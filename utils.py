@@ -1,4 +1,6 @@
+from calendar import c
 import os
+from platform import java_ver
 import cv2
 from cv2 import rectangle
 import numpy as np
@@ -33,13 +35,17 @@ def plotly_fig2array(fig):
 
 def plot_loss(loss, dir_res, name="loss.png", save=False):
     fig = plt.figure(figsize=(8, 4))
-    # print(loss[0:10])
+    labels = ('total', 'lapl', 'tea', 'distill', 'reg', 'photo')
+    colors = ('b', 'r', 'g', 'c', 'm', 'y')
+    print(loss.shape)
+    for j in range(loss.shape[1]): # how many loss components
+        plt.plot(loss[:, j], colors[j])
     # input("x")
-    plt.plot(loss)
-    plt.title('loss')
-    plt.ylabel('loss')
+    plt.title('validation losses')
     plt.xlabel('epoch')
-    plt.legend(['val'], loc='upper left')
+    plt.ylabel('loss')
+    plt.legend(['total', 'lapl', 'tea', 'dist', 'reg', 'photo'], loc='upper right')
+    # plt.legend()
     if save:
         res_path = os.path.join(dir_res, name)
         fig.savefig(res_path)
