@@ -574,7 +574,6 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_aug_rect.pkl" # bad
     # model_name = "flownet_lapl_aug_rect_255.pkl" # bad
     # model_name = "flownet_lapl_reg_smooth_aug_rect.pkl" # bad
-    # model_name = "flownet_lapl_regb2_aug_rect.pkl" # bad
     # model_name = "flownet_l1_aug_rect.pkl"
     # model_name = "flownet_lapl_t_aug_rect.pkl" # bad # loss_distill 0 and nan
     # model_name = "flownet_lapl_photo_aug_rect.pkl" # increased to 15%, 100 ep better than before, but underfit
@@ -604,6 +603,7 @@ if __name__ == "__main__":
     model_name = "flownet_lapl_dist_photo_reg_refine_v1_64_rect_text1.pkl" # worse than v2
     model_name = "flownet_lapl_refine_v2_128_rect_text1.pkl" # ? good 600 ep
     # model_name = "flownet_lapl_refine_test4x_v2_128_rect_text1.pkl" # 4x interpol
+    model_name = "flownet_lapl_dist_photo_v2_128_rect_text1.pkl" # ?
     model_name = "flownet_lapl_dist_photo_refine_v2_128_rect_text1.pkl" # ?
     model_name = "flownet_lapl_dist_reg_photo_refine_v2_128_rect_text1.pkl" # ? interpol good, flow could be better
     model_name = "flownet_lapl_dist_reg_photo_refine_v2_128_rects_text.pkl" # good interpol, inaccurate flow
