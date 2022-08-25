@@ -234,7 +234,7 @@ def load_data(dataset, exp, mode):
                             data_val_three.append(np.concatenate((data_val[i], 
                                 data_val[i + range_max-1], data_val[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
                     data_train = np.array(data_train_three)
-                    print("data_test in three:", data_train.shape)
+                    print("data_train in three:", data_train.shape)
                     data_val = np.array(data_val_three)
                     print("data_val in three:", data_val.shape)
                     # input("x")
