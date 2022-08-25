@@ -405,14 +405,14 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                     else:        
                         yield item
 
-            val_loss = list(flatten(val_loss))
+            # val_loss = list(flatten(val_loss))
             val_loss = np.array(val_loss)
             # print(val_loss.shape)
             # input("x")
-
-            plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
         except:
             print("loss json doesn't exist")
+
+        plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
 
         if dataset == "vimeo2d":
             data_test = np.array(data_test_combined) # vimeo
@@ -460,10 +460,10 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
         # loss_l1_list.append(info['loss_l1'].cpu().numpy())
         # loss_tea_list.append(info['loss_tea'].cpu().numpy())
         # loss_distill_list.append(info['loss_distill'].cpu().numpy())
-        # loss_total = [info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
-        #     info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy()]
-        # loss_G_list.append(loss_total)
-        loss_G_list.append(info['loss_G'].cpu().numpy())
+        loss_all = (info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
+            info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy())
+        # loss_G_list.append(loss_all)
+        # loss_G_list.append(info['loss_G'].cpu().numpy())
         # for j in range(gt.shape[0]):
         #     max_shape_2 = min(gt.shape[2], pred.shape[2])
         #     max_shape_3 = min(gt.shape[3], pred.shape[3])
@@ -501,8 +501,11 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
         model.save_model(model_name, log_path, local_rank) 
 
     val_loss = []
-    val_loss.append(float(np.array(loss_G_list).mean()))
-    # val_loss = val_loss.item().tolist()
+    # val_loss.append(float(np.array(loss_G_list).mean()))
+    loss_all = np.array(loss_all).tolist()
+    val_loss.append(loss_all)
+    print("loss_all", loss_all)
+    val_loss.append(loss_all)
     loss_path = 'loss.json'
     factor = 2
     dir_res = "Results"
@@ -520,12 +523,12 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
     if (os.path.exists(loss_path)):
         loss_file = open(loss_path, 'r')
         loss_data_old = json.load(loss_file)
-        loss_data_old['val_loss'].append(val_loss)
+        loss_data_old['val_loss'].extend(val_loss)
         loss_data = loss_data_old
         # print("exists:", loss_data)
         loss_file.close()
 
-    # print(loss_data)
+    # print("loss_data:", loss_data)
     # input("x")
 
     with open(loss_path, 'w+') as loss_file:
@@ -565,6 +568,8 @@ if __name__ == "__main__":
         args.batch_size = 55
     if args.dataset == "droplet2d" or args.dataset == "rectangle2d":
         args.batch_size = 128
+    if args.dataset == "rectangle2d":
+        args.batch_size = 180
     if args.dataset == "FluidSimML2d":
         args.batch_size = 64
     if args.dataset == "pipedcylinder2d" or args.dataset == "cylinder2d":
@@ -619,6 +624,7 @@ if __name__ == "__main__":
     model_name = "flownet_lapl_dist_refine_v3_128_rect_hftext.pkl" # no, don't use 5 blocks
     model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_refine_v2_128_rect_hftext.pkl" # with range; bad
     model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range.pkl" #
+    # model_name = "flownet_lapl_dist_refine_v2_128_rect_testloss.pkl"
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
