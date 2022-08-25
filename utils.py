@@ -33,6 +33,8 @@ def plotly_fig2array(fig):
 
 def plot_loss(loss, dir_res, name="loss.png", save=False):
     fig = plt.figure(figsize=(8, 4))
+    # print(loss[0:10])
+    # input("x")
     plt.plot(loss)
     plt.title('loss')
     plt.ylabel('loss')

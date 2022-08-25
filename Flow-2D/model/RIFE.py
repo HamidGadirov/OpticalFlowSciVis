@@ -264,8 +264,8 @@ class Model:
         lambda_l1 = 1
         lambda_tea = 1
         lambda_distill = 0.01 # 0.01 0.1
-        lambda_reg = 0 #1e-5 # 0 0.1 0.01
-        lambda_photo = 0 #1e-5 # 2 3 4 5
+        lambda_reg = 1e-5 # 0 0.1 0.01
+        lambda_photo = 1e-5 # 2 3 4 5
         lambda_smooth = 0 # 1e-8
         lambda_flow = 0 # 0.01 1
         # automatic parameter study
@@ -301,6 +301,10 @@ class Model:
         else:
             flow_teacher = flow[2]
             merged_teacher = merged[2]
+        
+        loss_distill *= lambda_distill
+        l1_reg *= lambda_reg
+        loss_photo *= lambda_photo
 
         return merged[2], {
             'merged_tea': merged_teacher,
@@ -311,5 +315,7 @@ class Model:
             'loss_l1': loss_l1,
             'loss_tea': loss_tea,
             'loss_distill': loss_distill,
+            'l1_reg': l1_reg,
+            'loss_photo': loss_photo,
             'loss_G': loss_G
             }

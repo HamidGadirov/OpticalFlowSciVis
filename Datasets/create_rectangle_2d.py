@@ -5,7 +5,7 @@ from matplotlib.pyplot import axes, title
 import matplotlib.pyplot as plt
 import pyimof
 import os
-# import cv2
+import cv2
 import math
 import time
 # import torch
@@ -196,6 +196,19 @@ dir_res = "Results"
 dataset = "rectange2d"
 # dir_res = os.path.join(dir_res, dataset)
 print("Saving at:", dir_res)
+
+data_video = data * 255.
+video_name = dataset + "_10fps.mp4"
+fps = 10 # 20
+sizeX = data_video.shape[1]
+sizeY = data_video.shape[2]
+out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+for i in range(200):
+    out.write(data_video[i].astype('uint8'))
+out.release()
+print("Created:", video_name)
+input("x")
+
 # title = "rectange2d"
 visualize_series(data[2000:], dir_res, title=dataset, show=False, save=True) # 2701::3
 visualize_series(velocities_x[2000:], dir_res, title="rect2d_flow_x", show=False, save=True) # 2701::3

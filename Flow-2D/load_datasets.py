@@ -150,8 +150,8 @@ def load_data(dataset, exp, mode):
         if mode == "train":
             # print("a train subset of the member is selected")
             if "rectangle2d" in filename:
-                data_train = data[:2430] # div to 3, 5, 9
-                data_val = data[2430:2700] #
+                data_train = data[:2205] # div to 3, 5, 9 and 7
+                data_val = data[2370:2685] # div to 3, 5, 9 and 7
             if "droplet2d" in filename:
                 data_train = data[:51300] # 46800 15120
                 data_val = data[51300:54000] # 18000 54000
@@ -222,7 +222,7 @@ def load_data(dataset, exp, mode):
             data_train_three = []
             data_val_three = []
             if exp == 1: # img0, img1, gt
-                if dataset == "rectangle2d__":
+                if dataset == "rectangle2d":
                     range_list = [3, 5, 7, 9]
                     # range_max = random.choice(range_list)
                     for n in range(len(range_list)):
@@ -237,7 +237,7 @@ def load_data(dataset, exp, mode):
                     print("data_test in three:", data_train.shape)
                     data_val = np.array(data_val_three)
                     print("data_val in three:", data_val.shape)
-                    input("x")
+                    # input("x")
                 else:
                     # prepare img0, gt, img1 (2x interpolation)
                     for i in range(0, data_train.shape[0], 3): 
@@ -293,7 +293,7 @@ def load_data(dataset, exp, mode):
             # return data_train, data_val
         else:
             if "rectangle2d" in filename:
-                data_test = data[2700:2970]
+                data_test = data[2685:3000] # div to 3, 5, 9 and 7
             elif "droplet2d" in filename:
                 data_test = data[:2700]
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:
@@ -328,23 +328,23 @@ def load_data(dataset, exp, mode):
 
             data_test_three = []
             if exp == 1: # img0, img1, gt
-                # if dataset == "rectangle2d":
-                #     range_list = [3, 5, 7, 9]
-                #     # range_max = random.choice(range_list)
-                #     for n in range(len(range_list)):
-                #         range_max = range_list[n]
-                #         for i in range(0, data_test.shape[0], range_max): 
-                #             data_test_three.append(np.concatenate((data_test[i], 
-                #                 data_test[i + range_max-1], data_test[i + (range_max-1)/2]), axis=0)) # img0, img1, gt
-                #     data_test = np.array(data_test_three)
-                #     print("data_test in three:", data_test.shape)
-                #     input("x")
-                # else:
-                for i in range(0, data_test.shape[0], 3): 
-                    data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
-                data_test = np.array(data_test_three)
-                print("data_test in three:", data_test.shape)
-                # input("x")
+                if dataset == "rectangle2d":
+                    range_list = [3, 5, 7, 9]
+                    # range_max = random.choice(range_list)
+                    for n in range(len(range_list)):
+                        range_max = range_list[n]
+                        for i in range(0, data_test.shape[0], range_max): 
+                            data_test_three.append(np.concatenate((data_test[i], 
+                                data_test[i + range_max-1], data_test[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                    data_test = np.array(data_test_three)
+                    print("data_test in three:", data_test.shape)
+                    # input("x")
+                else:
+                    for i in range(0, data_test.shape[0], 3): 
+                        data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
+                    data_test = np.array(data_test_three)
+                    print("data_test in three:", data_test.shape)
+                    # input("x")
             elif exp == 2:
                 print("4x interpolation") 
                 for i in range(0, data_test.shape[0], 5): 

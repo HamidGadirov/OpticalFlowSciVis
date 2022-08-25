@@ -27,7 +27,7 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
     )
 
 version = 2
-five_blocks = True
+five_blocks = False
 blocks_range = 3 if not five_blocks else 5
 refine = True
 

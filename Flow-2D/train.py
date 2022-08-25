@@ -433,9 +433,9 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
     # input(model_name)
     # writer = SummaryWriter('train') #
     # writer_val = SummaryWriter('validate') #
-    loss_l1_list = []
-    loss_distill_list = []
-    loss_tea_list = []
+    # loss_l1_list = []
+    # loss_distill_list = []
+    # loss_tea_list = []
     loss_G_list = []
     psnr_list = []
     psnr_list_teacher = []
@@ -457,9 +457,12 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
         with torch.no_grad():
             pred, info = model.update(imgs, gt, dataset, training=False)
             merged_img = info['merged_tea']
-        loss_l1_list.append(info['loss_l1'].cpu().numpy())
-        loss_tea_list.append(info['loss_tea'].cpu().numpy())
-        loss_distill_list.append(info['loss_distill'].cpu().numpy())
+        # loss_l1_list.append(info['loss_l1'].cpu().numpy())
+        # loss_tea_list.append(info['loss_tea'].cpu().numpy())
+        # loss_distill_list.append(info['loss_distill'].cpu().numpy())
+        # loss_total = [info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
+        #     info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy()]
+        # loss_G_list.append(loss_total)
         loss_G_list.append(info['loss_G'].cpu().numpy())
         # for j in range(gt.shape[0]):
         #     max_shape_2 = min(gt.shape[2], pred.shape[2])
@@ -511,7 +514,6 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
     # print(dir_model)
     # input("x")
     loss_path = os.path.join(dir_model, loss_path)
-
     loss_data = {'val_loss': val_loss}
 
     # load previous loss values if they exist
@@ -615,7 +617,8 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext.pkl" # 1000 ep ~better flow
     model_name = "flownet_lapl_dist_reg1e-4_photo1e-5_refine_v2_128_rect_hftext.pkl" # 800 ep: bad, loss inc
     model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_refine_v3_128_rect_hftext.pkl" # 800 ep: bad, loss inc
-    model_name = "flownet_lapl_dist_refine_v3_128_rect_hftext.pkl" #
+    model_name = "flownet_lapl_dist_refine_v3_128_rect_hftext.pkl" # no, don't use 5 blocks
+    model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_refine_v2_128_rect_hftext.pkl" #
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
