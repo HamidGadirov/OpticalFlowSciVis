@@ -253,8 +253,8 @@ def visualize_large(original_data, interpol_data, diffs,
                     break
         if int((i-1)/columns) == 5: # flow pred
             # this was flipped. why?
-            # u = flow_u[round(index)]
-            # v = flow_v[round(index)]
+            # u = - flow_u[round(index)]
+            # v = - flow_v[round(index)]
             u = flow_u[round(index)]
             v = flow_v[round(index)]
             norm = np.sqrt(u * u + v * v)
@@ -349,6 +349,8 @@ def visualize_large(original_data, interpol_data, diffs,
         y = 0.8
     elif "vimeo2d" in dataset:
         plt.subplots_adjust(wspace=0.01, hspace=0.01)
+        x = 0.075
+        y = 0.8
 
     step = (0.8 - 0.15) / 6.
     fig.text(x, y, 'GT', size=12)

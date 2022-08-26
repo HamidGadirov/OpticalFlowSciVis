@@ -33,7 +33,7 @@ refine = True
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
-        print("IFBlock init")
+        # print("IFBlock init")
         super(IFBlock, self).__init__()
         self.conv0 = nn.Sequential(
             conv(in_planes, c//2, 3, 2, 1),
@@ -88,10 +88,10 @@ class IFBlock(nn.Module):
             # x = x.type(torch.float32)
             x = F.interpolate(x, scale_factor = 1. / scale, mode="bilinear", align_corners=False)
         if flow != None:
-            print("flow != None ", flow.shape)
+            # print("flow != None ", flow.shape)
             flow = F.interpolate(flow, scale_factor = 1. / scale, mode="bilinear", align_corners=False) * 1. / scale
             x = torch.cat((x, flow), 1)
-        print("IFBlock forward, ", x.shape)
+        # print("IFBlock forward, ", x.shape)
         x = self.conv0(x)
         # print("conv0:", x.shape)
         if version == 1:
@@ -114,6 +114,11 @@ class IFBlock(nn.Module):
             mask = self.conv2(x)
             flow = F.interpolate(flow, scale_factor=scale, mode="bilinear", align_corners=False, recompute_scale_factor=False) * scale
             mask = F.interpolate(mask, scale_factor=scale, mode="bilinear", align_corners=False, recompute_scale_factor=False)
+        # try reversing flow here
+        # flow = - flow
+        mask = 1. - mask
+        # flow *= 0. # that breaks
+        # print("reversed mask!")
         return flow, mask
     
 class IFNet(nn.Module):
@@ -196,7 +201,7 @@ class IFNet(nn.Module):
             # visualize_ind(warped_img0[0, ...,].detach().cpu().numpy().squeeze(), dir_res=dir_res, name="warped_img0.png", save=True)
             # visualize_ind(warped_img1[0, ...,].detach().cpu().numpy().squeeze(), dir_res=dir_res, name="warped_img1.png", save=True)
 
-            print("gt:", gt.shape[1])
+            # print("gt:", gt.shape[1])
             
         if gt.shape[1] == 1: # 3
             # print("gt.shape[1] = 1")
@@ -212,9 +217,9 @@ class IFNet(nn.Module):
             flow = flow[:,:,:max_shape_2,:max_shape_3]
             gt = gt[:,:,:max_shape_2,:max_shape_3]
             # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
-            print("flow:", flow.shape)
+            # print("flow:", flow.shape)
 
-            print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
+            # print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
             flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
             flow_d = flow_d[:,:,:max_shape_2,:max_shape_3]
             mask_d = mask_d[:,:,:max_shape_2,:max_shape_3]
@@ -227,7 +232,7 @@ class IFNet(nn.Module):
             mask_teacher = torch.sigmoid(mask + mask_d)
             merged_teacher = warped_img0_teacher * mask_teacher + warped_img1_teacher * (1 - mask_teacher)
         else:
-            print("flow_teacher = None")
+            # print("flow_teacher = None")
             flow_teacher = None
             merged_teacher = None
 
@@ -246,7 +251,7 @@ class IFNet(nn.Module):
                 # print(loss_mask.mean())
                 # input("loss_distill")
 
-        print("in IFNet, forward")
+        # print("in IFNet, forward")
         if refine:
             # max_shape_2 = min(img0.shape[2], warped_img0.shape[2])
             # max_shape_3 = min(img0.shape[3], warped_img0.shape[3])
@@ -266,7 +271,7 @@ class IFNet(nn.Module):
             merged[2] = torch.clamp(merged[2] + res, 0, 1)
             # print(merged[2].shape)
             # input("x")
-            print("refined")
+            # print("refined")
         # return flow_list, mask_list[2], merged, flow_teacher, merged_teacher, loss_distill
         return flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill
 

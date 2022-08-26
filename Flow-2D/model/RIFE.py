@@ -100,7 +100,7 @@ class Model:
             img1 = img1_data
             imgs = torch.cat((img0, img1), 1)
             gt = gt_data
-            print(imgs.shape)
+            # print(imgs.shape)
             # input("x")
         else:
             img0 = imgs[:, :1]
@@ -119,11 +119,10 @@ class Model:
         gt = gt[:,:,:max_shape_2,:max_shape_3]
         if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" or dataset == "rectangle2d":
             gt_flow = gt_flow[:,:,:max_shape_2,:max_shape_3]
-
             # Flow loss
             # flow and flow_uv
-            print(flow[2].shape)
-            print(gt_flow.shape)
+            # print(flow[2].shape)
+            # print(gt_flow.shape)
             # input("flow")
             loss_flow = torch.nn.functional.l1_loss(flow[2][:, :2], gt_flow) #
 

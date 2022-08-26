@@ -146,14 +146,14 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 time_stamp = time.time()
                 # data = torch.zeros([16, 9, 150, 450], dtype=torch.float)
                 if dataset == "vimeo2d": 
-                    print("vimeo2d")
+                    # print("vimeo2d")
                     data_gpu, timestep = data # vimeo
                     data_gpu = data_gpu.to(device, non_blocking=True) / 255.
                 else:
                     data_gpu = data
                     data_gpu = data_gpu.to(device, non_blocking=True)
                 # data_gpu = data_gpu.permute(0, 3, 1, 2)
-                print("data to gpu:", data_gpu.shape)
+                # print("data to gpu:", data_gpu.shape)
                 # input("x")
                 # print(type(data_gpu[0,0,0,0]))
                 # print(data_gpu[0, 0])
@@ -169,8 +169,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 if exp == 1: # # img0, img1, gt
                     imgs = data_gpu[:, :2] # :6
                     gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
-                    print(imgs.shape)
-                    print(gt.shape)
+                    # print(imgs.shape)
+                    # print(gt.shape)
                     # input("x")
                     pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
                 elif exp == 2: # img0, img1, gt0, gt1, gt2
@@ -396,15 +396,14 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             val_loss = loss_data['val_loss']
             loss_file.close()   
 
-            from collections import Iterable
-            def flatten(lis):
-                for item in lis:
-                    if isinstance(item, Iterable) and not isinstance(item, str):
-                        for x in flatten(item):
-                            yield x
-                    else:        
-                        yield item
-
+            # from collections import Iterable
+            # def flatten(lis):
+            #     for item in lis:
+            #         if isinstance(item, Iterable) and not isinstance(item, str):
+            #             for x in flatten(item):
+            #                 yield x
+            #         else:        
+            #             yield item
             # val_loss = list(flatten(val_loss))
             val_loss = np.array(val_loss)
             # print(val_loss.shape)
@@ -504,8 +503,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
     # val_loss.append(float(np.array(loss_G_list).mean()))
     loss_all = np.array(loss_all).tolist()
     val_loss.append(loss_all)
-    print("loss_all", loss_all)
-    val_loss.append(loss_all)
+    # print("loss_all", loss_all)
     loss_path = 'loss.json'
     factor = 2
     dir_res = "Results"
@@ -545,7 +543,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=1000, type=int) # 300
+    parser.add_argument('--epoch', default=300, type=int) # 300
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -623,11 +621,16 @@ if __name__ == "__main__":
     model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_refine_v3_128_rect_hftext.pkl" # 800 ep: bad, loss inc
     model_name = "flownet_lapl_dist_refine_v3_128_rect_hftext.pkl" # no, don't use 5 blocks
     model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_refine_v2_128_rect_hftext.pkl" # with range; bad
-    model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range.pkl" #
+    model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range.pkl" # flow bad
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_testloss.pkl"
+    model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range357shift.pkl"
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
+    # model_name = "flownet_lapl_dist_reverse_v2_128_vimeo.pkl" # same ???
+    # model_name = "flownet_lapl_dist_noreverse_v2_128_vimeo.pkl" # same ???
+    # model_name = "flownet_lapl_dist_zero_v2_128_vimeo.pkl" # empty
+    model_name = "flownet_lapl_dist_reversemask_v2_128_vimeo.pkl" #
     # model_name ="flownet_lapl_dist_photo1e-4_v2_128_vimeo.pkl" # very good interpol, very bad flow
     # model_name ="flownet_lapl_v2_128_vimeo.pkl" # ?
     # model_name ="flownet_lapl_dist_reg_photo1e-5_v2_128_vimeo.pkl" # nan loss
