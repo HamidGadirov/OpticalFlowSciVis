@@ -223,17 +223,20 @@ def load_data(dataset, exp, mode):
             data_val_three = []
             if exp == 1: # img0, img1, gt
                 if dataset == "rectangle2d":
-                    range_list = [3, 5, 7]
+                    range_list = [3, 5, 7, 9]
+                    repeat = 1
                     # range_max = random.choice(range_list)
                     for n in range(len(range_list)):
                         range_max = range_list[n]
                         # for shift in range(range_max): # no need, too much data then
-                        for i in range(0, data_train.shape[0], range_max): 
-                            data_train_three.append(np.concatenate((data_train[i], 
-                                data_train[i + range_max-1], data_train[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
-                        for i in range(0, data_val.shape[0], range_max): 
-                            data_val_three.append(np.concatenate((data_val[i], 
-                                data_val[i + range_max-1], data_val[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                        for shift in range(repeat):
+                            for i in range(0 + shift, data_train.shape[0] - range_max, range_max): 
+                                data_train_three.append(np.concatenate((data_train[i], 
+                                    data_train[i + range_max-1], data_train[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                            for i in range(0 + shift, data_val.shape[0] - range_max, range_max): 
+                                data_val_three.append(np.concatenate((data_val[i], 
+                                    data_val[i + range_max-1], data_val[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                        repeat += 1
                     data_train = np.array(data_train_three)
                     print("data_train in three:", data_train.shape)
                     data_val = np.array(data_val_three)
@@ -330,13 +333,16 @@ def load_data(dataset, exp, mode):
             data_test_three = []
             if exp == 1: # img0, img1, gt
                 if dataset == "rectangle2d":
-                    range_list = [3, 5, 7]
+                    range_list = [3, 5, 7, 9]
+                    repeat = 1
                     # range_max = random.choice(range_list)
                     for n in range(len(range_list)):
                         range_max = range_list[n]
-                        for i in range(0, data_test.shape[0], range_max): 
-                            data_test_three.append(np.concatenate((data_test[i], 
-                                data_test[i + range_max-1], data_test[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                        for shift in range(repeat):
+                            for i in range(0 + shift, data_test.shape[0] - range_max, range_max): 
+                                data_test_three.append(np.concatenate((data_test[i], 
+                                    data_test[i + range_max-1], data_test[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                        repeat += 1
                     data_test = np.array(data_test_three)
                     print("data_test in three:", data_test.shape)
                     # input("x")

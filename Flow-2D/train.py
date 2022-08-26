@@ -543,7 +543,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=300, type=int) # 300
+    parser.add_argument('--epoch', default=1000, type=int) # 300
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -622,15 +622,17 @@ if __name__ == "__main__":
     model_name = "flownet_lapl_dist_refine_v3_128_rect_hftext.pkl" # no, don't use 5 blocks
     model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_refine_v2_128_rect_hftext.pkl" # with range; bad
     model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range.pkl" # flow bad
+    model_name = "flownet_lapl_dist_refine_reg1e-5_photo1e-5_v2_128_rect_hftext_range.pkl"
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_testloss.pkl"
-    model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range357shift.pkl"
+    # model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range357shift.pkl"
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
     # model_name = "flownet_lapl_dist_reverse_v2_128_vimeo.pkl" # same ???
     # model_name = "flownet_lapl_dist_noreverse_v2_128_vimeo.pkl" # same ???
     # model_name = "flownet_lapl_dist_zero_v2_128_vimeo.pkl" # empty
-    model_name = "flownet_lapl_dist_reversemask_v2_128_vimeo.pkl" #
+    # model_name = "flownet_lapl_dist_reversemask_v2_128_vimeo.pkl" # same ???
+    # model_name = "flownet_lapl_dist_reverseflowmask_v2_128_vimeo.pkl" # same ???
     # model_name ="flownet_lapl_dist_photo1e-4_v2_128_vimeo.pkl" # very good interpol, very bad flow
     # model_name ="flownet_lapl_v2_128_vimeo.pkl" # ?
     # model_name ="flownet_lapl_dist_reg_photo1e-5_v2_128_vimeo.pkl" # nan loss

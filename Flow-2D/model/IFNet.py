@@ -115,7 +115,7 @@ class IFBlock(nn.Module):
             flow = F.interpolate(flow, scale_factor=scale, mode="bilinear", align_corners=False, recompute_scale_factor=False) * scale
             mask = F.interpolate(mask, scale_factor=scale, mode="bilinear", align_corners=False, recompute_scale_factor=False)
         # try reversing flow here
-        # flow = - flow
+        flow = - flow
         mask = 1. - mask
         # flow *= 0. # that breaks
         # print("reversed mask!")

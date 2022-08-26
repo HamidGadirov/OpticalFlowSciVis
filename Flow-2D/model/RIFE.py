@@ -82,8 +82,8 @@ class Model:
             param_group['lr'] = learning_rate
 
         if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" or dataset == "rectangle2d":
-            print(imgs.shape)
-            print(gt.shape)
+            # print(imgs.shape)
+            # print(gt.shape)
             # input("x")
             gt_data = gt[:, 0, :1]
             gt_flow = gt[:, 0, 1:3]
@@ -93,7 +93,7 @@ class Model:
             img0_flow = img0[:, 0, 1:3]
             img1_data = img1[:, 0, :1]
             img1_flow = img1[:, 0, 1:3]
-            print(img0_data.shape, img1_flow.shape)
+            # print(img0_data.shape, img1_flow.shape)
             # input("x")
             # img0_flow_uv = imgs[:, :2] # (b_s, 3, 3, 450, 150)
             img0 = img0_data
@@ -263,8 +263,8 @@ class Model:
         lambda_l1 = 1
         lambda_tea = 1
         lambda_distill = 0.01 # 0.01 0.1
-        lambda_reg = 0 #1e-5 # 0 0.1 0.01
-        lambda_photo = 0 #1e-5 # 2 3 4 5
+        lambda_reg = 1e-5 # 0 0.1 0.01
+        lambda_photo = 1e-5 # 2 3 4 5
         lambda_smooth = 0 # 1e-8
         lambda_flow = 0 # 0.01 1
         # automatic parameter study
