@@ -622,7 +622,7 @@ if __name__ == "__main__":
     model_name = "flownet_lapl_dist_refine_v3_128_rect_hftext.pkl" # no, don't use 5 blocks
     model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_refine_v2_128_rect_hftext.pkl" # with range; bad
     model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range.pkl" # flow bad
-    model_name = "flownet_lapl_dist_refine_reg1e-5_photo1e-5_v2_128_rect_hftext_range.pkl"
+    # model_name = "flownet_lapl_dist_refine_reg1e-5_photo1e-5_v2_128_rect_hftext_range.pkl" 1000ep, 3579 range, bad
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_testloss.pkl"
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range357shift.pkl"
 
