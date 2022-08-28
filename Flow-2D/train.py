@@ -101,7 +101,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             data_test = DataLoader(dataset_test, batch_size=16, pin_memory=True, num_workers=8)
         else:
             data_test = load_data(dataset, exp, mode)
-            data_test = DataLoader(data_test, batch_size=args.batch_size, pin_memory=True, num_workers=8)
+            data_test = DataLoader(data_test, batch_size=16, pin_memory=True, num_workers=8)
 
     lapl_loss = True # yes
     l1_reg = False # didn't help
