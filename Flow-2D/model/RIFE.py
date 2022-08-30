@@ -284,7 +284,7 @@ class Model:
 
         if training:
             self.optimG.zero_grad()
-               
+
             # print("loss_l1:", loss_l1 * lambda_l1)
             # print("loss_tea:", loss_tea * lambda_tea)
             # print("loss_distill:", loss_distill * lambda_distill)
