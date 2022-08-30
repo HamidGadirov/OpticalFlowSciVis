@@ -202,15 +202,6 @@ def load_data(dataset, exp, mode):
             print(data_train.shape)
             # input("x")
 
-            # factor = 2
-            # dir_res = "Results"
-            # dir_res = os.path.join(dir_res, dataset)
-            # dir_res = os.path.join(dir_res, str(factor) + "x")
-            # print("Saving at:", dir_res)
-            # title = title = "inference_" + str(factor) + "x"
-            # visualize_series(data_train[600:,1,...], factor, dataset, dir_res, title=title, show=False, save=True)
-            # input("x")
-
             # data_train = torch.from_numpy(data_train.copy()).permute(2, 0, 1)
             # data_val = torch.from_numpy(data_val.copy()).permute(2, 0, 1)
             # print(data_train.shape)
@@ -241,7 +232,24 @@ def load_data(dataset, exp, mode):
                     print("data_train in three:", data_train.shape)
                     data_val = np.array(data_val_three)
                     print("data_val in three:", data_val.shape)
-                    input("x")
+
+                    # visualize
+                    factor = 2
+                    dir_res = "Results"
+                    dir_res = os.path.join(dir_res, dataset)
+                    dir_res = os.path.join(dir_res, str(factor) + "x")
+                    print("Saving at:", dir_res)
+                    title = title = "train_threeseq_aug_range"
+                    print(data_train.shape)
+                    data_train_vis = data_train[:100, :, 0, ...]
+                    data_train_vis_unthree = []
+                    for i in range(data_train_vis.shape[0]):
+                        data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
+                    data_train_vis_unthree = np.array(data_train_vis_unthree)
+                    print(data_train_vis_unthree.shape)
+                    # input("x")
+                    visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
+                    input("3579")
                 else:
                     # prepare img0, gt, img1 (2x interpolation)
                     for i in range(0, data_train.shape[0], 3): 
@@ -252,6 +260,24 @@ def load_data(dataset, exp, mode):
                         data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
                     data_val = np.array(data_val_three)
                     print("data_val in three:", data_val.shape)
+
+                    # visualize
+                    factor = 2
+                    dir_res = "Results"
+                    dir_res = os.path.join(dir_res, dataset)
+                    dir_res = os.path.join(dir_res, str(factor) + "x")
+                    print("Saving at:", dir_res)
+                    title = title = "train_threeseq_aug_range"
+                    print(data_train.shape)
+                    data_train_vis = data_train[:100, :, 0, ...]
+                    data_train_vis_unthree = []
+                    for i in range(data_train_vis.shape[0]):
+                        data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
+                    data_train_vis_unthree = np.array(data_train_vis_unthree)
+                    print(data_train_vis_unthree.shape)
+                    # input("x")
+                    visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
+                    input("x")
                 # input("x")
             elif exp == 2:
                 print("4x interpolation") 

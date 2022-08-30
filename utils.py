@@ -73,28 +73,44 @@ def visualize_series(data_to_vis, factor, dataset, dir_res="Results", title="Dat
         columns = 7
     rows = 10
 
+    j = 0
     for i in range(1, columns*rows+1):
-        index = (i - 1) * 2 # skip each second
+        # index = (i - 1) * 2 # skip each second
+        index = i
+
         if (index >= data_to_vis.shape[0]):
             break
 
         img = data_to_vis[index,...]
         ax = fig.add_subplot(rows, columns, i)
+        
+        # if index % factor == 0:
+        #     # add bb to the gt image
+        #     width = data_to_vis.shape[2]
+        #     height = data_to_vis.shape[1]
+        #     linewidth=2
+            # if "cylinder2d" in dataset:
+            #     linewidth=1
+            # rect = patches.Rectangle((0, 0), width, height, linewidth=linewidth, edgecolor='r', facecolor='none')
+            # ax.add_patch(rect)
 
-        if index % factor == 0:
+        # vis 3 in sequence:
+        if j <= 2:
             # add bb to the gt image
             width = data_to_vis.shape[2]
             height = data_to_vis.shape[1]
             linewidth=2
-            if "cylinder2d" in dataset:
-                linewidth=1
             rect = patches.Rectangle((0, 0), width, height, linewidth=linewidth, edgecolor='r', facecolor='none')
             ax.add_patch(rect)
+        j += 1
+        if j % 6 == 0:
+            j = 0
 
         plt.axis('off')
         # print("range:", data_to_vis.min(), data_to_vis.max())
         # input("x")
-        plt.imshow(img, cmap='viridis', vmin=data_to_vis.min(), vmax=data_to_vis.max())
+        # plt.imshow(img, cmap='viridis', vmin=data_to_vis.min(), vmax=data_to_vis.max())
+        plt.imshow(img, cmap='viridis')
         # plt.imshow(img, cmap='viridis', vmin=0, vmax=255)
 
     fig = plt.gcf()
