@@ -191,15 +191,19 @@ def load_data(dataset, exp, mode):
                 print(data_val.shape)
                 # input("x")
 
+            print(data_train.shape) # (2205, 1, 3, 128, 128)
+            print("before aug, data_train is in range %f to %f" % (np.min(data_train[:, :, 0]), np.max(data_train[:, :, 0])))
+
             # TODO: add other augment: diff steps for picking data ? 
             if "pipedcylinder2d" in filename or "cylinder2d" in filename or "FluidSimML" in filename or "rectangle2d" in filename:
                 print("Augmenting the data...")
-                data_train_flip = data_train[:,:,:,::-1]
+                data_train_flip = data_train[..., ::-1] # [:,:,:,::-1] wrong!
                 data_train = np.append(data_train, data_train_flip, axis=0)
-                data_train_flip = data_train[:,:,::-1,:]
+                data_train_flip = data_train[..., ::-1, :]  # [:,:,::-1,:] wrong!
                 data_train = np.append(data_train, data_train_flip, axis=0)
 
             print(data_train.shape)
+            print("after aug, data_train is in range %f to %f" % (np.min(data_train[:, :, 0]), np.max(data_train[:, :, 0])))
             # input("x")
 
             # data_train = torch.from_numpy(data_train.copy()).permute(2, 0, 1)
@@ -213,7 +217,7 @@ def load_data(dataset, exp, mode):
             data_train_three = []
             data_val_three = []
             if exp == 1: # img0, img1, gt
-                if dataset == "rectangle2d":
+                if dataset == "rectangle2d__":
                     range_list = [3, 5, 7, 9]
                     repeat = 1
                     # range_max = random.choice(range_list)
@@ -227,6 +231,7 @@ def load_data(dataset, exp, mode):
                             for i in range(0 + shift, data_val.shape[0] - range_max, range_max): 
                                 data_val_three.append(np.concatenate((data_val[i], 
                                     data_val[i + range_max-1], data_val[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                            # print(range_max, repeat) # np.array(data_train_three).shape)
                         repeat += 1
                     data_train = np.array(data_train_three)
                     print("data_train in three:", data_train.shape)
@@ -241,7 +246,7 @@ def load_data(dataset, exp, mode):
                     print("Saving at:", dir_res)
                     title = title = "train_threeseq_aug_range"
                     print(data_train.shape)
-                    data_train_vis = data_train[:100, :, 0, ...]
+                    data_train_vis = data_train[14000:14100, :, 0, ...]
                     data_train_vis_unthree = []
                     for i in range(data_train_vis.shape[0]):
                         data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
@@ -261,23 +266,23 @@ def load_data(dataset, exp, mode):
                     data_val = np.array(data_val_three)
                     print("data_val in three:", data_val.shape)
 
-                    # visualize
-                    factor = 2
-                    dir_res = "Results"
-                    dir_res = os.path.join(dir_res, dataset)
-                    dir_res = os.path.join(dir_res, str(factor) + "x")
-                    print("Saving at:", dir_res)
-                    title = title = "train_threeseq_aug_range"
-                    print(data_train.shape)
-                    data_train_vis = data_train[:100, :, 0, ...]
-                    data_train_vis_unthree = []
-                    for i in range(data_train_vis.shape[0]):
-                        data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
-                    data_train_vis_unthree = np.array(data_train_vis_unthree)
-                    print(data_train_vis_unthree.shape)
+                    # # visualize
+                    # factor = 2
+                    # dir_res = "Results"
+                    # dir_res = os.path.join(dir_res, dataset)
+                    # dir_res = os.path.join(dir_res, str(factor) + "x")
+                    # print("Saving at:", dir_res)
+                    # title = title = "train_threeseq_aug_range"
+                    # print(data_train.shape)
+                    # data_train_vis = data_train[:100, :, 0, ...]
+                    # data_train_vis_unthree = []
+                    # for i in range(data_train_vis.shape[0]):
+                    #     data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
+                    # data_train_vis_unthree = np.array(data_train_vis_unthree)
+                    # print(data_train_vis_unthree.shape)
+                    # # input("x")
+                    # visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
                     # input("x")
-                    visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
-                    input("x")
                 # input("x")
             elif exp == 2:
                 print("4x interpolation") 

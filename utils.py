@@ -73,6 +73,8 @@ def visualize_series(data_to_vis, factor, dataset, dir_res="Results", title="Dat
         columns = 7
     rows = 10
 
+    print("data_to_vis is in range %f to %f" % (np.min(data_to_vis), np.max(data_to_vis)))
+
     j = 0
     for i in range(1, columns*rows+1):
         # index = (i - 1) * 2 # skip each second
