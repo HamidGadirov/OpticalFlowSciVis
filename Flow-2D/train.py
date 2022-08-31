@@ -87,7 +87,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             # print(data_train.shape)
             # sampler = DistributedSampler(data_train)
             # train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
-            train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True)
+            train_data = DataLoader(data_train, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True, drop_last=True)
             args.step_per_epoch = train_data.__len__()
             # # input("train loaded...")
             print("len:", len(data_train))
@@ -101,7 +101,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             data_test = DataLoader(dataset_test, batch_size=16, pin_memory=True, num_workers=8)
         else:
             data_test = load_data(dataset, exp, mode)
-            data_test = DataLoader(data_test, batch_size=16, pin_memory=True, num_workers=8)
+            data_test = DataLoader(data_test, batch_size=16, shuffle=True, pin_memory=True, num_workers=8)
 
     lapl_loss = True # yes
     l1_reg = False # didn't help
@@ -627,7 +627,10 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range357shift.pkl"
     model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range.pkl" # 2000ep, 3579 range
     model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_refine_v2_128_rect_hftext_bugfix.pkl" # reg loss too high
-    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_bugfix.pkl"
+    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_bugfix.pkl" # reversed flow and mask
+
+    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_range.pkl" # 3579 bad 1e-5 reg too much
+    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_range357.pkl" # 
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow

@@ -217,8 +217,8 @@ def load_data(dataset, exp, mode):
             data_train_three = []
             data_val_three = []
             if exp == 1: # img0, img1, gt
-                if dataset == "rectangle2d__":
-                    range_list = [3, 5, 7, 9]
+                if dataset == "rectangle2d":
+                    range_list = [3, 5, 7] # , 9]
                     repeat = 1
                     # range_max = random.choice(range_list)
                     for n in range(len(range_list)):
@@ -232,29 +232,29 @@ def load_data(dataset, exp, mode):
                                 data_val_three.append(np.concatenate((data_val[i], 
                                     data_val[i + range_max-1], data_val[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
                             # print(range_max, repeat) # np.array(data_train_three).shape)
-                        repeat += 1
+                        # repeat += 1
                     data_train = np.array(data_train_three)
                     print("data_train in three:", data_train.shape)
                     data_val = np.array(data_val_three)
                     print("data_val in three:", data_val.shape)
 
-                    # visualize
-                    factor = 2
-                    dir_res = "Results"
-                    dir_res = os.path.join(dir_res, dataset)
-                    dir_res = os.path.join(dir_res, str(factor) + "x")
-                    print("Saving at:", dir_res)
-                    title = title = "train_threeseq_aug_range"
-                    print(data_train.shape)
-                    data_train_vis = data_train[14000:14100, :, 0, ...]
-                    data_train_vis_unthree = []
-                    for i in range(data_train_vis.shape[0]):
-                        data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
-                    data_train_vis_unthree = np.array(data_train_vis_unthree)
-                    print(data_train_vis_unthree.shape)
-                    # input("x")
-                    visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
-                    input("3579")
+                    # # visualize
+                    # factor = 2
+                    # dir_res = "Results"
+                    # dir_res = os.path.join(dir_res, dataset)
+                    # dir_res = os.path.join(dir_res, str(factor) + "x")
+                    # print("Saving at:", dir_res)
+                    # title = title = "train_threeseq_aug_range"
+                    # print(data_train.shape)
+                    # data_train_vis = data_train[14000:14100, :, 0, ...]
+                    # data_train_vis_unthree = []
+                    # for i in range(data_train_vis.shape[0]):
+                    #     data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
+                    # data_train_vis_unthree = np.array(data_train_vis_unthree)
+                    # print(data_train_vis_unthree.shape)
+                    # # input("x")
+                    # visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
+                    # input("3579")
                 else:
                     # prepare img0, gt, img1 (2x interpolation)
                     for i in range(0, data_train.shape[0], 3): 
@@ -364,7 +364,7 @@ def load_data(dataset, exp, mode):
             data_test_three = []
             if exp == 1: # img0, img1, gt
                 if dataset == "rectangle2d":
-                    range_list = [3, 5, 7, 9]
+                    range_list = [3, 5, 7] #, 9]
                     repeat = 1
                     # range_max = random.choice(range_list)
                     for n in range(len(range_list)):
@@ -373,7 +373,7 @@ def load_data(dataset, exp, mode):
                             for i in range(0 + shift, data_test.shape[0] - range_max, range_max): 
                                 data_test_three.append(np.concatenate((data_test[i], 
                                     data_test[i + range_max-1], data_test[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
-                        repeat += 1
+                        # repeat += 1
                     data_test = np.array(data_test_three)
                     print("data_test in three:", data_test.shape)
                     # input("x")

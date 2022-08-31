@@ -263,7 +263,7 @@ class Model:
         lambda_l1 = 1
         lambda_tea = 1
         lambda_distill = 0.01 # 0.01 0.1
-        lambda_reg = 1e-5
+        lambda_reg = 1e-6
         lambda_photo = 1e-5 # 2 3 4 5
         lambda_smooth = 0 # 1e-8
         lambda_flow = 0 # 0.01 1
