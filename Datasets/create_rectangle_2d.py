@@ -15,6 +15,16 @@ import pickle
 import random
 import argparse
 
+def flow2rgb(flow_map_np):
+    h, w, _ = flow_map_np.shape
+    rgb_map = np.zeros((h, w, 3)).astype(np.float32)
+    normalized_flow_map = flow_map_np / (np.abs(flow_map_np).max())
+    
+    rgb_map[:, :, 0] += normalized_flow_map[:, :, 0]
+    rgb_map[:, :, 1] -= 0.5 * (normalized_flow_map[:, :, 0] + normalized_flow_map[:, :, 1])
+    rgb_map[:, :, 2] += normalized_flow_map[:, :, 1]
+    return rgb_map.clip(0, 1)
+
 # from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large
 def visualize_series(data_to_vis, dir_res="Results", title="Data", show=True, save=False):
     fig=plt.figure()
@@ -149,9 +159,12 @@ for i in range(grit_t):
     # velocities_x[i, end_x-box_dim_x:end_x, end_y-box_dim_y:end_y] = vel_x
     # velocities_y[i, end_x-box_dim_x:end_x, end_y-box_dim_y:end_y] = vel_y
 
-    # this was flipped. why? - vis tool?
-    pos_x += vel_x
-    pos_y += vel_y
+    # vel_x = 8
+    # vel_y = 2
+
+    # this is reversed because matplotlib transposes x and y
+    pos_x += vel_y
+    pos_y += vel_x
     if pos_x < 0: 
         pos_x = 0
     if pos_y < 0: 
@@ -175,6 +188,8 @@ for i in range(grit_t):
     # print(end_x - pos_x, end_y - pos_y)
     grid[i, begin_x:end_x, begin_y:end_y] = box
 
+    # grid[i, 20:30, 0:10] = 1 # this is it
+
     # save vel vectors
     velocities_x[i, begin_x:end_x, begin_y:end_y] = vel_x
     velocities_y[i, begin_x:end_x, begin_y:end_y] = vel_y
@@ -184,8 +199,8 @@ for i in range(grit_t):
         seq = 0
     # input(seq)
 
-    # if i>=2000 and i<=2100:
-    #     print("i, vel_x, vel_y:", i, vel_x, vel_y)
+    if i>=0 and i<=100:
+        print("i, vel_x, vel_y:", i, vel_x, vel_y)
 
 print(grit_t, "timesteps created")
 print(grid.shape)
@@ -197,27 +212,27 @@ dataset = "rectange2d"
 # dir_res = os.path.join(dir_res, dataset)
 print("Saving at:", dir_res)
 
-data_video = data * 255.
-video_name = dataset + "_10fps.mp4"
-fps = 10 # 20
-sizeX = data_video.shape[1]
-sizeY = data_video.shape[2]
-out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
-for i in range(200):
-    out.write(data_video[i].astype('uint8'))
-out.release()
-print("Created:", video_name)
-input("x")
+# data_video = data * 255.
+# video_name = dataset + "_10fps.mp4"
+# fps = 10 # 20
+# sizeX = data_video.shape[1]
+# sizeY = data_video.shape[2]
+# out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+# for i in range(200):
+#     out.write(data_video[i].astype('uint8'))
+# out.release()
+# print("Created:", video_name)
+# input("x")
 
 # title = "rectange2d"
-visualize_series(data[2000:], dir_res, title=dataset, show=False, save=True) # 2701::3
-visualize_series(velocities_x[2000:], dir_res, title="rect2d_flow_x", show=False, save=True) # 2701::3
-visualize_series(velocities_y[2000:], dir_res, title="rect2d_flow_y", show=False, save=True) # 2701::3
-visualize_series_flow(data[2000:], velocities_x[2000:], velocities_y[2000:], 
+visualize_series(data[:100], dir_res, title=dataset, show=False, save=True) # 2701::3
+visualize_series(velocities_x[:100], dir_res, title="rect2d_flow_x", show=False, save=True) # 2701::3
+visualize_series(velocities_y[:100], dir_res, title="rect2d_flow_y", show=False, save=True) # 2701::3
+visualize_series_flow(data[:100], velocities_x[:100], velocities_y[:100], 
     dataset, dir_res="Results", title="rect2d_flow_vec", show=False, save=True)
 # print(velocities_x[2000])
 # print(velocities_x[2010])
-# input("velocities")
+input("velocities")
 
 # pkl_filename = "rectangle2d" + ".pkl" 
 pkl_filename = "rectangle2d_hftext" + "_flow" + ".pkl" 

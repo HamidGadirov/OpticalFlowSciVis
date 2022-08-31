@@ -128,6 +128,7 @@ for t in range(grit_t):
         # velocities[i, 0, t, end[i][0]-box_dim_x:end[i][0], end[i][1]-box_dim_y:end[i][1]] = vel[i][0]
         # velocities[i, 1, t, end[i][0]-box_dim_x:end[i][0], end[i][1]-box_dim_y:end[i][1]] = vel[i][1]
 
+        # this is reversed because matplotlib transposes x and y
         pos[i][0] += vel[i][1]
         pos[i][1] += vel[i][0]
 
@@ -174,7 +175,7 @@ visualize_series(velocities[2000:, 0], dir_res, title="rects2d_flow_x", show=Fal
 visualize_series(velocities[2000:, 1], dir_res, title="rects2d_flow_y", show=False, save=True) # 2701::3
 visualize_series_flow(data[2000:], velocities[2000:, 0], velocities[2000:, 1], 
     dataset, dir_res="Results", title="rects2d_flow_vec", show=False, save=True)
-# input("velocities")
+input("velocities")
 
 pkl_filename = "rectangles2d_text" + "_flow" + ".pkl" 
 

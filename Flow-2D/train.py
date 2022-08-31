@@ -540,6 +540,8 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
 
     eval_time_interval = time.time() - time_stamp
 
+    del loss_all
+
     if local_rank != 0:
         return
     # writer_val.add_scalar('psnr', np.array(psnr_list).mean(), nr_eval)
@@ -634,7 +636,10 @@ if __name__ == "__main__":
     model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_bugfix.pkl" # reversed flow and mask
 
     model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_range.pkl" # 3579 bad 1e-5 reg too much
-    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_range357.pkl" # 
+    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_range357.pkl" # flow inaccurate
+    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_range3579.pkl" # not good
+
+    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_1.pkl" 
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
