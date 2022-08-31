@@ -123,7 +123,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     # model.load_model(model_name, log_path)
     try:
         model.load_model(model_name, log_path) # won't work - we changed loss and pyramid
-        print("Loaded RIFE model:", model_name)
+        # print("Loaded RIFE model:", model_name)
         # print(model) # RIFE is not a neural net
     except:
         print("No weights found, training from scratch.")
@@ -485,19 +485,23 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
         #         writer_val.add_image(str(j) + '/flow', flow2rgb(flow0[j][:, :, ::-1]), nr_eval, dataformats='HWC')
     
     # early stopping
-    val_loss_now = info['loss_G']
-    global val_loss_best 
-    global early_stop_k
-    if val_loss_now > val_loss_best:
-        early_stop_k += 1
-        if early_stop_k == early_stop_patience:
-            print("Early stopping")
-            sys.exit(0)
-    else:
-        early_stop_k = 0
-        val_loss_best = val_loss_now
-        # input(model_name)
-        model.save_model(model_name, log_path, local_rank) 
+    # val_loss_now = info['loss_G']
+    # global val_loss_best 
+    # global early_stop_k
+    # if val_loss_now > val_loss_best:
+    #     print("val_loss_now > val_loss_best:", val_loss_now, val_loss_best)
+    #     early_stop_k += 1
+    #     if early_stop_k == early_stop_patience:
+    #         print("Early stopping")
+    #         sys.exit(0)
+    # else:
+    #     print("val_loss_now < val_loss_best", val_loss_now, val_loss_best)
+    #     early_stop_k = 0
+    #     val_loss_best = val_loss_now
+    #     # input(model_name)
+    #     model.save_model(model_name, log_path, local_rank) 
+
+    model.save_model(model_name, log_path, local_rank) 
 
     val_loss = []
     # val_loss.append(float(np.array(loss_G_list).mean()))
