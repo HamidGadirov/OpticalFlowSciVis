@@ -176,7 +176,7 @@ def visualize_large(original_data, interpol_data, diffs,
         columns = 20
     elif dataset == "vimeo2d":
         columns = 28
-    quiver_steps = 5
+    quiver_steps = 4
     rows = 7 # 4
     skip = 1
     if factor == 8:
@@ -222,9 +222,9 @@ def visualize_large(original_data, interpol_data, diffs,
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
             img = mask[round(index)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
-        if int((i-1)/columns) == 6: # flow diff
-            img = diffs_flow[round(index)] # [index-columns*2*2,...]
-            plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+        # if int((i-1)/columns) == 6: # flow diff
+        #     img = diffs_flow[round(index)] # [index-columns*2*2,...]
+        #     plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
         if int((i-1)/columns) == 4: # flow gt
             if dataset == "vimeo2d": # show pred flow in hsv-rgb instead of gt
                 hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
@@ -242,12 +242,13 @@ def visualize_large(original_data, interpol_data, diffs,
                 u_gt = flow_u_gt[round(index)]
                 v_gt = flow_v_gt[round(index)]
                 norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
+                # print(norm_gt.mean())
                 # img = original_data[round(index)] # [index-columns*2*2*2]
                 img = np.zeros((original_data.shape[1], original_data.shape[2]))
                 plt.axis('off')
                 ax = plt.gca()
-                # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
-                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
+                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
+                # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
                 # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
 
                 # hsv = np.empty(shape=(flow_u_gt.shape[1], flow_v_gt.shape[2], 3), dtype=np.uint8)
@@ -276,6 +277,7 @@ def visualize_large(original_data, interpol_data, diffs,
             u = flow_u[round(index)]
             v = flow_v[round(index)]
             norm = np.sqrt(u * u + v * v)
+            # print(norm.mean())
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
@@ -304,21 +306,22 @@ def visualize_large(original_data, interpol_data, diffs,
             # print(data_range)
             if round(index) >= data_range:
                 break
-        # if int((i-1)/columns) == 5: # flow diff vec
-        #     u_diff = flow_u_diff[round(index)]
-        #     v_diff = flow_v_diff[round(index)]
-        #     norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff)
-        #     # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
-        #     # print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
-        #     img = interpol_data[round(index)] # [index-columns*2*2*2]
-        #     plt.axis('off')
-        #     ax = plt.gca()
-        #     pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
-        #     # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
-        #     data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
-        #     # print(data_range)
-        #     if round(index) >= data_range:
-        #         break
+        if int((i-1)/columns) == 6: # flow diff vec
+            u_diff = flow_u_diff[round(index)]
+            v_diff = flow_v_diff[round(index)]
+            norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff)
+            # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
+            # print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
+            # img = interpol_data[round(index)] # [index-columns*2*2*2]
+            img = np.zeros((original_data.shape[1], original_data.shape[2]))
+            plt.axis('off')
+            ax = plt.gca()
+            pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
+            # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
+            data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
+            # print(data_range)
+            if round(index) >= data_range:
+                break
 
         # if dataset != "vimeo2d":
         #     if round(index) % factor == 0 and int((i-1)/columns) == 0:

@@ -217,7 +217,7 @@ def load_data(dataset, exp, mode):
             data_train_three = []
             data_val_three = []
             if exp == 1: # img0, img1, gt
-                if dataset == "rectangle2d__":
+                if dataset == "rectangle2d":
                     range_list = [3, 5, 7, 9]
                     repeat = 1
                     # range_max = random.choice(range_list)
@@ -363,7 +363,7 @@ def load_data(dataset, exp, mode):
 
             data_test_three = []
             if exp == 1: # img0, img1, gt
-                if dataset == "rectangle2d__":
+                if dataset == "rectangle2d":
                     range_list = [3, 5, 7, 9]
                     repeat = 1
                     # range_max = random.choice(range_list)
