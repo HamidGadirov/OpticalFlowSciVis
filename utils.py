@@ -176,7 +176,7 @@ def visualize_large(original_data, interpol_data, diffs,
         columns = 20
     elif dataset == "vimeo2d":
         columns = 28
-    quiver_steps = 4
+    quiver_steps = 4 # 5
     rows = 7 # 4
     skip = 1
     if factor == 8:
@@ -246,7 +246,7 @@ def visualize_large(original_data, interpol_data, diffs,
                 # img = original_data[round(index)] # [index-columns*2*2*2]
                 img = np.zeros((original_data.shape[1], original_data.shape[2]))
                 plt.axis('off')
-                ax = plt.gca()
+                # ax = plt.gca()
                 pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
                 # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
@@ -281,7 +281,7 @@ def visualize_large(original_data, interpol_data, diffs,
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
-            ax = plt.gca()
+            # ax = plt.gca()
             pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
             # pyimof.display.plot(u, v, ax=ax, colorwheel=True) # rgb with colormap. correct direction!
@@ -315,7 +315,7 @@ def visualize_large(original_data, interpol_data, diffs,
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
-            ax = plt.gca()
+            # ax = plt.gca()
             pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
             data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
@@ -323,16 +323,17 @@ def visualize_large(original_data, interpol_data, diffs,
             if round(index) >= data_range:
                 break
 
-        # if dataset != "vimeo2d":
-        #     if round(index) % factor == 0 and int((i-1)/columns) == 0:
-        #         # add bb to the gt image
-        #         width = data_to_vis.shape[2]
-        #         height = data_to_vis.shape[1]
-        #         linewidth = 2
-        #         if "cylinder2d" in dataset:
-        #             linewidth = 1
-        #         rect = patches.Rectangle((0, 0), width+linewidth, height+linewidth, linewidth=linewidth, edgecolor='r', facecolor='none')
-        #         ax.add_patch(rect)
+        if dataset != "vimeo2d":
+            # if round(index) % factor == 0 and int((i-1)/columns) == 0:
+            if round(index - 1) % 3 == 0:
+                # add bb to the gt image
+                width = data_to_vis.shape[2]
+                height = data_to_vis.shape[1]
+                linewidth = 0.5
+                # if "cylinder2d" in dataset:
+                #     linewidth = 1
+                rect = patches.Rectangle((0, 0), width-linewidth, height-linewidth, linewidth=linewidth, edgecolor='r', facecolor='none')
+                ax.add_patch(rect)
 
         plt.axis('off')
         cmap='viridis'
