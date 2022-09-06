@@ -644,6 +644,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_refine_v2_128_rect_hftext_revflowmask.pkl" 
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_1.pkl" 
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range3579.pkl" # flow not accurate, loss jump
+    # desired unsupervised flow wasn't achieved, switching to UPFlow... 02.09.22
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
