@@ -32,12 +32,11 @@ from load_datasets import load_data
 from error import calculate_diff
 from utils import plot_loss, visualize_ind, visualize_series, visualize_series_flow, visualize_large
 
+# early stopping is deactivated
 # TODO:
-# try early stopping +
-# plot loss f +
 # merge with 3d model -
-# sync with git -
-# try conv to float16 -
+# convert model to float 16 +
+# try mixed precision model -
 
 device = torch.device("cuda")
 
@@ -102,13 +101,6 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         else:
             data_test = load_data(dataset, exp, mode)
             data_test = DataLoader(data_test, batch_size=16, shuffle=True, pin_memory=True, num_workers=8)
-
-    lapl_loss = True # yes
-    l1_reg = False # didn't help
-    smooth_loss = False # ?
-    photo_loss = True
-    each_third = True # yes
-    aug = False # only when needed
 
     # model_name = "flownet"
     # model_name += "_lapl" if lapl_loss else ""
@@ -829,10 +821,6 @@ if __name__ == "__main__":
             visualize_large(original_data, interpol_data, diffs,
                 flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
                 factor, dataset, dir_model, title=title, show=False, save=True)
-
-        # TODO
-        # convert model to float 16 +
-        # try mixed precision model -
 
 # print("Dataset:", dataset)
 
