@@ -1,5 +1,6 @@
 # Optical Flow 2D and 3D for SciVis
 Unsupervised learning of optical flow for scientific datasets
+Tasks: flow estimation, interpolation, time step selection
 
 ## Datasets used:
 
