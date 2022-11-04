@@ -1,5 +1,5 @@
 # ssh -Y hamid@129.125.75.167
-# python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=droplet2d --mode=train
+# python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=rectangle2d --mode=train
 
 # rsync -avz -e 'ssh' hamid@129.125.75.167:~/Desktop/OpticalFlow/RIFE/train_log/ /Users/hamidgadirov/Desktop/OpticalFlow/RIFE/train_log/
 

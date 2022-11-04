@@ -18,9 +18,9 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 
-from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large
+# from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large
 
-from skimage.transform import rescale, resize, downscale_local_mean
+# from skimage.transform import rescale, resize, downscale_local_mean
 
 # TODO:
 # remove RGB +
