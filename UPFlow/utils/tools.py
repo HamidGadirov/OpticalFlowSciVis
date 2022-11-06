@@ -28,8 +28,8 @@ import png
 import array
 import warnings
 import shutil
-import tensorflow as tf
-tf.compat.v1.enable_eager_execution
+# import tensorflow as tf
+# tf.compat.v1.enable_eager_execution
 
 
 class tools():

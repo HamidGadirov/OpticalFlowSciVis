@@ -15,6 +15,7 @@ import cv2
 import os
 import math
 
+device = torch.device("cuda")
 
 class network_tools():
     class sgu_model(tools.abstract_model):
@@ -386,8 +387,8 @@ class UPFlow_net(tools.abstract_model):
             im1.append(im1_np)
             im2.append(im2_np)
 
-        im1 = torch.Tensor(im1).to(device='cuda')
-        im2 = torch.Tensor(im2).to(device='cuda')
+        im1 = torch.Tensor(im1).to(device)
+        im2 = torch.Tensor(im2).to(device)
         print(im1.size())
         data_dict = {'im1': im1, 'im2': im2, 'if_loss': False}
         print("dict created!")

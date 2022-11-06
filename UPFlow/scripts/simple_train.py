@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# conda activate upflow
+# conda activate upflow_new2
 
 import os
 import sys
@@ -18,7 +18,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 # from dataset.kitti_dataset_2012 import kitti_train, kitti_flow
 # from dataset.kitti_dataset import kitti_train, kitti_flow # kitti
-from dataset.scivis_datasets import kitti_train, kitti_flow # our data
+# from dataset.scivis_datasets import kitti_train, kitti_flow # our data
 from model.upflow import UPFlow_net
 from torch.utils.data import DataLoader
 import time
@@ -31,12 +31,13 @@ import pickle
 # parentdir = os.path.dirname(currentdir)
 # sys.path.insert(0, parentdir) 
 # sys.path.append('../../FlowSciVis/Flow2D/')
-sys.path.insert(1, '../../FlowSciVis/Flow-2D')
-sys.path.insert(2, '../../FlowSciVis/Datasets')
-from load_datasets import load_data
 
+# sys.path.insert(1, '../../FlowSciVis/Flow-2D')
+# sys.path.insert(2, '../../FlowSciVis/Datasets')
+# from load_datasets import load_data
 
 os.environ['TF_XLA_FLAGS'] = '--tf_xla_enable_xla_devices'
+device = torch.device("cuda")
 
 ''' scripts for training：
 1. simply using photo loss and smooth loss
@@ -137,7 +138,7 @@ class Trainer():
         self.net = self.load_model()
 
         # for evaluation
-        self.bench = self.load_eval_bench()
+        # self.bench = self.load_eval_bench()
         self.eval_model = Eval_model()
 
 
@@ -231,26 +232,26 @@ class Trainer():
             net = net.cuda()
         return net
 
-    def load_eval_bench(self):
+    # def load_eval_bench(self):
         # bench = kitti_flow.Evaluation_bench(name='2015_train', if_gpu=self.conf.if_cuda, batch_size=1)
-        bench = kitti_flow.Evaluation_bench(name='2012_train', if_gpu=self.conf.if_cuda, batch_size=1)
-        return bench
+        # bench = kitti_flow.Evaluation_bench(name='2012_train', if_gpu=self.conf.if_cuda, batch_size=1)
+        # return bench
 
-    def load_training_dataset(self):
-        print("in load_training_dataset")
-        data_config = {
-            'crop_size': (256, 832),
-            'rho': 8,
-            'swap_images': True,
-            'normalize': True,
-            'horizontal_flip_aug': True,
-        }
-        data_conf = kitti_train.kitti_data_with_start_point.config(mv_type='2015', **data_config)
-        # data_conf = kitti_train.kitti_data_with_start_point.config(mv_type='2012', **data_config)
-        print("in load_training_dataset")
-        dataset = data_conf()
-        print("in load_training_dataset")
-        return dataset
+    # def load_training_dataset(self):
+    #     print("in load_training_dataset")
+    #     data_config = {
+    #         'crop_size': (256, 832),
+    #         'rho': 8,
+    #         'swap_images': True,
+    #         'normalize': True,
+    #         'horizontal_flip_aug': True,
+    #     }
+    #     data_conf = kitti_train.kitti_data_with_start_point.config(mv_type='2015', **data_config)
+    #     # data_conf = kitti_train.kitti_data_with_start_point.config(mv_type='2012', **data_config)
+    #     print("in load_training_dataset")
+    #     dataset = data_conf()
+    #     print("in load_training_dataset")
+    #     return dataset
 
     def load_scivis_training_dataset(self, dataset):
         filename = "../../FlowSciVis/Datasets/"

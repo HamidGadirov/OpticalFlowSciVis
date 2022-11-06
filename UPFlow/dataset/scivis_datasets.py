@@ -680,7 +680,7 @@ class kitti_flow:
             im1 = read_img(data['im1'])
             im2 = read_img(data['im2'])
             print(im1.shape, im2.shape)
-            print("__getitem__")
+            # print("__getitem__")
             im1 = img_func.get_process_img_only_img(im1, normalize=self.normalize)
             im2 = img_func.get_process_img_only_img(im2, normalize=self.normalize)
             if self.name in ['2012_test', '2015_test']:
