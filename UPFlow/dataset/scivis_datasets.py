@@ -492,7 +492,7 @@ class kitti_flow:
                 im1, im2, occ, occmask, noc, nocmask = batch
                 num = im1.shape[0]
                 print(im1.shape, im2.shape, occ.shape, occmask.shape, noc.shape, nocmask.shape)
-                input("x")
+                # input("x")
                 predflow = test_model.eval_forward(im1, im2, occ, occmask, noc, nocmask)
 
                 pep_error_all, f1_rate = calculate(predflow=predflow, gt_flow=occ, gt_mask=occmask)
@@ -520,7 +520,7 @@ class kitti_flow:
             dataset = "rectangle2d"
             visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title="Flow_rectangle2d", show=False, save=True)
 
-            input("s")
+            # input("s")
             print('=' * 3 + ' eval time %ss ' % self.timer.get_during() + '=' * 3)
             return all_pep_error_meter.avg, f1_rate_meter.avg, noc_pep_error_meter.avg, occ_pep_error_meter.avg
 

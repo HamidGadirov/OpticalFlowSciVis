@@ -8,7 +8,7 @@ class CorrelationFunction(Function):
     @staticmethod
     def forward(ctx, input1, input2, 
             pad_size=3, kernel_size=3, max_displacement=20, stride1=1, stride2=2, corr_multiply=1):
-        print("in CorrelationFunction forward")
+        # print("in CorrelationFunction forward")
         ctx.save_for_backward(input1, input2)
 
         with torch.cuda.device_of(input1):
@@ -43,7 +43,7 @@ class Correlation(Function):
     def forward(ctx, input1, input2, 
             pad_size=0, kernel_size=0, max_displacement=0, stride1=1, stride2=2, corr_multiply=1): 
             # self, self for the object; when you call, it is without - synthactic sugar!
-        print("in Correlation forward")
+        # print("in Correlation forward")
 
         result = CorrelationFunction.apply(input1, input2, pad_size, kernel_size, max_displacement, stride1, stride2, corr_multiply)
         # result = CorrelationFunction(pad_size, kernel_size, max_displacement, stride1, stride2, corr_multiply)(input1, input2)

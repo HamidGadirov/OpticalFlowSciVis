@@ -196,9 +196,9 @@ class tools():
             self.drop_last = drop_last
 
         def build(self):
-            input("in build")
+            # input("in build")
             print(type(self.dataset))
-            input("self.dataset")
+            # input("self.dataset")
             loader = DataLoader(dataset=self.dataset, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=self.shuffle, drop_last=self.drop_last, pin_memory=self.pin_memory)
             # self.loader = _DataLoaderIter(loader)
             self.loader = iter(loader)
@@ -250,9 +250,9 @@ class tools():
 
 
         def build(self):
-            input("in DataProvider build")
+            # input("in DataProvider build")
             print(type(self.dataset))
-            input("self.dataset")
+            # input("self.dataset")
             dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=self.shuffle, num_workers=self.num_worker,
                                     pin_memory=self.pin_memory,
                                     drop_last=self.drop_last)

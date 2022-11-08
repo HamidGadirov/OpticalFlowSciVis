@@ -143,7 +143,7 @@ class Trainer():
 
 
         print("in Trainer init")
-        input("loading...")
+        print("loading...")
         # load training dataset
         # self.train_set = self.load_training_dataset() # kitti
         self.train_set = self.load_scivis_training_dataset(dataset)
@@ -171,12 +171,12 @@ class Trainer():
             # prepare batch 
             # data
             print("train_loader", type(train_loader))
-            input("prepare batch data")
+            # input("prepare batch data")
             batch_value = train_loader.next()
             # batch_value_ = np.array(batch_value)
             # print("batch_value_", batch_value_.shape)
             print("batch_value", type(batch_value))
-            input("batch_value")
+            # input("batch_value")
             if batch_value is None:
                 batch_value = train_loader.next()
                 assert batch_value is not None
@@ -185,18 +185,18 @@ class Trainer():
             print("batchsize", batchsize)
             i_batch += 1
             # train batch
-            print("to self.net.train()")
+            # print("to self.net.train()")
             self.net.train()
-            print("to self.net.zero_grad()")
+            # print("to self.net.zero_grad()")
             optimizer.zero_grad()
-            print("to self.net()")
+            # print("to self.net()")
             out_data = self.net(batch_value)  #
-            print("out_data")
+            # print("out_data")
 
             loss_dict = out_data['loss_dict']
             loss = loss_manager.compute_loss(loss_dict=loss_dict, batch_N=batchsize)
 
-            loss.backward()
+            # loss.backward()
             optimizer.step()
             if i_batch % self.conf.batch_per_print == 0:
                 pass
@@ -304,7 +304,7 @@ class Trainer():
                 im1.append(im1_np)
                 im2.append(im2_np)
                 
-            data_dict = {'im1': im1, 'im2': im2, 'if_loss': False}
+            data_dict = {'im1': im1, 'im2': im2, 'if_loss': True}
             print(np.array(data_dict['im1']).shape)
             print(np.array(data_dict['im2']).shape)
             print("created data dictionary")

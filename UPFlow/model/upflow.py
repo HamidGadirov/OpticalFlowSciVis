@@ -393,10 +393,11 @@ class UPFlow_net(tools.abstract_model):
         im1 = torch.Tensor(im1).to(device)
         im2 = torch.Tensor(im2).to(device)
         print(im1.size())
-        data_dict = {'im1': im1, 'im2': im2, 'if_loss': False}
+        data_dict = {'im1': im1, 'im2': im2, 'if_loss': True}
         print("dict created!")
         return data_dict
 
+    # @staticmethod
     def forward(self, input_dict: dict):
         # print("UPFlow_net.forward")
         '''
@@ -431,6 +432,7 @@ class UPFlow_net(tools.abstract_model):
         output_dict['occ_bw'] = occ_bw
 
         if input_dict['if_loss']:
+            print("smooth loss")
             # === smooth loss
             if self.conf.smooth_level == 'final':
                 s_flow_f, s_flow_b = flow_f_pwc_out, flow_b_pwc_out
@@ -468,6 +470,13 @@ class UPFlow_net(tools.abstract_model):
 
             # === photo loss
             if self.conf.if_use_boundary_warp:
+                print("photo loss")
+                # for key, value in input_dict.items() :
+                #     print(key)
+                start = torch.zeros(1, 2, 1, 1).to(device)
+                input_dict['im1_raw'] = im1_ori
+                input_dict['im2_raw'] = im2_ori
+                input_dict['start'] = start
                 im1_s, im2_s, start_s = input_dict['im1_raw'], input_dict['im2_raw'], input_dict['start']  # the image before cropping
                 im1_warp = tools.boundary_dilated_warp.warp_im(im2_s, flow_f_pwc_out, start_s)  # warped im1 by forward flow and im2
                 im2_warp = tools.boundary_dilated_warp.warp_im(im1_s, flow_b_pwc_out, start_s)
@@ -487,6 +496,7 @@ class UPFlow_net(tools.abstract_model):
 
             # === census loss
             if self.conf.photo_loss_census_weight > 0:
+                print("census loss")
                 census_loss = loss_functions.census_loss_torch(img1=im1_ori, img1_warp=im1_warp, mask=occ_fw, q=self.conf.photo_loss_delta,
                                                                charbonnier_or_abs_robust=False, if_use_occ=self.conf.photo_loss_use_occ, averge=True) + \
                               loss_functions.census_loss_torch(img1=im2_ori, img1_warp=im2_warp, mask=occ_bw, q=self.conf.photo_loss_delta,
@@ -498,6 +508,7 @@ class UPFlow_net(tools.abstract_model):
 
             # === multi scale distillation loss
             if self.conf.multi_scale_distillation_weight > 0:
+                print("multi scale distillation loss")
                 flow_fw_label = flow_f_pwc_out.clone().detach()
                 flow_bw_label = flow_b_pwc_out.clone().detach()
                 msd_loss_ls = []
@@ -528,6 +539,11 @@ class UPFlow_net(tools.abstract_model):
                 msd_loss = None
 
             output_dict['msd_loss'] = msd_loss
+            # for key, value in output_dict.items():
+            #     print(key)
+            # print("returning output_dict")
+            loss_dict = {'photo_loss' : photo_loss, 'smooth_loss': smooth_loss, 'census_loss' : census_loss, 'msd_loss' : msd_loss}
+            output_dict['loss_dict'] = loss_dict
         return output_dict
 
     def forward_2_frame_v3(self, x1_raw, x2_raw, if_loss=False):
@@ -598,20 +614,10 @@ class UPFlow_net(tools.abstract_model):
             out_corr_2 = self.correlation_pytorch(feature_2, feature_1_warp)
         else:
             out_corr_1 = Correlation.apply(feature_1, feature_2_warp, 4, 1, 4, 1, 1, 1)
-            # obj1 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)
             # out_corr_1 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)(feature_1, feature_2_warp)
-            # out_corr_1 = Correlation(feature_1, feature_2_warp)
-            # out_corr_1 = obj1(feature_1, feature_2_warp)
-            # out_corr_1 = Correlation(self, pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1, 
-            #                 input1=feature_1, input2=feature_2_warp)
 
             out_corr_2 = Correlation.apply(feature_2, feature_1_warp, 4, 1, 4, 1, 1, 1)
-            # obj2 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)
             # out_corr_2 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)(feature_2, feature_1_warp)
-            # out_corr_2 = Correlation(feature_2, feature_1_warp)
-            # out_corr_2 = obj2(feature_2, feature_1_warp)
-            # out_corr_2 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1, 
-            #                 input1=feature_2, input2=feature_1_warp)
 
         out_corr_relu_1 = self.leakyRELU(out_corr_1)
         out_corr_relu_2 = self.leakyRELU(out_corr_2)
@@ -679,6 +685,7 @@ class UPFlow_net(tools.abstract_model):
         start = np.zeros((1, 2, 1, 1))
         start = torch.from_numpy(start).float()  # .cuda()
         im_torch = torch.from_numpy(im).float()  # .cuda()
+        # input("input_dict")
         input_dict = {'im1': im_torch, 'im2': im_torch,
                       'im1_raw': im_torch, 'im2_raw': im_torch, 'im1_sp': im_torch, 'im2_sp': im_torch, 'start': start, 'if_loss': True}
         output_dict = net(input_dict)
