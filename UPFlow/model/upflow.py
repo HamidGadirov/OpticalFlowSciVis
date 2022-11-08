@@ -292,6 +292,7 @@ class network_tools():
 class UPFlow_net(tools.abstract_model):
     class config(tools.abstract_config):
         def __init__(self):
+            print("UPFlow_net.config.__init__, inherits tools.abstract_config")
             # occ loss choose
             self.occ_type = 'for_back_check'
             self.alpha_1 = 0.1
@@ -324,10 +325,12 @@ class UPFlow_net(tools.abstract_model):
             self.if_use_cor_pytorch = False  # use my implementation of correlation layer by pytorch. only for test model in cpu(corr layer cuda is not compiled)
 
         def __call__(self, ):
+            print("UPFlow_net.config.__call__")
             # return PWCNet_unsup_irr_bi_v5_4(self)
             return UPFlow_net(self)
 
     def __init__(self, conf: config):
+        print("UPFlow_net.__init__")
         super(UPFlow_net, self).__init__()
         # === get config file
         self.conf = conf
@@ -395,6 +398,7 @@ class UPFlow_net(tools.abstract_model):
         return data_dict
 
     def forward(self, input_dict: dict):
+        # print("UPFlow_net.forward")
         '''
         :param input_dict:     im1, im2, im1_raw, im2_raw, start, if_loss
         :return: output_dict:  flows, flow_f_out, flow_b_out, photo_loss
@@ -593,8 +597,22 @@ class UPFlow_net(tools.abstract_model):
             out_corr_1 = self.correlation_pytorch(feature_1, feature_2_warp)
             out_corr_2 = self.correlation_pytorch(feature_2, feature_1_warp)
         else:
-            out_corr_1 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)(feature_1, feature_2_warp)
-            out_corr_2 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)(feature_2, feature_1_warp)
+            out_corr_1 = Correlation.apply(feature_1, feature_2_warp, 4, 1, 4, 1, 1, 1)
+            # obj1 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)
+            # out_corr_1 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)(feature_1, feature_2_warp)
+            # out_corr_1 = Correlation(feature_1, feature_2_warp)
+            # out_corr_1 = obj1(feature_1, feature_2_warp)
+            # out_corr_1 = Correlation(self, pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1, 
+            #                 input1=feature_1, input2=feature_2_warp)
+
+            out_corr_2 = Correlation.apply(feature_2, feature_1_warp, 4, 1, 4, 1, 1, 1)
+            # obj2 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)
+            # out_corr_2 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)(feature_2, feature_1_warp)
+            # out_corr_2 = Correlation(feature_2, feature_1_warp)
+            # out_corr_2 = obj2(feature_2, feature_1_warp)
+            # out_corr_2 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1, 
+            #                 input1=feature_2, input2=feature_1_warp)
+
         out_corr_relu_1 = self.leakyRELU(out_corr_1)
         out_corr_relu_2 = self.leakyRELU(out_corr_2)
         feature_int_1, flow_res_1 = self.flow_estimators(torch.cat([out_corr_relu_1, feature_1_1x1, flow_1_up_bilinear], dim=1))

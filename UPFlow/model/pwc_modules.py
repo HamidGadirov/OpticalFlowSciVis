@@ -84,8 +84,8 @@ def upsample2d_flow_as(inputs, target_as, mode="bilinear", if_rate=False):
         u_scale = (w / w_)
         v_scale = (h / h_)
         u, v = res.chunk(2, dim=1)
-        u *= u_scale
-        v *= v_scale
+        u = u * u_scale
+        v = v * v_scale
         res = torch.cat([u, v], dim=1)
     return res
 

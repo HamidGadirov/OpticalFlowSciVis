@@ -4,15 +4,15 @@ import torch.nn.functional as F
 import numpy as np
 # import tensorflow as tf # Successfully opened dynamic library libcudart.so.10.1
 
-device = torch.device("cuda")
+# device = torch.device("cuda")
         
-im1 = [3, 5]
-im2 = [1, 2]
+# im1 = [3, 5]
+# im2 = [1, 2]
 
-im1 = torch.Tensor(im1).to(device)
-im2 = torch.Tensor(im2).to(device)
+# im1 = torch.Tensor(im1).to(device)
+# im2 = torch.Tensor(im2).to(device)
 
-print("done")
+# print("done")
 
 # Let’s define this network:
 
@@ -40,14 +40,67 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-net = Net()
-print(net)
+class CorrelationFunction(torch.autograd.Function):
 
-params = list(net.parameters())
-print(len(params))
-print(params[0].size())  # conv1's .weight
+    @staticmethod
+    def forward(ctx, input1, input2, 
+            pad_size=3, kernel_size=3, max_displacement=20, stride1=1, stride2=2, corr_multiply=1):
+        print("in CorrelationFunction forward")
+        ctx.save_for_backward(input1, input2)
+
+        with torch.cuda.device_of(input1):
+            rbot1 = input1.new()
+            rbot2 = input2.new()
+            output = input1.new()
+
+            # correlation_cuda.forward(input1, input2, rbot1, rbot2, output, 
+            #     pad_size, kernel_size, max_displacement, stride1, stride2, corr_multiply)
+
+        return output
+
+    @staticmethod
+    def backward(ctx, grad_output):
+        input1, input2 = ctx.saved_tensors
+
+        with torch.cuda.device_of(input1):
+            rbot1 = input1.new()
+            rbot2 = input2.new()
+
+            grad_input1 = input1.new()
+            grad_input2 = input2.new()
+
+            # correlation_cuda.backward(input1, input2, rbot1, rbot2, grad_output, grad_input1, grad_input2,
+            #     pad_size, kernel_size, max_displacement, stride1, stride2, corr_multiply)
+
+        return grad_input1, grad_input2
+
+class Correlation(torch.autograd.Function):
+
+    @staticmethod
+    def forward(ctx, input1, input2, 
+            pad_size=0, kernel_size=0, max_displacement=0, stride1=1, stride2=2, corr_multiply=1): 
+            # self, self for the object; when you call, it is without - synthactic sugar!
+        print("in Correlation forward")
+
+        result = CorrelationFunction(input1, input2, pad_size, kernel_size, max_displacement, stride1, stride2, corr_multiply)
+        # result = CorrelationFunction(pad_size, kernel_size, max_displacement, stride1, stride2, corr_multiply)(input1, input2)
+
+        return result
+
+net = Net()
+# print(net)
+
+# params = list(net.parameters())
+# print(len(params))
+# print(params[0].size())  # conv1's .weight
 
 input = torch.randn(1, 1, 32, 32)
+
+#
+leakyRELU = nn.LeakyReLU(0.1, inplace=True)
+out_corr_1 = Correlation.apply(input, input, 4, 1, 4, 1, 1, 1)
+out_corr_relu_1 = leakyRELU(out_corr_1)
+
 out = net(input)
 print(out)
 

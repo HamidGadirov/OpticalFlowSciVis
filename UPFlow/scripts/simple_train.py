@@ -185,9 +185,13 @@ class Trainer():
             print("batchsize", batchsize)
             i_batch += 1
             # train batch
+            print("to self.net.train()")
             self.net.train()
+            print("to self.net.zero_grad()")
             optimizer.zero_grad()
+            print("to self.net()")
             out_data = self.net(batch_value)  #
+            print("out_data")
 
             loss_dict = out_data['loss_dict']
             loss = loss_manager.compute_loss(loss_dict=loss_dict, batch_N=batchsize)
@@ -224,8 +228,11 @@ class Trainer():
         }
         pretrain_path = None  # pretrain path
         net_conf = UPFlow_net.config()
+        print("net_conf")
         net_conf.update(param_dict)
+        print("net_conf.update")
         net = net_conf()  # .cuda()
+        print("net_conf()")
         if pretrain_path is not None:
             net.load_model(pretrain_path, if_relax=True, if_print=False)
         if self.conf.if_cuda:
