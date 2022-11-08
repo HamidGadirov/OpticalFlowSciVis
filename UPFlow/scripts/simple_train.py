@@ -115,8 +115,8 @@ class Trainer():
 
             self.batchsize = 20
             self.NUM_WORKERS = 8 # 4
-            self.n_epoch = 1000
-            self.batch_per_epoch = 500
+            self.n_epoch = 2 # 1000
+            self.batch_per_epoch = 5 # 500
             self.batch_per_print = 20
             self.lr = 1e-4
             self.weight_decay = 1e-4
@@ -170,19 +170,19 @@ class Trainer():
         while True:
             # prepare batch 
             # data
-            print("train_loader", type(train_loader))
+            # print("train_loader", type(train_loader))
             # input("prepare batch data")
             batch_value = train_loader.next()
             # batch_value_ = np.array(batch_value)
             # print("batch_value_", batch_value_.shape)
-            print("batch_value", type(batch_value))
+            # print("batch_value", type(batch_value))
             # input("batch_value")
             if batch_value is None:
                 batch_value = train_loader.next()
                 assert batch_value is not None
             # batchsize = batch_value['im1'].shape[0] # check if the im1 exists
             batchsize = 20 # batch_value.shape[0] # check if the im1 exists
-            print("batchsize", batchsize)
+            # print("batchsize", batchsize)
             i_batch += 1
             # train batch
             # print("to self.net.train()")

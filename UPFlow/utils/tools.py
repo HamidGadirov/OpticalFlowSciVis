@@ -216,8 +216,8 @@ class tools():
             # print('self.batch',type(self.batch))
             # for i in range(len(self.batch)):
             #     print('i',i,type(self.batch[i]))
-            with torch.cuda.stream(self.stream):
-                print("next")
+            # with torch.cuda.stream(self.stream):
+                # print("next")
                 # batch = tools.tensor_gpu(*batch, check_on=True, non_blocking=True, gpu_opt=self.gpu_opt)
                 # print("batch")
                 # self.next_img = self.next_img.cuda(non_blocking=True).float()

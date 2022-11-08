@@ -325,7 +325,7 @@ class UPFlow_net(tools.abstract_model):
             self.if_use_cor_pytorch = False  # use my implementation of correlation layer by pytorch. only for test model in cpu(corr layer cuda is not compiled)
 
         def __call__(self, ):
-            print("UPFlow_net.config.__call__")
+            # print("UPFlow_net.config.__call__")
             # return PWCNet_unsup_irr_bi_v5_4(self)
             return UPFlow_net(self)
 
@@ -372,7 +372,7 @@ class UPFlow_net(tools.abstract_model):
             self.froze_PWC()
 
     def scivis_data_dict(self, data_tensor): # img0, img1, gt
-        print("data_tensor", data_tensor.size())
+        # print("data_tensor", data_tensor.size())
         im1 = []
         im2 = []
         for i in range(data_tensor.shape[0]):
@@ -390,11 +390,11 @@ class UPFlow_net(tools.abstract_model):
             im1.append(im1_np)
             im2.append(im2_np)
 
-        im1 = torch.Tensor(im1).to(device)
-        im2 = torch.Tensor(im2).to(device)
-        print(im1.size())
+        im1 = torch.Tensor(np.array(im1)).to(device)
+        im2 = torch.Tensor(np.array(im2)).to(device)
+        # print(im1.size())
         data_dict = {'im1': im1, 'im2': im2, 'if_loss': True}
-        print("dict created!")
+        # print("dict created!")
         return data_dict
 
     # @staticmethod
@@ -404,8 +404,8 @@ class UPFlow_net(tools.abstract_model):
         :param input_dict:     im1, im2, im1_raw, im2_raw, start, if_loss
         :return: output_dict:  flows, flow_f_out, flow_b_out, photo_loss
         '''
-        print("in UPFlow_net forward, input_dict:", np.array(input_dict).shape)
-        print(type(input_dict))
+        # print("in UPFlow_net forward, input_dict:", np.array(input_dict).shape)
+        # print(type(input_dict))
         input_dict = self.scivis_data_dict(input_dict)
         # input("forward")
         # don't touch upflow, do preprocessing in simple_train.py
@@ -432,7 +432,7 @@ class UPFlow_net(tools.abstract_model):
         output_dict['occ_bw'] = occ_bw
 
         if input_dict['if_loss']:
-            print("smooth loss")
+            # print("smooth loss")
             # === smooth loss
             if self.conf.smooth_level == 'final':
                 s_flow_f, s_flow_b = flow_f_pwc_out, flow_b_pwc_out
@@ -470,7 +470,7 @@ class UPFlow_net(tools.abstract_model):
 
             # === photo loss
             if self.conf.if_use_boundary_warp:
-                print("photo loss")
+                # print("photo loss")
                 # for key, value in input_dict.items() :
                 #     print(key)
                 start = torch.zeros(1, 2, 1, 1).to(device)
@@ -496,7 +496,7 @@ class UPFlow_net(tools.abstract_model):
 
             # === census loss
             if self.conf.photo_loss_census_weight > 0:
-                print("census loss")
+                # print("census loss")
                 census_loss = loss_functions.census_loss_torch(img1=im1_ori, img1_warp=im1_warp, mask=occ_fw, q=self.conf.photo_loss_delta,
                                                                charbonnier_or_abs_robust=False, if_use_occ=self.conf.photo_loss_use_occ, averge=True) + \
                               loss_functions.census_loss_torch(img1=im2_ori, img1_warp=im2_warp, mask=occ_bw, q=self.conf.photo_loss_delta,
@@ -508,7 +508,7 @@ class UPFlow_net(tools.abstract_model):
 
             # === multi scale distillation loss
             if self.conf.multi_scale_distillation_weight > 0:
-                print("multi scale distillation loss")
+                # print("multi scale distillation loss")
                 flow_fw_label = flow_f_pwc_out.clone().detach()
                 flow_bw_label = flow_b_pwc_out.clone().detach()
                 msd_loss_ls = []
