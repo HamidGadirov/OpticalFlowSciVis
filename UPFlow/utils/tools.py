@@ -178,11 +178,12 @@ class tools():
 
             # self.loader = iter(loader)
             print("loader:", loader.__len__())
-            # input("problem")
+            # input("loader")
 
             # for i, data in enumerate(loader):
-            #     data_gpu, timestep = data
-            #     print("enum", len(data_gpu))
+            #     data_gpu = data
+            #     print("i:", i, len(data_gpu))
+            # input("x")
 
             # self.loader = _DataLoaderIter(loader)
             self.loader = iter(loader)
@@ -194,6 +195,9 @@ class tools():
             self.num_workers = num_workers
             self.pin_memory = pin_memory
             self.drop_last = drop_last
+
+        def get_len(self):
+            return self.loader.__len__()
 
         def build(self):
             # input("in build")
@@ -208,9 +212,9 @@ class tools():
             try:
                 batch = next(self.loader)
                 # batch = self.loader.next() # run_eagerly=True
-                print("self.loader.next() SUCCESS")
+                # print("self.loader.next() SUCCESS")
             except StopIteration:
-                print("self.loader.next() FAIL")
+                # print("self.loader.next() FAIL")
                 self.build()
                 return None
             # print('self.batch',type(self.batch))
@@ -250,7 +254,7 @@ class tools():
 
 
         def build(self):
-            # input("in DataProvider build")
+            input("in DataProvider build")
             print(type(self.dataset))
             # input("self.dataset")
             dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=self.shuffle, num_workers=self.num_worker,

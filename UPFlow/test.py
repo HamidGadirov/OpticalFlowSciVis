@@ -103,7 +103,7 @@ def visualize_series_data_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Re
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
 
 class Test_model(tools.abs_test_model):
-    def __init__(self, pretrain_path='./scripts/upflow_kitti2015.pth'):
+    def __init__(self, pretrain_path='./train_log/upflow_piped_1.pkl'): # './scripts/upflow_kitti2015.pth'):
         super(Test_model, self).__init__()
         param_dict = {
             # use cost volume norm
@@ -275,7 +275,7 @@ def scivis_test(dataset):
     flow_v = flow_arr[:, 1]
     data_to_vis = np.zeros((flow_arr.shape[0], flow_arr.shape[2], flow_arr.shape[3]))
     # data_to_vis = data_arr[:, 0] # one channel
-    title = "Flow_" + dataset
+    title = "Flow_trained_" + dataset
     visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title=title, show=False, save=True)
     # visualize_series_data_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title="Data_flow_rectangle2d", show=False, save=True)
 

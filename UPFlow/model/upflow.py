@@ -6,7 +6,7 @@ import torch.nn.functional as F
 # from torch.nn.utils.spectral_norm import spectral_norm
 from model.pwc_modules import conv, initialize_msra, upsample2d_flow_as, upsample_flow, FlowEstimatorDense_v2, ContextNetwork_v2_, OccEstimatorDense, OccContextNetwork
 from model.pwc_modules import WarpingLayer_no_div, FeatureExtractor
-from model.correlation_package.correlation import Correlation
+from model.correlation_package.correlation import CorrelationFunction
 import numpy as np
 from utils.tools import tools
 from utils.loss import loss_functions
@@ -406,7 +406,7 @@ class UPFlow_net(tools.abstract_model):
         '''
         # print("in UPFlow_net forward, input_dict:", np.array(input_dict).shape)
         # print(type(input_dict))
-        input_dict = self.scivis_data_dict(input_dict)
+        input_dict = self.scivis_data_dict(input_dict) # training
         # input("forward")
         # don't touch upflow, do preprocessing in simple_train.py
         # print(np.array(input_dict).shape)
@@ -546,6 +546,10 @@ class UPFlow_net(tools.abstract_model):
             output_dict['loss_dict'] = loss_dict
         return output_dict
 
+    # @staticmethod
+    # def backward(ctx):
+    #     print("in UPFlow_net backward")
+
     def forward_2_frame_v3(self, x1_raw, x2_raw, if_loss=False):
         _, _, height_im, width_im = x1_raw.size()
         # on the bottom level are original images
@@ -613,10 +617,12 @@ class UPFlow_net(tools.abstract_model):
             out_corr_1 = self.correlation_pytorch(feature_1, feature_2_warp)
             out_corr_2 = self.correlation_pytorch(feature_2, feature_1_warp)
         else:
-            out_corr_1 = Correlation.apply(feature_1, feature_2_warp, 4, 1, 4, 1, 1, 1)
+            # out_corr_1 = self.correlation_pytorch(feature_1, feature_2_warp)
+            # out_corr_2 = self.correlation_pytorch(feature_2, feature_1_warp)
+            out_corr_1 = CorrelationFunction.apply(feature_1, feature_2_warp, 4, 1, 4, 1, 1, 1)
             # out_corr_1 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)(feature_1, feature_2_warp)
 
-            out_corr_2 = Correlation.apply(feature_2, feature_1_warp, 4, 1, 4, 1, 1, 1)
+            out_corr_2 = CorrelationFunction.apply(feature_2, feature_1_warp, 4, 1, 4, 1, 1, 1)
             # out_corr_2 = Correlation(pad_size=self.search_range, kernel_size=1, max_displacement=self.search_range, stride1=1, stride2=1, corr_multiply=1)(feature_2, feature_1_warp)
 
         out_corr_relu_1 = self.leakyRELU(out_corr_1)

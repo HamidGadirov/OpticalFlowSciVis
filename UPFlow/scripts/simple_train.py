@@ -38,6 +38,10 @@ import pickle
 
 os.environ['TF_XLA_FLAGS'] = '--tf_xla_enable_xla_devices'
 device = torch.device("cuda")
+log_path = '../train_log'
+model_name = "upflow_piped.pkl" # 42K iter
+model_name = "upflow_piped_1.pkl" # 55K iter
+# model_name = "upflow_rectangle.pkl"
 
 ''' scripts for training：
 1. simply using photo loss and smooth loss
@@ -113,9 +117,9 @@ class Trainer():
             self.exp_dir = './demo_exp'
             self.if_cuda = True
 
-            self.batchsize = 20
+            self.batchsize = 25
             self.NUM_WORKERS = 8 # 4
-            self.n_epoch = 2 # 1000
+            self.n_epoch = 1000 # 1000
             self.batch_per_epoch = 5 # 500
             self.batch_per_print = 20
             self.lr = 1e-4
@@ -141,16 +145,18 @@ class Trainer():
         # self.bench = self.load_eval_bench()
         self.eval_model = Eval_model()
 
-
         print("in Trainer init")
-        print("loading...")
+        # print("loading...")
         # load training dataset
         # self.train_set = self.load_training_dataset() # kitti
         self.train_set = self.load_scivis_training_dataset(dataset)
-
-        print("self.train_set:", type(self.train_set))
+        print("self.train_set:", type(self.train_set), self.train_set.shape)
         # input("xxx")
-
+    
+    @staticmethod
+    def save_model(ctx, model_name, path):
+            torch.save(ctx.net.state_dict(),'{}/{}'.format(path, model_name))
+            print("saved {}".format(model_name))
 
     def training(self, dataset):
         print("in training")
@@ -162,17 +168,26 @@ class Trainer():
         loss_manager = Loss_manager()
         timer = tools.time_clock()
         print("start training" + '=' * 10)
+        batchsize = self.conf.batchsize # batch_value.shape[0] # check if the im1 exists
+        # batchsize = batch_value['im1'].shape[0] # check if the im1 exists
         i_batch = 0
         epoch = 0
         loss_manager.prepare_epoch()
         current_val, best_val, best_epoch = 0, 0, 0
         timer.start()
+        time_stamp = time.time()
+        print("loader:", train_loader.get_len())
+        iterations = train_loader.get_len()
         while True:
+        # for epoch in range(self.conf.n_epoch):
+            # data_time_interval = time.time() - time_stamp
+            # time_stamp = time.time()
             # prepare batch 
             # data
             # print("train_loader", type(train_loader))
             # input("prepare batch data")
             batch_value = train_loader.next()
+            i_batch += 1
             # batch_value_ = np.array(batch_value)
             # print("batch_value_", batch_value_.shape)
             # print("batch_value", type(batch_value))
@@ -180,33 +195,54 @@ class Trainer():
             if batch_value is None:
                 batch_value = train_loader.next()
                 assert batch_value is not None
-            # batchsize = batch_value['im1'].shape[0] # check if the im1 exists
-            batchsize = 20 # batch_value.shape[0] # check if the im1 exists
-            # print("batchsize", batchsize)
-            i_batch += 1
+                i_batch = 0
+                epoch += 1
+                if not os.path.isdir(log_path):
+                    os.makedirs(log_path)
+                torch.save(self.net.state_dict(),'{}/{}'.format(log_path, model_name))
+                print("saved {}".format(model_name))
+                scheduler.step(epoch=epoch)
+                if epoch == self.conf.n_epoch:
+                    break
             # train batch
             # print("to self.net.train()")
             self.net.train()
             # print("to self.net.zero_grad()")
             optimizer.zero_grad()
             # print("to self.net()")
-            out_data = self.net(batch_value)  #
+            out_data = self.net(batch_value)
             # print("out_data")
 
             loss_dict = out_data['loss_dict']
             loss = loss_manager.compute_loss(loss_dict=loss_dict, batch_N=batchsize)
 
-            # loss.backward()
+            loss.backward()
             optimizer.step()
-            if i_batch % self.conf.batch_per_print == 0:
-                pass
-            if i_batch % self.conf.batch_per_epoch == 0:
-                # do eval  and check if save model todo===
-                epoch+=1
-                timer.end()
-                print(' === epoch use time %.2f' % timer.get_during())
-                scheduler.step(epoch=epoch)
-                timer.start()
+
+            # train_time_interval = time.time() - time_stamp
+            # if i_batch % self.conf.batch_per_print == 0:
+            #     pass
+            # if i_batch % self.conf.batch_per_epoch == 0:
+            #     # do eval  and check if save model todo===
+            #     epoch+=1
+            #     timer.end()
+            #     print(' === epoch use time %.2f' % timer.get_during())
+            #     scheduler.step(epoch=epoch)
+            #     timer.start()
+
+            print('epoch:{}/{} {}/{} loss_G:{:.4e}'.format(epoch, self.conf.n_epoch, i_batch, iterations, loss))
+
+            # if epoch % 10 == 0:
+            #     print('epoch:{}/{} {}/{} loss_G:{:.4e}' \
+            #         .format(epoch, self.conf.n_epoch, i_batch, iterations, loss))
+            #     # print('epoch:{}/{} {}/{} time:{:.2f}+{:.2f} loss_G:{:.4e}' \
+            #     #     .format(self.conf.n_epoch, epoch, 0, 0, data_time_interval, train_time_interval, loss))
+
+            #     # self.net.save_model(model_name, log_path)    
+            #     if not os.path.isdir(log_path):
+            #         os.makedirs(log_path)
+            #     torch.save(self.net.state_dict(),'{}/{}'.format(log_path, model_name))
+            #     print("saved {}".format(model_name))
 
     def evaluation(self):
         self.eval_model.change_model(self.net)
@@ -226,7 +262,7 @@ class Trainer():
             'if_use_cor_pytorch': False,  # speed is very slow, just for debug when cuda correlation is not compiled
             'if_sgu_upsample': False,  # 先把这个关掉跑通吧
         }
-        pretrain_path = None  # pretrain path
+        pretrain_path = os.path.join(log_path, model_name)  # pretrain path
         net_conf = UPFlow_net.config()
         print("net_conf")
         net_conf.update(param_dict)
@@ -234,7 +270,10 @@ class Trainer():
         net = net_conf()  # .cuda()
         print("net_conf()")
         if pretrain_path is not None:
-            net.load_model(pretrain_path, if_relax=True, if_print=False)
+            try:
+                net.load_model(pretrain_path, if_relax=True, if_print=False)
+            except:
+                print("model not found, training from scratch!")
         if self.conf.if_cuda:
             net = net.cuda()
         return net
@@ -291,7 +330,7 @@ class Trainer():
 
             im1 = []
             im2 = []
-            for i in range(100):
+            for i in range(data.shape(0)):
                 im1_np = data[i * 3]
                 im2_np = data[i * 3 + 2]
                 # print(im1_np.shape, im2_np.shape)
