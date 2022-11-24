@@ -17,13 +17,14 @@ import warnings  # ignore warnings
 import torch.nn.functional as F
 import torch.optim as optim
 # from dataset.kitti_dataset_2012 import kitti_train, kitti_flow
-# from dataset.kitti_dataset import kitti_train, kitti_flow # kitti
+from dataset.kitti_dataset import kitti_train, kitti_flow # kitti
 # from dataset.scivis_datasets import kitti_train, kitti_flow # our data
 from model.upflow import UPFlow_net
 from torch.utils.data import DataLoader
 import time
 import argparse
 import pickle
+import json
 # import tensorflow as tf
 # tf.compat.v1.enable_eager_execution
 
@@ -41,7 +42,16 @@ device = torch.device("cuda")
 log_path = '../train_log'
 model_name = "upflow_piped.pkl" # 42K iter
 model_name = "upflow_piped_1.pkl" # 55K iter
+model_name = "upflow_piped_3.pkl"
+
+# model_name = "upflow_rect.pkl" # 
+model_name = "upflow_rect_hf.pkl" # 1K ep
+model_name = "upflow_rect_hf_1.pkl" # 
+# model_name = "upflow_rect_hf_2.pkl" # 700 ep
+
 # model_name = "upflow_rectangle.pkl"
+
+model_name = "upflow_kitti1.pkl" # 
 
 ''' scripts for training：
 1. simply using photo loss and smooth loss
@@ -148,8 +158,8 @@ class Trainer():
         print("in Trainer init")
         # print("loading...")
         # load training dataset
-        # self.train_set = self.load_training_dataset() # kitti
-        self.train_set = self.load_scivis_training_dataset(dataset)
+        self.train_set = self.load_training_dataset() # kitti
+        # self.train_set = self.load_scivis_training_dataset(dataset)
         print("self.train_set:", type(self.train_set), self.train_set.shape)
         # input("xxx")
     
@@ -202,6 +212,42 @@ class Trainer():
                 torch.save(self.net.state_dict(),'{}/{}'.format(log_path, model_name))
                 print("saved {}".format(model_name))
                 scheduler.step(epoch=epoch)
+
+                # val_loss = []
+                # loss_all = (loss.detach().cpu().numpy(), loss.detach().cpu().numpy())
+                # # val_loss.append(float(np.array(loss_G_list).mean()))
+                # loss_all = np.array(loss_all).tolist()
+                # val_loss.append(loss_all)
+                # # print("loss_all", loss_all)
+                # loss_path = 'loss.json'
+                # factor = 2
+                # dir_res = "Results"
+                # dir_res = os.path.join(dir_res, dataset)
+                # dir_res = os.path.join(dir_res, str(factor) + "x")
+                # dir_model = os.path.join(dir_res, model_name[:-4])
+                # if not os.path.isdir(dir_model):
+                #     os.makedirs(dir_model)
+                # # print(dir_model)
+                # # input("x")
+                # loss_path = os.path.join(dir_model, loss_path)
+                # loss_data = {'val_loss': val_loss}
+
+                # # load previous loss values if they exist
+                # if (os.path.exists(loss_path)):
+                #     print(loss_path)
+                #     loss_file = open(loss_path, 'r')
+                #     loss_data_old = json.load(loss_file)
+                #     loss_data_old['val_loss'].extend(val_loss)
+                #     loss_data = loss_data_old
+                #     # print("exists:", loss_data)
+                #     loss_file.close()
+
+                # with open(loss_path, 'w+') as loss_file:
+                #     json.dump(loss_data, loss_file, indent=4)
+                #     # print("dump loss to json")
+                #     loss_file.close()
+                # del loss_all
+
                 if epoch == self.conf.n_epoch:
                     break
             # train batch
@@ -283,21 +329,21 @@ class Trainer():
         # bench = kitti_flow.Evaluation_bench(name='2012_train', if_gpu=self.conf.if_cuda, batch_size=1)
         # return bench
 
-    # def load_training_dataset(self):
-    #     print("in load_training_dataset")
-    #     data_config = {
-    #         'crop_size': (256, 832),
-    #         'rho': 8,
-    #         'swap_images': True,
-    #         'normalize': True,
-    #         'horizontal_flip_aug': True,
-    #     }
-    #     data_conf = kitti_train.kitti_data_with_start_point.config(mv_type='2015', **data_config)
-    #     # data_conf = kitti_train.kitti_data_with_start_point.config(mv_type='2012', **data_config)
-    #     print("in load_training_dataset")
-    #     dataset = data_conf()
-    #     print("in load_training_dataset")
-    #     return dataset
+    def load_training_dataset(self):
+        print("in load_training_dataset")
+        data_config = {
+            'crop_size': (256, 832),
+            'rho': 8,
+            'swap_images': True,
+            'normalize': True,
+            'horizontal_flip_aug': True,
+        }
+        data_conf = kitti_train.kitti_data_with_start_point.config(mv_type='2015', **data_config)
+        # data_conf = kitti_train.kitti_data_with_start_point.config(mv_type='2012', **data_config)
+        print("in load_training_dataset")
+        dataset = data_conf()
+        print("in load_training_dataset")
+        return dataset
 
     def load_scivis_training_dataset(self, dataset):
         filename = "../../FlowSciVis/Datasets/"
@@ -327,8 +373,8 @@ class Trainer():
             data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             print("rectangle2d data:", data.shape)
-
-            im1 = []
+            """
+            im1 = [] 
             im2 = []
             for i in range(data.shape(0)):
                 im1_np = data[i * 3]
@@ -348,6 +394,7 @@ class Trainer():
             print(np.array(data_dict['im2']).shape)
             print("created data dictionary")
             data = data_dict
+            """
             # data = data_dict['im2']
             # data = im1, im2
         else:
@@ -366,6 +413,9 @@ class Trainer():
                 # input("x")
         if dataset == "pipedcylinder2d":
             data = data[:, np.newaxis, ...]
+        if "rectangle2d" in filename:
+            data_train = data[:2205] # div to 3, 5, 9 and 7
+            data_val = data[2370:2685] # div to 3, 5, 9 and 7
         if "pipedcylinder2d" in filename or "cylinder2d" in filename: # 1501 in total
                 data_train = data[:540] # 1080 div to 27 and 5
                 data_train = np.append(data_train, data[-540:], axis=0)

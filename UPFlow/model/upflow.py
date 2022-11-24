@@ -406,7 +406,7 @@ class UPFlow_net(tools.abstract_model):
         '''
         # print("in UPFlow_net forward, input_dict:", np.array(input_dict).shape)
         # print(type(input_dict))
-        input_dict = self.scivis_data_dict(input_dict) # training
+        # input_dict = self.scivis_data_dict(input_dict) # training
         # input("forward")
         # don't touch upflow, do preprocessing in simple_train.py
         # print(np.array(input_dict).shape)

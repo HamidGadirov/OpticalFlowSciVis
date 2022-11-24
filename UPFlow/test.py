@@ -58,8 +58,8 @@ def visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results
 
 def visualize_series_data_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title="Flow", show=True, save=False):
     fig=plt.figure()
-    columns = 10
-    rows = 10
+    columns = 12
+    rows = 4
     print("in vis:", data_to_vis.shape, flow_u.shape)
 
     data_index = 0
@@ -67,30 +67,36 @@ def visualize_series_data_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Re
     for i in range(1, columns*rows+1 ):
         # index = (i-1)*2 # skip eaach second
         ax = fig.add_subplot(rows, columns, i)
-        index = i-1
+        index = i - 1
         if (index >= data_to_vis.shape[0] or index >= flow_u.shape[0]):
             break
         if (index - 1) % 3 == 0:
             print("flow", index)
             # Vector field quiver plot
-            u = flow_u[data_index]
-            v = flow_v[data_index]
-            norm = np.sqrt(u*u + v*v)
-            img = data_to_vis[round(index)]
-            
-            fig.add_subplot(rows, columns, i)
+            u = flow_u[flow_index]
+            v = flow_v[flow_index]
+            norm = np.sqrt(u * u + v * v)
+            img = data_to_vis[index]
             plt.axis('off')
+            fig.add_subplot(rows, columns, i)
+            # plt.axis('off')
             ax = plt.gca()
             pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
-            data_index += 1
+            flow_index += 1
+            ax.set_title('flow')
         else:
             print("data", index)
-            img = data_to_vis[flow_index]
+            img = data_to_vis[index]
+            plt.axis('off')
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
-            flow_index += 1
+            # flow_index += 1
+            if index % 3 == 0:
+                ax.set_title('t=0') # can we help model with info of seq?
+            else:
+                ax.set_title('t=1')
         
-    plt.axis('off')
+    # plt.axis('off')
     # fig = plt.gcf()
     plt.suptitle(title) 
     fig.set_size_inches(12, 9)
@@ -169,8 +175,8 @@ def scivis_test(dataset):
     filename = "../FlowSciVis/Datasets/"
     if dataset == 'rectangle2d':
         filename += "rectangle2d.pkl"
-        # flow_fln = "../FlowSciVis/Datasets/rectangle2d_hftext_flow.pkl"
-        flow_fln = "../FlowSciVis/Datasets/rectangle2d_flow.pkl"
+        flow_fln = "../FlowSciVis/Datasets/rectangle2d_hftext_flow.pkl"
+        # flow_fln = "../FlowSciVis/Datasets/rectangle2d_flow.pkl"
     if dataset == "droplet2d":
         filename += "drop2D/droplet2d_test.pkl"
     elif dataset == "pipedcylinder2d":
@@ -217,7 +223,7 @@ def scivis_test(dataset):
     #     # flow_uv = (flow_uv - np.min(flow_uv)) / (np.max(flow_uv) - np.min(flow_uv))
     #     print("Flow is in range %f to %f" % (np.min(flow_uv), np.max(flow_uv)))
     #     flow_uv = np.float32(flow_uv)
-
+        data = data[540:810]
         data = data[:, np.newaxis, ...]
         # # print(data.shape, flow_uv.shape)
         # # input("x")
@@ -236,9 +242,10 @@ def scivis_test(dataset):
     data_list = []
     model = Test_model()
 
-    for i in range(40):
+    for i in range(48):
         im1_np = data[i * 3]
         im2_np = data[i * 3 + 2]
+        gt_np = data[i * 3 + 1]
         # index += 1
         # im1, im2 = batch
         print(im1_np.shape, im2_np.shape)
@@ -246,11 +253,14 @@ def scivis_test(dataset):
         # to rgb
         im1_np = np.concatenate((im1_np, im1_np, im1_np), axis=0)
         im2_np = np.concatenate((im2_np, im2_np, im2_np), axis=0)
+        gt_np = np.concatenate((gt_np, gt_np, gt_np), axis=0)
         
         im1 = torch.tensor(im1_np)
         im2 = torch.tensor(im2_np)
+        gt = torch.tensor(gt_np)
         im1 = im1[None, ...]
         im2 = im2[None, ...]
+        gt = gt[None, ...]
         print(im1.shape, im2.shape)
         # print(im1.is_cuda)
         im1 = im1.to(device)
@@ -265,6 +275,7 @@ def scivis_test(dataset):
         print(flow.shape)
         flow_list.append(flow)
         data_list.extend(im1.detach().cpu().numpy())
+        data_list.extend(gt.detach().cpu().numpy())
         data_list.extend(im2.detach().cpu().numpy())
 
     flow_arr = np.squeeze(np.array(flow_list))
@@ -273,11 +284,12 @@ def scivis_test(dataset):
     print(data_arr.shape)
     flow_u = flow_arr[:, 0]
     flow_v = flow_arr[:, 1]
-    data_to_vis = np.zeros((flow_arr.shape[0], flow_arr.shape[2], flow_arr.shape[3]))
-    # data_to_vis = data_arr[:, 0] # one channel
-    title = "Flow_trained_" + dataset
-    visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title=title, show=False, save=True)
-    # visualize_series_data_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title="Data_flow_rectangle2d", show=False, save=True)
+    # data_to_vis = np.zeros((flow_arr.shape[0], flow_arr.shape[2], flow_arr.shape[3]))
+    data_to_vis = data_arr[:, 0] # one channel
+    # title = "Flow_trained_" + dataset
+    # visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title=title, show=False, save=True)
+    title = "Data_flow_trained_" + dataset
+    visualize_series_data_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title=title, show=False, save=True)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
