@@ -212,8 +212,8 @@ class tools():
             try:
                 batch = next(self.loader)
                 # batch = self.loader.next() # run_eagerly=True
-                print("self.loader.next() SUCCESS")
-                input("x")
+                # print("self.loader.next() SUCCESS")
+                # input("x")
             except StopIteration:
                 # print("self.loader.next() FAIL")
                 self.build()
@@ -255,7 +255,7 @@ class tools():
 
 
         def build(self):
-            input("in DataProvider build")
+            # input("in DataProvider build")
             print(type(self.dataset))
             # input("self.dataset")
             dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=self.shuffle, num_workers=self.num_worker,

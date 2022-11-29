@@ -129,7 +129,7 @@ class Trainer():
             self.exp_dir = './demo_exp'
             self.if_cuda = True
 
-            self.batchsize = 1 # 25
+            self.batchsize = 10 # 25
             self.NUM_WORKERS = 8 # 4
             self.n_epoch = 1000 # 1000
             self.batch_per_epoch = 5 # 500
@@ -175,7 +175,7 @@ class Trainer():
         # print("self.train_set:", np.array(self.train_set['im1']).shape)
         print("self.train_set:", type(self.train_set))
         print(self.train_set)
-        input("x")
+        # input("x")
         train_loader = tools.data_prefetcher(self.train_set, batch_size=self.conf.batchsize, shuffle=True, num_workers=self.conf.NUM_WORKERS, pin_memory=True, drop_last=True)
         optimizer = optim.Adam(self.net.parameters(), lr=self.conf.lr, amsgrad=True, weight_decay=self.conf.weight_decay)
         scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=self.conf.scheduler_gamma)
@@ -200,13 +200,13 @@ class Trainer():
             # data
             # print("train_loader", type(train_loader))
             # input("prepare batch data")
-            print("before next")
+            # print("before next")
             batch_value = train_loader.next()
             i_batch += 1
             batch_value_ = np.array(batch_value)
-            print("batch_value_", batch_value_.shape)
+            # print("batch_value_", batch_value_.shape)
             # print("batch_value", type(batch_value))
-            input("batch_value")
+            # input("batch_value")
             if batch_value is None:
                 batch_value = train_loader.next()
                 assert batch_value is not None

@@ -416,11 +416,11 @@ class UPFlow_net(tools.abstract_model):
         :param input_dict:     im1, im2, im1_raw, im2_raw, start, if_loss
         :return: output_dict:  flows, flow_f_out, flow_b_out, photo_loss
         '''
-        print("in UPFlow_net forward, input_dict:", np.array(input_dict).shape)
-        print(type(input_dict))
+        # print("in UPFlow_net forward, input_dict:", np.array(input_dict).shape)
+        # print(type(input_dict))
         # print(input_dict)
-        for i in range(np.array(input_dict).shape[0]):
-            print(np.array(input_dict)[i].shape)
+        # for i in range(np.array(input_dict).shape[0]):
+        #     print(np.array(input_dict)[i].shape)
         # input_dict = self.scivis_data_dict(input_dict) # training
         input_dict = self.kitti_data_dict(input_dict) # training
         # input("forward")

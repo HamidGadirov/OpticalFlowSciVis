@@ -7,7 +7,7 @@ import cv2
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import torch
-import tensorflow as tf
+# import tensorflow as tf
 import warnings  # ignore warnings
 import zipfile
 from glob import glob
@@ -56,9 +56,9 @@ class img_func():
             # unflow_pytorch = unflow_pytorch * (1.0 / 255.0)
             return unflow_im
 
-        # img = cv2.imread(img_name)
-        data = tf.io.read_file(img_name)
-        img = tf.image.decode_image(data).numpy()
+        img = cv2.imread(img_name)
+        # data = tf.io.read_file(img_name)
+        # img = tf.image.decode_image(data).numpy()
         if if_horizontal_flip:
             img = np.flip(img, 1)
         if normalize:
@@ -117,9 +117,9 @@ class img_func():
 
     @classmethod
     def read_flow_tf(cls, filename):  # need tensorflow 2.0.0, WRONG!!! use the function read_png_flow
-        data = tf.io.read_file(filename)
-        gt = tf.image.decode_png(data, channels=3, dtype=tf.uint16).numpy()
-        # gt=cv2.imread(filename)
+        # data = tf.io.read_file(filename)
+        # gt = tf.image.decode_png(data, channels=3, dtype=tf.uint16).numpy()
+        gt = cv2.imread(filename)
         flow = (gt[:, :, 0:2] - 2 ** 15) / 64.0
         flow = flow.astype(np.float)
         mask = gt[:, :, 2:3]
@@ -202,8 +202,7 @@ class kitti_train:
         if os.path.isfile(file_names_save_path) and not if_test:
             print("not if_test")
             data = tools.pickle_saver.load_picke(file_names_save_path)
-            # print(data)
-            input("data")
+            # input("data")
             return data
         else:
             # mv_2012_name = 'stereo_flow_2012'
@@ -232,8 +231,9 @@ class kitti_train:
 
             def read_mv_data(d_path):
                 def tf_read_img(im_path):
-                    data_img = tf.io.read_file(im_path)
-                    img_read = tf.image.decode_image(data_img).numpy()  # get image 1
+                    # data_img = tf.io.read_file(im_path)
+                    # img_read = tf.image.decode_image(data_img).numpy()  # get image 1
+                    img_read = cv2.imread(im_path)
                     return img_read
 
                 sample_ls = []
@@ -496,10 +496,12 @@ class kitti_flow:
             """Evaluates the average endpoint error between flow batches.tf batch is n h w c"""
 
             def euclidean(t):
-                return tf.sqrt(tf.reduce_sum(t ** 2, [3], keepdims=True))
+                # return tf.sqrt(tf.reduce_sum(t ** 2, [3], keepdims=True))
+                return np.sqrt(np.sum(t ** 2, [3], keepdims=True))
 
             diff = euclidean(flow_1 - flow_2) * mask
-            error = tf.reduce_sum(diff) / tf.reduce_sum(mask)
+            # error = tf.reduce_sum(diff) / tf.reduce_sum(mask)
+            error = np.sum(diff) / np.sum(mask)
             return error
 
         @classmethod
@@ -639,8 +641,9 @@ class kitti_flow:
                 return [func(a) for a in args]
 
             def read_img(img_path):
-                data_ = tf.io.read_file(img_path)
-                img = tf.image.decode_image(data_).numpy()
+                # data_ = tf.io.read_file(img_path)
+                # img = tf.image.decode_image(data_).numpy()
+                img = cv2.imread(img_path)
                 return img
 
             data = self.file_names[index]
