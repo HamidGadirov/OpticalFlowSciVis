@@ -14,8 +14,7 @@ from glob import glob
 from torchvision import transforms as vision_transforms
 import imageio
 import png
-import tensorflow as tf
-tf.compat.v1.enable_eager_execution
+# tf.compat.v1.enable_eager_execution
 
 '''
 Here tensorflow is not necessary, it is needed in my early implementation from UnFlow and DDFlow.
@@ -348,8 +347,13 @@ class kitti_train:
             im1_crop, im2_crop, start = self.random_crop(im1, im2)
             im1, im2, im1_crop, im2_crop, start = img_func.np_2_tensor(im1, im2, im1_crop, im2_crop, start)
             # input("__getitem__")
-            return im1, im2, im1_crop, im2_crop, start
-
+            # return im1, im2, im1_crop, im2_crop, start
+            return im1_crop, im2_crop
+            # torch.Size([1, 3, 376, 1241])
+            # torch.Size([1, 3, 376, 1241])
+            # torch.Size([1, 3, 256, 832])
+            # torch.Size([1, 3, 256, 832])
+            # torch.Size([1, 2, 1, 1])
 
         def random_crop(self, im1, im2):
             height, width = im1.shape[1:]

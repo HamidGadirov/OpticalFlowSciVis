@@ -212,7 +212,8 @@ class tools():
             try:
                 batch = next(self.loader)
                 # batch = self.loader.next() # run_eagerly=True
-                # print("self.loader.next() SUCCESS")
+                print("self.loader.next() SUCCESS")
+                input("x")
             except StopIteration:
                 # print("self.loader.next() FAIL")
                 self.build()

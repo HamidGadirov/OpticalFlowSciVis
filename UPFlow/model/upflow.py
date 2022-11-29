@@ -397,6 +397,18 @@ class UPFlow_net(tools.abstract_model):
         # print("dict created!")
         return data_dict
 
+    def kitti_data_dict(self, batch): # img0, img1, gt
+        # print("data_tensor", data_tensor.size())
+        im1 = batch[0]
+        im2 = batch[1]
+
+        im1 = torch.Tensor(np.array(im1)).to(device)
+        im2 = torch.Tensor(np.array(im2)).to(device)
+
+        data_dict = {'im1': im1, 'im2': im2, 'if_loss': True}
+        # print("dict created!")
+        return data_dict
+
     # @staticmethod
     def forward(self, input_dict: dict):
         # print("UPFlow_net.forward")
@@ -404,9 +416,13 @@ class UPFlow_net(tools.abstract_model):
         :param input_dict:     im1, im2, im1_raw, im2_raw, start, if_loss
         :return: output_dict:  flows, flow_f_out, flow_b_out, photo_loss
         '''
-        # print("in UPFlow_net forward, input_dict:", np.array(input_dict).shape)
-        # print(type(input_dict))
+        print("in UPFlow_net forward, input_dict:", np.array(input_dict).shape)
+        print(type(input_dict))
+        # print(input_dict)
+        for i in range(np.array(input_dict).shape[0]):
+            print(np.array(input_dict)[i].shape)
         # input_dict = self.scivis_data_dict(input_dict) # training
+        input_dict = self.kitti_data_dict(input_dict) # training
         # input("forward")
         # don't touch upflow, do preprocessing in simple_train.py
         # print(np.array(input_dict).shape)
