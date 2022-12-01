@@ -485,7 +485,6 @@ class kitti_flow:
             # with torch.no_grad():
 
             flow_list = []
-
             # while batch is not None:
             for i in range(60):
                 index += 1

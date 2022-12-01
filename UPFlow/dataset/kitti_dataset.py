@@ -41,6 +41,44 @@ mv_data_dir = '/home/hamid/Desktop/OpticalFlow/FlowSciVis/Datasets'
 kitti_flow_dir = '/home/hamid/Desktop/OpticalFlow/FlowSciVis/Datasets'
 
 
+from matplotlib import pyplot as plt
+import matplotlib.patches as patches
+import pyimof
+def visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title="Flow", show=True, save=False):
+    print("in visualize_series_flow")
+    fig=plt.figure()
+    columns = 10
+    rows = 10
+
+    for i in range(1, columns*rows+1 ):
+        # index = (i-1)*2 # skip eaach second
+        index = i-1
+        if (index >= data_to_vis.shape[0] or index >= flow_u.shape[0]):
+            break
+        # Vector field quiver plot
+        u = flow_u[round(index)]
+        v = flow_v[round(index)]
+        norm = np.sqrt(u*u + v*v)
+        img = data_to_vis[round(index)]
+        
+        fig.add_subplot(rows, columns, i)
+        plt.axis('off')
+        ax = plt.gca()
+        pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
+        # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
+        
+    fig = plt.gcf()
+    plt.suptitle(title) 
+    fig.set_size_inches(12, 9)
+    if show:
+        plt.show()  
+    if save:
+        title += ".pdf"
+        if not os.path.isdir(dir_res):
+            os.makedirs(dir_res)
+        fig.savefig(os.path.join(dir_res, title), dpi = 300)
+
+
 class img_func():
 
     @classmethod
@@ -414,10 +452,62 @@ class kitti_train:
                 # im1, im2 = tools.func_decorator(process, im1, im2)
                 # tools.cv2_show_dict(im1=im1, im2=im2)
 
+# added: Test_model to get predflow
+from model.upflow import UPFlow_net
+if_cuda = True
+device = torch.device("cuda")
+class Test_model(tools.abs_test_model):
+    def __init__(self, pretrain_path='./train_log/upflow_piped_1.pkl'): # './scripts/upflow_kitti2015.pth'):
+        super(Test_model, self).__init__()
+        param_dict = {
+            # use cost volume norm
+            'if_norm_before_cost_volume': True,
+            'norm_moments_across_channels': False,
+            'norm_moments_across_images': False,
+            'if_froze_pwc': False,
+            'if_use_cor_pytorch': False,  # speed is very slow, just for debug when cuda correlation is not compiled
+            'if_sgu_upsample': True,
+        }
+        net_conf = UPFlow_net.config()
+        net_conf.update(param_dict)
+        net = net_conf()  # .cuda()
+        net.load_model(pretrain_path, if_relax=True, if_print=True)
+        if if_cuda:
+            net = net.cuda()
+        net.eval()
+        self.net_work = net
+
+    # def eval_forward(self, im1, im2, gt, *args):
+    def eval_forward(self, im1, im2):
+        # print("in eval_forward")
+        # print("images:", im1.shape, im2.shape)
+        # print("Data is in range %f to %f" % (torch.min(im1), torch.max(im1)))
+        # input("x")
+        # === network output
+        with torch.no_grad():
+            input_dict = {'im1': im1, 'im2': im2, 'if_loss': False}
+            output_dict = self.net_work(input_dict)
+            flow_fw, flow_bw = output_dict['flow_f_out'], output_dict['flow_b_out']
+            pred_flow = flow_fw
+        return pred_flow
+
+    def eval_save_result(self, save_name, predflow, *args, **kwargs):
+        # you can save flow results here
+        print("in eval_save_result")
+        # print(predflow.type)
+        # print(predflow.shape)
+        flow = predflow.detach().cpu().numpy()
+
+        # img = np.zeros((original_data.shape[1], original_data.shape[2]))
+        # print(flow.type)
+        print(flow.shape)
+        print(save_name)
+        return flow
+# added: Test_model to get predflow
+
 
 class kitti_flow:
     class Evaluation_bench():
-
         def __init__(self, name, if_gpu=True, batch_size=1):
             assert if_gpu == True
             self.batch_size = batch_size
@@ -455,11 +545,11 @@ class kitti_flow:
                         im1, im2 = tools.tensor_gpu(im1, im2, check_on=True)
                     index += 1
                     # im1, im2 = batch
-                    predflow = test_model.eval_forward(im1, im2, 0)
-                    test_model.eval_save_result(img_name, predflow)
+                    # predflow = test_model.eval_forward(im1, im2, 0)
+                    # test_model.eval_save_result(img_name, predflow)
                 self.timer.end()
                 print('=' * 3 + ' test time %ss ' % self.timer.get_during() + '=' * 3)
-                return
+                # return
             all_pep_error_meter = tools.AverageMeter()
             f1_rate_meter = tools.AverageMeter()
             occ_pep_error_meter = tools.AverageMeter()
@@ -468,28 +558,52 @@ class kitti_flow:
             index = -1
             batch = self.loader.next()
             # with torch.no_grad():
-            while batch is not None:
+            print("in Evaluation_bench __call__")
+
+            # test_model = Test_model()
+            flow_list = []
+            # while batch is not None:
+            for i in range(60):
                 index += 1
-                im1, im2, occ, occmask, noc, nocmask = batch
+                # im1, im2, occ, occmask, noc, nocmask = batch
+                im1, im2, _ = batch
                 num = im1.shape[0]
-                predflow = test_model.eval_forward(im1, im2, occ, occmask, noc, nocmask)
+                # input(num)
+                # predflow = test_model.eval_forward(im1, im2, occ, occmask, noc, nocmask)
+                predflow = test_model.eval_forward(im1, im2)
 
-                pep_error_all, f1_rate = calculate(predflow=predflow, gt_flow=occ, gt_mask=occmask)
-                all_pep_error_meter.update(val=pep_error_all.item(), num=num)
-                f1_rate_meter.update(val=f1_rate.item(), num=num)
+                # pep_error_all, f1_rate = calculate(predflow=predflow, gt_flow=occ, gt_mask=occmask)
+                # all_pep_error_meter.update(val=pep_error_all.item(), num=num)
+                # f1_rate_meter.update(val=f1_rate.item(), num=num)
 
-                noc_pep_error_, _ = calculate(predflow=predflow, gt_flow=noc, gt_mask=nocmask)
-                noc_pep_error_meter.update(val=noc_pep_error_.item(), num=num)
+                # noc_pep_error_, _ = calculate(predflow=predflow, gt_flow=noc, gt_mask=nocmask)
+                # noc_pep_error_meter.update(val=noc_pep_error_.item(), num=num)
 
-                occ_erea_mask = occmask - nocmask
-                pep_error_occ, _ = calculate(predflow=predflow, gt_flow=occ, gt_mask=occ_erea_mask)
-                occ_pep_error_meter.update(val=pep_error_occ.item(), num=num)
-                save_name = 'all_%.2f f1_%.1f noc_%.2f occ_%.2f__%d' % (all_pep_error_meter.val, f1_rate_meter.val, noc_pep_error_meter.val, occ_pep_error_meter.val, index)
-                test_model.eval_save_result(save_name, predflow, occmask=occmask)
+                # occ_erea_mask = occmask - nocmask
+                # pep_error_occ, _ = calculate(predflow=predflow, gt_flow=occ, gt_mask=occ_erea_mask)
+                # occ_pep_error_meter.update(val=pep_error_occ.item(), num=num)
+                # save_name = 'all_%.2f f1_%.1f noc_%.2f occ_%.2f__%d' % (all_pep_error_meter.val, f1_rate_meter.val, noc_pep_error_meter.val, occ_pep_error_meter.val, index)
+
+                save_name = ""
+                flow = test_model.eval_save_result(save_name, predflow)
+                # flow = test_model.eval_save_result(save_name, predflow, occmask=occmask)
+                flow_list.append(flow)
+                print("batch is not None:")
                 batch = self.loader.next()
             self.timer.end()
+            flow_arr = np.squeeze(np.array(flow_list))
+            print(flow_arr.shape)
+
+            data_to_vis = np.zeros((flow_arr.shape[0], flow_arr.shape[2], flow_arr.shape[3]))
+            flow_u = flow_arr[:, 0]
+            flow_v = flow_arr[:, 1]
+            dataset = "kitti"
+            visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title="Flow_trained_kitti", show=False, save=True)
+
+            # input("s")
             print('=' * 3 + ' eval time %ss ' % self.timer.get_during() + '=' * 3)
             return all_pep_error_meter.avg, f1_rate_meter.avg, noc_pep_error_meter.avg, occ_pep_error_meter.avg
+
 
         @classmethod
         def flow_error_avg_tf(cls, flow_1, flow_2, mask):

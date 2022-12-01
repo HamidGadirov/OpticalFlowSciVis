@@ -115,7 +115,7 @@ class tools():
 
         def load_model(self, load_path, if_relax=False, if_print=True):
             if if_print:
-                print('loading protrained model from %s' % load_path)
+                print('loading pretrained model from %s' % load_path)
             if if_relax:
                 model_dict = self.state_dict()
                 pretrained_dict = torch.load(load_path)
@@ -162,6 +162,13 @@ class tools():
         save_dir = ''
 
         def eval_forward(self, im1, im2, gt, *args):  # do model forward and cache forward results
+            # with torch.no_grad():
+            #     input_dict = {'im1': im1, 'im2': im2, 'if_loss': False}
+            #     output_dict = self.net_work(input_dict)
+            #     flow_fw, flow_bw = output_dict['flow_f_out'], output_dict['flow_b_out']
+            #     pred_flow = flow_fw
+            # return pred_flow
+
             return 0
 
         def eval_save_result(self, save_name, predflow, *args, **kwargs):

@@ -158,15 +158,17 @@ class Test_model(tools.abs_test_model):
 
 
 def kitti_2015_test():
-    pretrain_path = './scripts/upflow_kitti2015.pth'
+    pretrain_path = './train_log/upflow_kitti1.pkl' # './scripts/upflow_kitti2015.pth'
     # note that eval batch size should be 1 for KITTI 2012 and KITTI 2015 (image size may be different for different sequence)
     bench = kitti_flow.Evaluation_bench(name='2015_test', if_gpu=if_cuda, batch_size=1)
     testmodel = Test_model(pretrain_path=pretrain_path)
-    epe_all, f1, epe_noc, epe_occ = bench(testmodel)
-    print('EPE All = %.2f, F1 = %.2f, EPE Noc = %.2f, EPE Occ = %.2f' % (epe_all, f1, epe_noc, epe_occ))
+    bench(testmodel)
+    # epe_all, f1, epe_noc, epe_occ = bench(testmodel)
+    # print('EPE All = %.2f, F1 = %.2f, EPE Noc = %.2f, EPE Occ = %.2f' % (epe_all, f1, epe_noc, epe_occ))
+    print('kitti_2015_test')
 
 def scivis_test(dataset):
-    pretrain_path = './scripts/upflow_kitti2015.pth'
+    # pretrain_path = './scripts/upflow_kitti2015.pth'
     # bench = kitti_flow.Evaluation_bench(name=dataset, if_gpu=if_cuda, batch_size=1)
     # testmodel = Test_model(pretrain_path=pretrain_path)
     # epe_all, f1, epe_noc, epe_occ = bench(testmodel)
@@ -288,7 +290,7 @@ def scivis_test(dataset):
     data_to_vis = data_arr[:, 0] # one channel
     # title = "Flow_trained_" + dataset
     # visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title=title, show=False, save=True)
-    title = "Data_flow_trained_" + dataset
+    title = "Data_flow_trained_" + "kitti" # dataset
     visualize_series_data_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title=title, show=False, save=True)
 
 if __name__ == '__main__':

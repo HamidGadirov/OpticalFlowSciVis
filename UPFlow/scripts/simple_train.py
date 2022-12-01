@@ -53,7 +53,7 @@ model_name = "upflow_rect_hf_1.pkl" #
 
 # model_name = "upflow_rectangle.pkl"
 
-model_name = "upflow_kitti1.pkl" # 
+model_name = "upflow_kitti1.pkl" # 350 ep, 304 iter each, 24h
 
 ''' scripts for training：
 1. simply using photo loss and smooth loss
