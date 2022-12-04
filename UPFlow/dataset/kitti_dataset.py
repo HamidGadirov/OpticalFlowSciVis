@@ -64,8 +64,20 @@ def visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results
         fig.add_subplot(rows, columns, i)
         plt.axis('off')
         ax = plt.gca()
-        pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
+        # pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
         # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
+
+        hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
+        hsv[:,:,1] = 255
+        mag, ang = cv2.cartToPolar(flow_u[round(index)], flow_v[round(index)])
+        hsv[..., 0] = ang * 180 / np.pi / 2
+        hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
+
+        # bgr = np.empty(shape=hsv.shape, dtype=np.uint8)
+        bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        # print("Flow in bgr:", bgr.shape)
+        # plt.imshow(bgr, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+        plt.imshow(bgr)
         
     fig = plt.gcf()
     plt.suptitle(title) 
@@ -457,7 +469,7 @@ from model.upflow import UPFlow_net
 if_cuda = True
 device = torch.device("cuda")
 class Test_model(tools.abs_test_model):
-    def __init__(self, pretrain_path='./train_log/upflow_piped_1.pkl'): # './scripts/upflow_kitti2015.pth'):
+    def __init__(self, pretrain_path=''): # './scripts/upflow_kitti2015.pth'): /train_log/upflow_piped_1.pkl
         super(Test_model, self).__init__()
         param_dict = {
             # use cost volume norm
@@ -598,7 +610,8 @@ class kitti_flow:
             flow_u = flow_arr[:, 0]
             flow_v = flow_arr[:, 1]
             dataset = "kitti"
-            visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title="Flow_trained_kitti", show=False, save=True)
+            title = "Flow_trained_kitti_HSV"
+            visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title=title, show=False, save=True)
 
             # input("s")
             print('=' * 3 + ' eval time %ss ' % self.timer.get_during() + '=' * 3)
@@ -712,10 +725,10 @@ class kitti_flow:
         else:
             data = {}
             # get 2012 train dataset paths
-            image_dir = os.path.join(kitti_flow_dir, 'data_stereo_flow', 'training', 'colored_0')
-            flow_dir_occ = os.path.join(kitti_flow_dir, 'data_stereo_flow', 'training', 'flow_occ')
-            flow_dir_noc = os.path.join(kitti_flow_dir, 'data_stereo_flow', 'training', 'flow_noc')
-            data['2012_train'] = get_img_flow_path_pair(im_dir=image_dir, flow_occ_dir=flow_dir_occ, flow_noc_dir=flow_dir_noc)
+            # image_dir = os.path.join(kitti_flow_dir, 'data_stereo_flow', 'training', 'colored_0')
+            # flow_dir_occ = os.path.join(kitti_flow_dir, 'data_stereo_flow', 'training', 'flow_occ')
+            # flow_dir_noc = os.path.join(kitti_flow_dir, 'data_stereo_flow', 'training', 'flow_noc')
+            # data['2012_train'] = get_img_flow_path_pair(im_dir=image_dir, flow_occ_dir=flow_dir_occ, flow_noc_dir=flow_dir_noc)
             # get 2015 train dataset paths
             image_dir = os.path.join(kitti_flow_dir, 'data_scene_flow', 'training', 'image_2')
             flow_dir_occ = os.path.join(kitti_flow_dir, 'data_scene_flow', 'training', 'flow_occ')
@@ -723,8 +736,8 @@ class kitti_flow:
             data['2015_train'] = get_img_flow_path_pair(im_dir=image_dir, flow_occ_dir=flow_dir_occ, flow_noc_dir=flow_dir_noc)
 
             # get 2012 test dataset paths
-            image_dir = os.path.join(kitti_flow_dir, 'data_stereo_flow', 'testing', 'colored_0')
-            data['2012_test'] = get_img_path_dir(im_dir=image_dir)
+            # image_dir = os.path.join(kitti_flow_dir, 'data_stereo_flow', 'testing', 'colored_0')
+            # data['2012_test'] = get_img_path_dir(im_dir=image_dir)
             # get 2015 test dataset paths
             image_dir = os.path.join(kitti_flow_dir, 'data_scene_flow', 'testing', 'image_2')
             data['2015_test'] = get_img_path_dir(im_dir=image_dir)

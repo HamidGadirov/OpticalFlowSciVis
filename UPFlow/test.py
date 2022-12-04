@@ -158,7 +158,8 @@ class Test_model(tools.abs_test_model):
 
 
 def kitti_2015_test():
-    pretrain_path = './train_log/upflow_kitti1.pkl' # './scripts/upflow_kitti2015.pth'
+    # pretrain_path = './scripts/upflow_kitti2015.pth'
+    pretrain_path = './train_log/upflow_kitti1.pkl'
     # note that eval batch size should be 1 for KITTI 2012 and KITTI 2015 (image size may be different for different sequence)
     bench = kitti_flow.Evaluation_bench(name='2015_test', if_gpu=if_cuda, batch_size=1)
     testmodel = Test_model(pretrain_path=pretrain_path)
