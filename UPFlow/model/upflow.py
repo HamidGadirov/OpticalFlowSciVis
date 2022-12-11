@@ -432,8 +432,8 @@ class UPFlow_net(tools.abstract_model):
         # for i in range(np.array(input_dict).shape[0]):
         #     print(np.array(input_dict)[i].shape)
         # input_dict = self.scivis_data_dict(input_dict) # training
-        input_dict = self.kitti_data_dict(input_dict) # training kitti
-        # input_dict = self.kitti_inference_data_dict(input_dict) # inference kitti
+        # input_dict = self.kitti_data_dict(input_dict) # training kitti
+        input_dict = self.kitti_inference_data_dict(input_dict) # inference kitti
         # input("forward")
         # don't touch upflow, do preprocessing in simple_train.py
         # print(np.array(input_dict).shape)

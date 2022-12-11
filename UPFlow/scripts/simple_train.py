@@ -53,8 +53,9 @@ model_name = "upflow_rect_hf_1.pkl" #
 
 # model_name = "upflow_rectangle.pkl"
 
-model_name = "upflow_kitti1.pkl" # 350 ep, 304 iter each, 24h
-# 400000 iteration with b_s 10 according to paper
+model_name = "upflow_kitti1.pkl" # 350 ep, 304 iter each
+# 350 ep 24 h (10) + 100 ep (10) + 300 ep (8) + 100 ep (8) + 100(8) + 250(8) + 300(8) = 1500 ep
+# 1500 * 380 = 570k iterations with b_s 8
 # I had 106400 iter within 24h
 # only kitti 2015 train test
 # also saved as: upflow_kitti1_backup.pkl
@@ -137,7 +138,7 @@ class Trainer():
             self.exp_dir = './demo_exp'
             self.if_cuda = True
 
-            self.batchsize = 10 # 25
+            self.batchsize = 8 # 25
             self.NUM_WORKERS = 8 # 4
             self.n_epoch = 1000 # 1000
             self.batch_per_epoch = 5 # 500
@@ -202,110 +203,111 @@ class Trainer():
         iterations = train_loader.get_len()
         while True:
         # for epoch in range(self.conf.n_epoch):
-            # data_time_interval = time.time() - time_stamp
-            # time_stamp = time.time()
-            # prepare batch 
-            # data
-            # print("train_loader", type(train_loader))
-            # input("prepare batch data")
-            # print("before next")
-            try:
-                batch_value = train_loader.next()
+            try: # catch if it randomly crashes
+                # data_time_interval = time.time() - time_stamp
+                # time_stamp = time.time()
+                # prepare batch 
+                # data
+                # print("train_loader", type(train_loader))
+                # input("prepare batch data")
+                # print("before next")
+                try:
+                    batch_value = train_loader.next()
+                except:
+                    print("skipping batch")
+                    continue
+                i_batch += 1
+                batch_value_ = np.array(batch_value)
+                # print("batch_value_", batch_value_.shape)
+                # print("batch_value", type(batch_value))
+                # input("batch_value")
+                if batch_value is None: # end of epoch
+                    batch_value = train_loader.next()
+                    assert batch_value is not None
+                    i_batch = 0
+                    epoch += 1
+                    if not os.path.isdir(log_path):
+                        os.makedirs(log_path)
+                    torch.save(self.net.state_dict(),'{}/{}'.format(log_path, model_name))
+                    print("saved {}".format(model_name))
+                    scheduler.step(epoch=epoch)
+
+                    val_loss = []
+                    loss_all = (loss.detach().cpu().numpy())
+                    # val_loss.append(float(np.array(loss_G_list).mean()))
+                    loss_all = np.array(loss_all).tolist()
+                    val_loss.append(loss_all)
+                    print("loss_all", loss_all)
+                    loss_path = 'loss.json'
+                    factor = 2
+                    dir_res = "../Results"
+                    dir_res = os.path.join(dir_res, dataset)
+                    dir_res = os.path.join(dir_res, str(factor) + "x")
+                    dir_model = os.path.join(dir_res, model_name[:-4])
+                    if not os.path.isdir(dir_model):
+                        os.makedirs(dir_model)
+                    # print(dir_model)
+                    # input("x")
+                    loss_path = os.path.join(dir_model, loss_path)
+                    loss_data = {'val_loss': val_loss}
+
+                    # load previous loss values if they exist
+                    if (os.path.exists(loss_path)):
+                        print(loss_path)
+                        loss_file = open(loss_path, 'r')
+                        loss_data_old = json.load(loss_file)
+                        loss_data_old['val_loss'].extend(val_loss)
+                        loss_data = loss_data_old
+                        # print("exists:", loss_data)
+                        loss_file.close()
+
+                    with open(loss_path, 'w+') as loss_file:
+                        json.dump(loss_data, loss_file, indent=4)
+                        # print("dump loss to json")
+                        loss_file.close()
+                    del loss_all
+
+                    if epoch == self.conf.n_epoch:
+                        break
+                # train batch
+                # print("to self.net.train()")
+                self.net.train()
+                # print("to self.net.zero_grad()")
+                optimizer.zero_grad()
+                # print("to self.net()")
+                out_data = self.net(batch_value)
+                # print("out_data")
+
+                loss_dict = out_data['loss_dict']
+                loss = loss_manager.compute_loss(loss_dict=loss_dict, batch_N=batchsize)
+
+                loss.backward()
+                optimizer.step()
+
+                # train_time_interval = time.time() - time_stamp
+                # if i_batch % self.conf.batch_per_print == 0:
+                #     pass
+                # if i_batch % self.conf.batch_per_epoch == 0:
+                #     # do eval  and check if save model todo===
+                #     epoch+=1
+                #     timer.end()
+                #     print(' === epoch use time %.2f' % timer.get_during())
+                #     scheduler.step(epoch=epoch)
+                #     timer.start()
+                print('epoch:{}/{} {}/{} loss_G:{:.4e}'.format(epoch, self.conf.n_epoch, i_batch, iterations, loss))
+                # if epoch % 10 == 0:
+                #     print('epoch:{}/{} {}/{} loss_G:{:.4e}' \
+                #         .format(epoch, self.conf.n_epoch, i_batch, iterations, loss))
+                #     # print('epoch:{}/{} {}/{} time:{:.2f}+{:.2f} loss_G:{:.4e}' \
+                #     #     .format(self.conf.n_epoch, epoch, 0, 0, data_time_interval, train_time_interval, loss))
+
+                #     # self.net.save_model(model_name, log_path)    
+                #     if not os.path.isdir(log_path):
+                #         os.makedirs(log_path)
+                #     torch.save(self.net.state_dict(),'{}/{}'.format(log_path, model_name))
+                #     print("saved {}".format(model_name))
             except:
-                print("skipping batch")
-                continue
-            i_batch += 1
-            batch_value_ = np.array(batch_value)
-            # print("batch_value_", batch_value_.shape)
-            # print("batch_value", type(batch_value))
-            # input("batch_value")
-            if batch_value is None: # end of epoch
-                batch_value = train_loader.next()
-                assert batch_value is not None
-                i_batch = 0
-                epoch += 1
-                if not os.path.isdir(log_path):
-                    os.makedirs(log_path)
-                torch.save(self.net.state_dict(),'{}/{}'.format(log_path, model_name))
-                print("saved {}".format(model_name))
-                scheduler.step(epoch=epoch)
-
-                val_loss = []
-                loss_all = (loss.detach().cpu().numpy())
-                # val_loss.append(float(np.array(loss_G_list).mean()))
-                loss_all = np.array(loss_all).tolist()
-                val_loss.append(loss_all)
-                print("loss_all", loss_all)
-                loss_path = 'loss.json'
-                factor = 2
-                dir_res = "../Results"
-                dir_res = os.path.join(dir_res, dataset)
-                dir_res = os.path.join(dir_res, str(factor) + "x")
-                dir_model = os.path.join(dir_res, model_name[:-4])
-                if not os.path.isdir(dir_model):
-                    os.makedirs(dir_model)
-                # print(dir_model)
-                # input("x")
-                loss_path = os.path.join(dir_model, loss_path)
-                loss_data = {'val_loss': val_loss}
-
-                # load previous loss values if they exist
-                if (os.path.exists(loss_path)):
-                    print(loss_path)
-                    loss_file = open(loss_path, 'r')
-                    loss_data_old = json.load(loss_file)
-                    loss_data_old['val_loss'].extend(val_loss)
-                    loss_data = loss_data_old
-                    # print("exists:", loss_data)
-                    loss_file.close()
-
-                with open(loss_path, 'w+') as loss_file:
-                    json.dump(loss_data, loss_file, indent=4)
-                    # print("dump loss to json")
-                    loss_file.close()
-                del loss_all
-
-                if epoch == self.conf.n_epoch:
-                    break
-            # train batch
-            # print("to self.net.train()")
-            self.net.train()
-            # print("to self.net.zero_grad()")
-            optimizer.zero_grad()
-            # print("to self.net()")
-            out_data = self.net(batch_value)
-            # print("out_data")
-
-            loss_dict = out_data['loss_dict']
-            loss = loss_manager.compute_loss(loss_dict=loss_dict, batch_N=batchsize)
-
-            loss.backward()
-            optimizer.step()
-
-            # train_time_interval = time.time() - time_stamp
-            # if i_batch % self.conf.batch_per_print == 0:
-            #     pass
-            # if i_batch % self.conf.batch_per_epoch == 0:
-            #     # do eval  and check if save model todo===
-            #     epoch+=1
-            #     timer.end()
-            #     print(' === epoch use time %.2f' % timer.get_during())
-            #     scheduler.step(epoch=epoch)
-            #     timer.start()
-
-            print('epoch:{}/{} {}/{} loss_G:{:.4e}'.format(epoch, self.conf.n_epoch, i_batch, iterations, loss))
-
-            # if epoch % 10 == 0:
-            #     print('epoch:{}/{} {}/{} loss_G:{:.4e}' \
-            #         .format(epoch, self.conf.n_epoch, i_batch, iterations, loss))
-            #     # print('epoch:{}/{} {}/{} time:{:.2f}+{:.2f} loss_G:{:.4e}' \
-            #     #     .format(self.conf.n_epoch, epoch, 0, 0, data_time_interval, train_time_interval, loss))
-
-            #     # self.net.save_model(model_name, log_path)    
-            #     if not os.path.isdir(log_path):
-            #         os.makedirs(log_path)
-            #     torch.save(self.net.state_dict(),'{}/{}'.format(log_path, model_name))
-            #     print("saved {}".format(model_name))
+                print("Unexpected crash, continuing with new epoch!")
 
     def evaluation(self):
         self.eval_model.change_model(self.net)

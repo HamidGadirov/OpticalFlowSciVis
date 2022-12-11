@@ -610,7 +610,7 @@ class kitti_flow:
             flow_u = flow_arr[:, 0]
             flow_v = flow_arr[:, 1]
             dataset = "kitti"
-            title = "Flow_trained_kitti_HSV"
+            title = "Flow_trained_1500ep_kitti_HSV"
             visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results", title=title, show=False, save=True)
 
             # input("s")
