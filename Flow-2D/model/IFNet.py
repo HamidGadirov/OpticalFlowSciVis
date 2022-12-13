@@ -29,7 +29,7 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 version = 2
 five_blocks = False
 blocks_range = 3 if not five_blocks else 5
-refine = True
+refine = False # True
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):

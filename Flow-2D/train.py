@@ -1,4 +1,5 @@
 # ssh -Y hamid@129.125.75.167
+# conda activate gpu
 # python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=rectangle2d --mode=train
 
 # rsync -avz -e 'ssh' hamid@129.125.75.167:~/Desktop/OpticalFlow/RIFE/train_log/ /Users/hamidgadirov/Desktop/OpticalFlow/RIFE/train_log/
@@ -287,7 +288,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 flow_gt_combined.append(flow_gt_array[b, 2])
                 flow_gt_combined.append(flow_gt_array[b, 1])
 
-            if dataset == "pipedcylinder2d"  or dataset == "cylinder2d" or dataset == "FluidSimML2d" or dataset == "rectangle2d":
+            if dataset == "pipedcylinder2d"  or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
+                or dataset == "rectangle2d" or dataset == "lbs2d":
                 imgs = imgs[:, :, 0]
                 gt = gt[:, :, 0]
 
@@ -566,6 +568,8 @@ if __name__ == "__main__":
         args.batch_size = 128
     if args.dataset == "rectangle2d":
         args.batch_size = 180
+    if args.dataset == "lbs2d":
+        args.batch_size = 100
     if args.dataset == "FluidSimML2d":
         args.batch_size = 64
     if args.dataset == "pipedcylinder2d" or args.dataset == "cylinder2d":
@@ -637,6 +641,10 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_1.pkl" 
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range3579.pkl" # flow not accurate, loss jump
     # desired unsupervised flow wasn't achieved, switching to UPFlow... 02.09.22
+
+    """ lbs2d """
+    model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
+    # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs.pkl" # 200 ep: very good interpol, bad flow
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow

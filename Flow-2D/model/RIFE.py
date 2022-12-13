@@ -81,7 +81,8 @@ class Model:
         for param_group in self.optimG.param_groups:
             param_group['lr'] = learning_rate
 
-        if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" or dataset == "rectangle2d":
+        if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
+            or dataset == "rectangle2d" or dataset == "lbs2d":
             # print(imgs.shape)
             # print(gt.shape)
             # input("x")
@@ -117,7 +118,8 @@ class Model:
         max_shape_2 = min(img0.shape[2], mask.shape[2])
         max_shape_3 = min(img0.shape[3], mask.shape[3])
         gt = gt[:,:,:max_shape_2,:max_shape_3]
-        if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" or dataset == "rectangle2d":
+        if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
+            or dataset == "rectangle2d" or dataset == "lbs2d":
             gt_flow = gt_flow[:,:,:max_shape_2,:max_shape_3]
             # Flow loss
             # flow and flow_uv
@@ -260,11 +262,11 @@ class Model:
         # print(loss_photo)
         # input("x")
 
-        lambda_l1 = 1
-        lambda_tea = 1
+        lambda_l1 = 1 # 1
+        lambda_tea = 1 # 1
         lambda_distill = 0.01 # 0.01 0.1
-        lambda_reg = 1e-6
-        lambda_photo = 1e-5 # 2 3 4 5
+        lambda_reg = 0 # 1e-6
+        lambda_photo = 1e-5 # 1e-5 # 2 3 4 5
         lambda_smooth = 0 # 1e-8
         lambda_flow = 0 # 0.01 1
         # automatic parameter study
@@ -275,7 +277,8 @@ class Model:
         if math.isnan(loss_distill) or loss_distill > 10.:
             loss_distill = torch.tensor(0.)
 
-        if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" or dataset == "rectangle2d": # flow loss separately
+        if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
+            or dataset == "rectangle2d" or dataset == "lbs2d" : # flow loss separately
             loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
                     loss_flow * lambda_flow + l1_reg * lambda_reg + loss_photo * lambda_photo
         else:

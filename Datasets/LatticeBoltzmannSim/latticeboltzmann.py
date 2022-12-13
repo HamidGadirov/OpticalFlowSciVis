@@ -66,6 +66,12 @@ def main():
 		rho = np.sum(F,2)
 		ux  = np.sum(F*cxs,2) / rho
 		uy  = np.sum(F*cys,2) / rho
+		print(ux.shape)
+		# print("vec", ux[50].shape, uy[50].shape)
+		print("ux uy at 30 100", ux[30][100], uy[30][100])
+		print("ux uy at 50 200", ux[50][200], uy[50][200])
+		print("ux uy at 70 300", ux[70][300], uy[70][300])
+		print("ux uy mean grid", np.mean(ux), np.mean(uy))
 		
 		# Apply Collision
 		Feq = np.zeros(F.shape)
@@ -77,7 +83,7 @@ def main():
 		# Apply boundary 
 		F[cylinder,:] = bndryF
 		
-		
+
 		# plot in real time - color 1/2 particles blue, other half red
 		if (plotRealTime and (it % 10) == 0) or (it == Nt-1):
 			plt.cla()
@@ -115,7 +121,8 @@ def main():
 	# save data to pkl
 	pkl_filename = "lbs2d" + ".pkl" 
 
-	data = np.zeros((Nt, Ny, Nx), dtype=np.float32)
+	# data = np.zeros((Nt, Ny, Nx), dtype=np.float32)
+	data = density
 	print("data:", data.shape)
 	data = data[:, np.newaxis, ...]
 	velocities_x = vel_x[:, np.newaxis, ...]

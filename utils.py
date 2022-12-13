@@ -210,6 +210,12 @@ def visualize_large(original_data, interpol_data, diffs,
         if int((i-1)/columns) == 0: # gt
             img = original_data[round(index)]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+            if index % 3 == 0:
+                ax.set_title('t=0') # can we help model with info of seq?
+            elif index % 3 == 1:
+                ax.set_title('t=1')
+            else:
+                ax.set_title('t=2')
         if int((i-1)/columns) == 1: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
             img = interpol_data[round(index)] # [index-columns*2,...]
@@ -218,14 +224,14 @@ def visualize_large(original_data, interpol_data, diffs,
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
             img = diffs[round(index)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
-        if int((i-1)/columns) == 3: # mask
+        if int((i-1)/columns) == 3 and round(index - 1) % 3 == 0: # mask
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
             img = mask[round(index)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
         # if int((i-1)/columns) == 6: # flow diff
         #     img = diffs_flow[round(index)] # [index-columns*2*2,...]
         #     plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
-        if int((i-1)/columns) == 4: # flow gt
+        if int((i-1)/columns) == 4 and round(index - 1) % 3 == 0: # flow gt
             if dataset == "vimeo2d": # show pred flow in hsv-rgb instead of gt
                 hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
                 hsv[:,:,1] = 255
@@ -270,7 +276,10 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print(data_range)
                 if round(index) >= data_range:
                     break
-        if int((i-1)/columns) == 5: # flow pred
+        # else: # empty
+        #     img = np.zeros((original_data.shape[1], original_data.shape[2]))
+        #     plt.imshow(img)
+        if int((i-1)/columns) == 5 and round(index - 1) % 3 == 0: # flow pred; only for interpolated!
             # this was flipped. why?
             # u = - flow_u[round(index)]
             # v = - flow_v[round(index)]
@@ -306,7 +315,10 @@ def visualize_large(original_data, interpol_data, diffs,
             # print(data_range)
             if round(index) >= data_range:
                 break
-        if int((i-1)/columns) == 6: # flow diff vec
+        # else: # empty
+        #     img = np.zeros((original_data.shape[1], original_data.shape[2]))
+        #     plt.imshow(img)
+        if int((i-1)/columns) == 6 and round(index - 1) % 3 == 0: # flow diff vec
             u_diff = flow_u_diff[round(index)]
             v_diff = flow_v_diff[round(index)]
             norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff)
@@ -322,6 +334,9 @@ def visualize_large(original_data, interpol_data, diffs,
             # print(data_range)
             if round(index) >= data_range:
                 break
+        # else: # empty
+        #     img = np.zeros((original_data.shape[1], original_data.shape[2]))
+        #     plt.imshow(img)
 
         if dataset != "vimeo2d":
             # if round(index) % factor == 0 and int((i-1)/columns) == 0:
@@ -369,12 +384,18 @@ def visualize_large(original_data, interpol_data, diffs,
         plt.subplots_adjust(wspace=-0.95, hspace=0.01)
         x = 0.25
         y = 0.8
+        step = (y - 0.15) / 6.
+    elif "lbs2d" in dataset:
+        plt.subplots_adjust(wspace=0.01, hspace=-0.75)
+        x = 0.075
+        y = 0.7
+        step = (y - 0.25) / 6.
     elif "vimeo2d" in dataset:
         plt.subplots_adjust(wspace=0.01, hspace=0.01)
         x = 0.075
         y = 0.8
+        step = (y - 0.15) / 6.
 
-    step = (0.8 - 0.15) / 6.
     fig.text(x, y, 'GT', size=12)
     fig.text(x, y - step, 'Interpol', size=12)
     fig.text(x, y - step*2, 'Diff', size=12)

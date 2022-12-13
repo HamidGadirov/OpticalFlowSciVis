@@ -35,6 +35,8 @@ def load_data(dataset, exp, mode):
     combined_data_val = []
     if dataset == 'rectangle2d':
         datasets = ["rectangle2d"]
+    if dataset == 'lbs2d':
+        datasets = ["lbs2d"]
     if dataset == 'droplet2d':
         datasets = ["droplet2d"]
     elif dataset == 'pipedcylinder2d':
@@ -58,6 +60,8 @@ def load_data(dataset, exp, mode):
             # flow_fln = "../Datasets/rectangle2d_text_flow.pkl"
             flow_fln = "../Datasets/rectangle2d_hftext_flow.pkl"
             # flow_fln = "../Datasets/rectangles2d_text_flow.pkl"
+        if dataset == 'lbs2d':
+            filename += "LatticeBoltzmannSim/lbs2d.pkl"
         if dataset == "droplet2d":
             filename += "drop2D/droplet2d.pkl" if mode == "train" else "drop2D/droplet2d_test.pkl"
         elif dataset == "pipedcylinder2d":
@@ -130,7 +134,7 @@ def load_data(dataset, exp, mode):
 
         # data = data[5:] # skip empty
         # data = np.squeeze(data)
-        if data.ndim == 3 or dataset == "rectangle2d":
+        if data.ndim == 3 or dataset == "rectangle2d" or dataset == "lbs2d":
             data = np.expand_dims(data, axis=-1)
 
         # convert to RGB for training
@@ -152,6 +156,9 @@ def load_data(dataset, exp, mode):
             if "rectangle2d" in filename:
                 data_train = data[:2205] # div to 3, 5, 9 and 7
                 data_val = data[2370:2685] # div to 3, 5, 9 and 7
+            if "lbs2d" in filename: # 6K in total, skip first 3K
+                data_train = data[3000:5205] 
+                data_val = data[5370:5685]
             if "droplet2d" in filename:
                 data_train = data[:51300] # 46800 15120
                 data_val = data[51300:54000] # 18000 54000
@@ -174,7 +181,7 @@ def load_data(dataset, exp, mode):
                 data_train = data[100:820] 
                 data_val = data[820:964]
 
-            if dataset != "rectangle2d":
+            if dataset != "rectangle2d" or dataset != "lbs2d":
                 # prepare data for training - use only each third frame while shifting the sampling
                 data_train_ = []
                 data_val_ = []
@@ -195,7 +202,8 @@ def load_data(dataset, exp, mode):
             print("before aug, data_train is in range %f to %f" % (np.min(data_train[:, :, 0]), np.max(data_train[:, :, 0])))
 
             # TODO: add other augment: diff steps for picking data ? 
-            if "pipedcylinder2d" in filename or "cylinder2d" in filename or "FluidSimML" in filename or "rectangle2d" in filename:
+            if "pipedcylinder2d" in filename or "cylinder2d" in filename or "FluidSimML" in filename or \
+                "rectangle2d" in filename or "lbs2d" in filename:
                 print("Augmenting the data...")
                 data_train_flip = data_train[..., ::-1] # [:,:,:,::-1] wrong!
                 data_train = np.append(data_train, data_train_flip, axis=0)
@@ -329,6 +337,8 @@ def load_data(dataset, exp, mode):
         else:
             if "rectangle2d" in filename:
                 data_test = data[2685:3000] # div to 3, 5, 9 and 7
+            if "lbs2d" in filename:
+                data_test = data[5685:6000]
             elif "droplet2d" in filename:
                 data_test = data[:2700]
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:
@@ -347,7 +357,7 @@ def load_data(dataset, exp, mode):
             print(data_test.shape)
             # input("x")
 
-            if dataset != "rectangle2d":
+            if dataset != "rectangle2d" or dataset != "lbs2d":
                 # prepare data for training - use only each third frame while shifting the sampling
                 data_test_ = []
                 for shift in range(3):
