@@ -61,7 +61,8 @@ def load_data(dataset, exp, mode):
             flow_fln = "../Datasets/rectangle2d_hftext_flow.pkl"
             # flow_fln = "../Datasets/rectangles2d_text_flow.pkl"
         if dataset == 'lbs2d':
-            filename += "LatticeBoltzmannSim/lbs2d.pkl"
+            # filename += "LatticeBoltzmannSim/lbs2d.pkl"
+            filename += "LatticeBoltzmannSim/lbs2d_skip.pkl"
         if dataset == "droplet2d":
             filename += "drop2D/droplet2d.pkl" if mode == "train" else "drop2D/droplet2d_test.pkl"
         elif dataset == "pipedcylinder2d":
@@ -156,9 +157,9 @@ def load_data(dataset, exp, mode):
             if "rectangle2d" in filename:
                 data_train = data[:2205] # div to 3, 5, 9 and 7
                 data_val = data[2370:2685] # div to 3, 5, 9 and 7
-            if "lbs2d" in filename: # 6K in total, skip first 3K
-                data_train = data[3000:5205] 
-                data_val = data[5370:5685]
+            if "lbs2d" in filename: # 6K in total, skip first 3K; 3K in total, each 10th
+                data_train = data[:2205]
+                data_val = data[2370:2685]
             if "droplet2d" in filename:
                 data_train = data[:51300] # 46800 15120
                 data_val = data[51300:54000] # 18000 54000
@@ -338,7 +339,7 @@ def load_data(dataset, exp, mode):
             if "rectangle2d" in filename:
                 data_test = data[2685:3000] # div to 3, 5, 9 and 7
             if "lbs2d" in filename:
-                data_test = data[5685:6000]
+                data_test = data[2685:3000] # [5685:6000]
             elif "droplet2d" in filename:
                 data_test = data[:2700]
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:

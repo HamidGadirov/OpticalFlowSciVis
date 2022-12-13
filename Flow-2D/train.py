@@ -120,6 +120,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # print(model) # RIFE is not a neural net
     except:
         print("No weights found, training from scratch.")
+        print("model name:", model_name)
     # input("x")
 
     def count_parameters(model):
@@ -645,6 +646,8 @@ if __name__ == "__main__":
     """ lbs2d """
     model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs.pkl" # 200 ep: very good interpol, bad flow
+    model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs_skip.pkl" # 250 ep: perf interpol, good flow but it was too easy
+    model_name = "flownet_flowonly_v2_128_lbs_skip.pkl" 
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow

@@ -19,7 +19,7 @@ def main():
 	Ny                     = 100    # resolution y-dir
 	rho0                   = 100    # average density
 	tau                    = 0.6    # collision timescale
-	Nt                     = 6000   # number of timesteps # 4000
+	Nt                     = 30000   # number of timesteps # 4000
 	plotRealTime = True # switch on for plotting as the simulation goes along
 	
 	# Lattice speeds / weights
@@ -66,12 +66,11 @@ def main():
 		rho = np.sum(F,2)
 		ux  = np.sum(F*cxs,2) / rho
 		uy  = np.sum(F*cys,2) / rho
-		print(ux.shape)
-		# print("vec", ux[50].shape, uy[50].shape)
-		print("ux uy at 30 100", ux[30][100], uy[30][100])
-		print("ux uy at 50 200", ux[50][200], uy[50][200])
-		print("ux uy at 70 300", ux[70][300], uy[70][300])
-		print("ux uy mean grid", np.mean(ux), np.mean(uy))
+		# print(ux.shape)
+		# print("ux uy at 30 100", ux[30][100], uy[30][100])
+		# print("ux uy at 50 200", ux[50][200], uy[50][200])
+		# print("ux uy at 70 300", ux[70][300], uy[70][300])
+		# print("ux uy mean grid", np.mean(ux), np.mean(uy))
 		
 		# Apply Collision
 		Feq = np.zeros(F.shape)
@@ -102,24 +101,25 @@ def main():
 			ax.set_aspect('equal')	
 			plt.pause(0.001)
 		
-		# add density and velolicites to list
-		density.append(rho)
-		vel_x.append(ux)
-		vel_y.append(uy)
+			# add density and velolicites to list
+			# each 10th timestep
+			density.append(rho)
+			vel_x.append(ux)
+			vel_y.append(uy)
 
 	density = np.array(density)
 	vel_x = np.array(vel_x)
 	vel_y = np.array(vel_y)
 	print("density:", density.shape)
 	print("vel_x:", vel_x.shape)
-	input("X")
+	# input("X")
 	
 	# # Save figure
 	# plt.savefig('latticeboltzmann.png',dpi=240)
 	# plt.show()
 
 	# save data to pkl
-	pkl_filename = "lbs2d" + ".pkl" 
+	pkl_filename = "lbs2d_skip" + ".pkl" 
 
 	# data = np.zeros((Nt, Ny, Nx), dtype=np.float32)
 	data = density
@@ -130,7 +130,7 @@ def main():
 	data = np.hstack((data, velocities_x))
 	data = np.hstack((data, velocities_y))
 	print(data.shape)
-	input("x")
+	# input("x")
 
 	data = np.float32(data)
 

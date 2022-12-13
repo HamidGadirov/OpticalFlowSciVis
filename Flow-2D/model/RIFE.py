@@ -262,13 +262,13 @@ class Model:
         # print(loss_photo)
         # input("x")
 
-        lambda_l1 = 1 # 1
-        lambda_tea = 1 # 1
-        lambda_distill = 0.01 # 0.01 0.1
+        lambda_l1 = 0 # 1
+        lambda_tea = 0 # 1
+        lambda_distill = 0 # 0.01 0.1
         lambda_reg = 0 # 1e-6
-        lambda_photo = 1e-5 # 1e-5 # 2 3 4 5
+        lambda_photo = 0 # 1e-5 # 2 3 4 5
         lambda_smooth = 0 # 1e-8
-        lambda_flow = 0 # 0.01 1
+        lambda_flow = 1 # 0.01 1
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter
