@@ -406,7 +406,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         except:
             print("loss json doesn't exist")
 
-        plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
+        # plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
 
         if dataset == "vimeo2d":
             data_test = np.array(data_test_combined) # vimeo
@@ -646,22 +646,22 @@ if __name__ == "__main__":
     """ lbs2d """
     model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs.pkl" # 200 ep: very good interpol, bad flow
-    model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs_skip.pkl" # 250 ep: perf interpol, good flow but it was too easy
-    model_name = "flownet_flowonly_v2_128_lbs_skip.pkl" 
+    # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs_skip.pkl" # 250 ep: perf interpol, good flow but it was too easy
+    # model_name = "flownet_flowonly_v2_128_lbs_skip.pkl" # 175 ep: 
 
     """ vimeo2d """
-    # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
+    model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
     # model_name = "flownet_lapl_dist_reverse_v2_128_vimeo.pkl" # same ???
     # model_name = "flownet_lapl_dist_noreverse_v2_128_vimeo.pkl" # same ???
     # model_name = "flownet_lapl_dist_zero_v2_128_vimeo.pkl" # empty
     # model_name = "flownet_lapl_dist_reversemask_v2_128_vimeo.pkl" # same ???
     # model_name = "flownet_lapl_dist_reverseflowmask_v2_128_vimeo.pkl" # same ???
-    # model_name ="flownet_lapl_dist_photo1e-4_v2_128_vimeo.pkl" # very good interpol, very bad flow
-    # model_name ="flownet_lapl_v2_128_vimeo.pkl" # ?
-    # model_name ="flownet_lapl_dist_reg_photo1e-5_v2_128_vimeo.pkl" # nan loss
-    # model_name ="flownet_lapl_dist01_v2_128_vimeo.pkl"
-    # model_name ="flownet_lapl_dist_v2_240_vimeo.pkl" # very good interpol, ? good flow
-    # model_name ="flownet_lapl_dist_photo1e-5_v2_128_vimeo.pkl" # very good interpol, ? good flow
+    # model_name = "flownet_lapl_dist_photo1e-4_v2_128_vimeo.pkl" # very good interpol, very bad flow
+    # model_name = "flownet_lapl_v2_128_vimeo.pkl" # ?
+    # model_name = "flownet_lapl_dist_reg_photo1e-5_v2_128_vimeo.pkl" # nan loss
+    # model_name = "flownet_lapl_dist01_v2_128_vimeo.pkl"
+    # model_name = "flownet_lapl_dist_v2_240_vimeo.pkl" # very good interpol, ? good flow
+    # model_name = "flownet_lapl_dist_photo1e-5_v2_128_vimeo.pkl" # very good interpol, ? good flow
 
     """ droplet2d """
     # model_name = "flownet_lapl_reg_nosmooth_3rd_drop50K.pkl"
@@ -801,8 +801,8 @@ if __name__ == "__main__":
             # u = (u - np.min(u)) / (np.max(u) - np.min(u))
             # v_gt = (v_gt - np.min(v_gt)) / (np.max(v_gt) - np.min(v_gt))
             # v = (v - np.min(v)) / (np.max(v) - np.min(v))
-            norm = (norm - np.min(norm)) / (np.max(norm) - np.min(norm))
-            norm_gt = (norm_gt - np.min(norm_gt)) / (np.max(norm_gt) - np.min(norm_gt))
+            # norm = (norm - np.min(norm)) / (np.max(norm) - np.min(norm))
+            # norm_gt = (norm_gt - np.min(norm_gt)) / (np.max(norm_gt) - np.min(norm_gt))
             print("u_gt is in range %f to %f" % (np.min(u_gt), np.max(u_gt)))
             print("u is in range %f to %f" % (np.min(u), np.max(u)))
             print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
@@ -826,6 +826,9 @@ if __name__ == "__main__":
             flow_gt = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
             u_diff = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
             v_diff = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
+
+        print("Flow gt mean and std:", np.mean(flow_gt), np.std(flow_gt))
+        print("Flow pred mean and std:", np.mean(flow), np.std(flow))
 
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         if "2d" in dataset:

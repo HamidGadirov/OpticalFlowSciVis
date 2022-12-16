@@ -70,7 +70,9 @@ def main():
 		# print("ux uy at 30 100", ux[30][100], uy[30][100])
 		# print("ux uy at 50 200", ux[50][200], uy[50][200])
 		# print("ux uy at 70 300", ux[70][300], uy[70][300])
-		# print("ux uy mean grid", np.mean(ux), np.mean(uy))
+		print("ux uy mean grid", np.mean(ux), np.mean(uy))
+		print("rho mean grid", np.mean(rho), np.mean(rho))
+		
 		
 		# Apply Collision
 		Feq = np.zeros(F.shape)

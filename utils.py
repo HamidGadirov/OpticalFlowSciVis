@@ -216,11 +216,11 @@ def visualize_large(original_data, interpol_data, diffs,
                 ax.set_title('t=1')
             else:
                 ax.set_title('t=2')
-        if int((i-1)/columns) == 1: # interpol
+        if int((i-1)/columns) == 1 and round(index - 1) % 3 == 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
             img = interpol_data[round(index)] # [index-columns*2,...]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
-        if int((i-1)/columns) == 2: # diff
+        if int((i-1)/columns) == 2 and round(index - 1) % 3 == 0: # diff
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
             img = diffs[round(index)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
@@ -276,9 +276,6 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print(data_range)
                 if round(index) >= data_range:
                     break
-        # else: # empty
-        #     img = np.zeros((original_data.shape[1], original_data.shape[2]))
-        #     plt.imshow(img)
         if int((i-1)/columns) == 5 and round(index - 1) % 3 == 0: # flow pred; only for interpolated!
             # this was flipped. why?
             # u = - flow_u[round(index)]
@@ -315,9 +312,6 @@ def visualize_large(original_data, interpol_data, diffs,
             # print(data_range)
             if round(index) >= data_range:
                 break
-        # else: # empty
-        #     img = np.zeros((original_data.shape[1], original_data.shape[2]))
-        #     plt.imshow(img)
         if int((i-1)/columns) == 6 and round(index - 1) % 3 == 0: # flow diff vec
             u_diff = flow_u_diff[round(index)]
             v_diff = flow_v_diff[round(index)]
@@ -334,9 +328,6 @@ def visualize_large(original_data, interpol_data, diffs,
             # print(data_range)
             if round(index) >= data_range:
                 break
-        # else: # empty
-        #     img = np.zeros((original_data.shape[1], original_data.shape[2]))
-        #     plt.imshow(img)
 
         if dataset != "vimeo2d":
             # if round(index) % factor == 0 and int((i-1)/columns) == 0:
@@ -359,7 +350,6 @@ def visualize_large(original_data, interpol_data, diffs,
             # plt.imshow(img, cmap=cmap, vmin=0., vmax=1.)
             # plt.imshow(img, cmap=cmap, vmin=data_to_vis.min(), vmax=data_to_vis.max())
 
-        # index += 2
         index += skip
         # index += factor / math.log2(factor) # skip = factor / exp  128/7
         # print(round(index))

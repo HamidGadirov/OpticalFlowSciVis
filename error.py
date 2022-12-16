@@ -241,7 +241,12 @@ def calculate_diff(original_data, interpol_data, dataset, factor, dir_res):
         print("Diff", diffs.min(), diffs.max())
         diffs = (diffs - diffs.min()) / (diffs.max() - diffs.min())
         # diffs = (diffs - diffs.min()) / (diffs.max() - diffs.min()) * 255. # no need if 0..1 range
-        print("Diff after stretch", diffs.min(), diffs.max())
+        # print("Diff after stretch", diffs.min(), diffs.max())
+        print("Diff min max:", diffs.min(), diffs.max())
+
+        # quantify the error, e.g., giving the mean/dev/max 
+        print("Diff mean and std:", np.mean(diffs), np.std(diffs))
+
         title = "Difference"
         # if "2d" in dataset:
         #     visualize_series(diffs, factor,  dataset, dir_res, title=title, show=False, save=True)
