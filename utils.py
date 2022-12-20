@@ -368,6 +368,9 @@ def visualize_large(original_data, interpol_data, diffs,
         plt.subplots_adjust(wspace=-0.21, hspace=-0.01)
     elif "pipedcylinder2d" in dataset:
         plt.subplots_adjust(wspace=0.01, hspace=-0.75)
+        x = 0.075
+        y = 0.7
+        step = (y - 0.25) / 6.
     elif "cylinder2d" in dataset:
         plt.subplots_adjust(wspace=0.01, hspace=-0.945)
     elif "rectangle2d" in dataset:

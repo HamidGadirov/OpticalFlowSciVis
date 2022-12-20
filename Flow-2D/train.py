@@ -406,7 +406,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         except:
             print("loss json doesn't exist")
 
-        # plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
+        plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
 
         if dataset == "vimeo2d":
             data_test = np.array(data_test_combined) # vimeo
@@ -643,14 +643,18 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_refine_v2_128_rect_hftext_range3579.pkl" # flow not accurate, loss jump
     # desired unsupervised flow wasn't achieved, switching to UPFlow... 02.09.22
 
+    model_name = "flownet_lapl_dist_photo1e-5_refine_v2_128_rect_big_hftext.pkl" # no
+    model_name = "flownet_lapl_dist_refine_v2_128_rect_big_hftext.pkl" # no
+    model_name = "flownet_flowonly_v2_128_rect_big_hftext.pkl" # 
+
     """ lbs2d """
-    model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
+    # model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs.pkl" # 200 ep: very good interpol, bad flow
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs_skip.pkl" # 250 ep: perf interpol, good flow but it was too easy
     # model_name = "flownet_flowonly_v2_128_lbs_skip.pkl" # 175 ep: 
 
     """ vimeo2d """
-    model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
+    # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
     # model_name = "flownet_lapl_dist_reverse_v2_128_vimeo.pkl" # same ???
     # model_name = "flownet_lapl_dist_noreverse_v2_128_vimeo.pkl" # same ???
     # model_name = "flownet_lapl_dist_zero_v2_128_vimeo.pkl" # empty
@@ -715,8 +719,14 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_refine_v2_128_piped.pkl" # 128 96 64 450ep very good interpol, inaccurate flow
     # model_name = "flownet_lapl_dist_photo_refine_v2_128_piped.pkl" # 128 96 64 no refine, flow not accurate 
     # model_name = "flownet_lapl_dist_reg_photo_v2_128_piped.pkl"
+    # model_name = "flownet_lapl_dist_photo1e-6_v2_128_piped.pkl"
 
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_piped.pkl" # 600 ep: very good interpol, not accurate flow
+    # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_piped.pkl" # this was not so bad, improve???
+    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_1K_piped.pkl" # best result for unsupervised!
+    # model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_v2_128_1K_piped.pkl" # same, reg1e-6 is netter for loss values
+    # model_name = "flownet_lapl_dist_v2_128_1K_piped.pkl" # very good interpol, not accurate flow (wrong direction)
+    # model_name = "flownet_lapl_dist_reg1e-6_photo1e-4_v2_128_1K_piped.pkl" # photo1e-5 was better
 
     """ FluidSimML2d """
     # model_name = "flownet_lapl_3rd_c_Fluid.pkl" # not good

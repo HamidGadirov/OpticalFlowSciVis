@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+import os
+import cv2
 
 """
 Create Your Own Lattice Boltzmann Simulation (With Python)
@@ -8,8 +10,24 @@ Philip Mocz (2020) Princeton Univeristy, @PMocz
 
 Simulate flow past cylinder
 for an isothermal fluid
+"""
 
 """
+added fields and created dataset
+Hamid Gadirov (2022) Univeristy of Groningen
+"""
+# def generate_video(img):
+#     for i in range(len(img)):
+#         plt.imshow(img[i], cmap='bwr') # cm.Greys_r)
+#         plt.savefig("video" + "/file%02d.png" % i)
+
+#     os.chdir("your_folder")
+#     subprocess.call([
+#         'ffmpeg', '-framerate', '8', '-i', 'file%02d.png', '-r', '30', '-pix_fmt', 'yuv420p',
+#         'video_name.mp4'
+#     ])
+#     for file_name in glob.glob("*.png"):
+#         os.remove(file_name)
 
 def main():
 	""" Lattice Boltzmann Simulation """
@@ -41,7 +59,7 @@ def main():
 	
 	# Cylinder boundary
 	X, Y = np.meshgrid(range(Nx), range(Ny))
-	cylinder = (X - Nx/4)**2 + (Y - Ny/2)**2 < (Ny/4)**2
+	cylinder = (X - Nx/5)**2 + (Y - Ny/2.5)**2 < (Ny/4)**2
 	
 	# Prep figure
 	fig = plt.figure(figsize=(4,2), dpi=80)
@@ -70,8 +88,11 @@ def main():
 		# print("ux uy at 30 100", ux[30][100], uy[30][100])
 		# print("ux uy at 50 200", ux[50][200], uy[50][200])
 		# print("ux uy at 70 300", ux[70][300], uy[70][300])
-		print("ux uy mean grid", np.mean(ux), np.mean(uy))
-		print("rho mean grid", np.mean(rho), np.mean(rho))
+		# print("ux uy mean grid", np.mean(ux), np.mean(uy))
+		# print("rho mean grid", np.mean(rho), np.mean(rho))
+		# print("rho at 30 100", rho[30][100])
+		# print("rho at 50 200", rho[50][200])
+		# print("rho at 70 300", rho[70][300])
 		
 		
 		# Apply Collision
@@ -83,25 +104,122 @@ def main():
 		
 		# Apply boundary 
 		F[cylinder,:] = bndryF
-		
 
+		# create video from fields
+		# cap = cv2.VideoCapture(0)
+		# ret, frame = cap.read()
+		video_name = "LBS" + "_10fps.mp4"
+		fps = 10
+		sizeY = 100
+		sizeX = 400
+		out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+		
 		# plot in real time - color 1/2 particles blue, other half red
 		if (plotRealTime and (it % 10) == 0) or (it == Nt-1):
 			plt.cla()
+			# ux[cylinder] = 0
+			# uy[cylinder] = 0
+			# vorticity = (np.roll(ux, -1, axis=0) - np.roll(ux, 1, axis=0)) - (np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1))
+			# vorticity[cylinder] = np.nan
+			# vorticity = np.ma.array(vorticity, mask=cylinder)
+			# plt.imshow(vorticity, cmap='bwr')
+			# plt.imshow(~cylinder, cmap='gray', alpha=0.3)
+			# plt.clim(-.1, .1)
+			# ax = plt.gca()
+			# ax.invert_yaxis()
+			# ax.get_xaxis().set_visible(False)
+			# ax.get_yaxis().set_visible(False)	
+			# ax.set_aspect('equal')	
+			# plt.pause(0.001)
+
+			# plt.cla()
+			# rho[cylinder] = 0
+			# rho = np.ma.array(rho, mask=cylinder)
+			# plt.imshow(rho, cmap='bwr')
+			# plt.imshow(~cylinder, cmap='gray', alpha=0.3)
+			# plt.clim(-.1, .1)
+			# ax = plt.gca()
+			# ax.invert_yaxis()
+			# ax.get_xaxis().set_visible(False)
+			# ax.get_yaxis().set_visible(False)	
+			# ax.set_aspect('equal')	
+			# plt.pause(0.001)
+
+			norm = np.sqrt(ux * ux + uy * uy) # direction???
+
+			# plt.cla()
+			# norm = np.ma.array(norm, mask=cylinder)
+			# plt.imshow(norm, cmap='bwr')
+			# plt.imshow(~cylinder, cmap='gray', alpha=0.3)
+			# plt.clim(-.1, .1)
+			# ax = plt.gca()
+			# ax.invert_yaxis()
+			# ax.get_xaxis().set_visible(False)
+			# ax.get_yaxis().set_visible(False)	
+			# ax.set_aspect('equal')	
+			# plt.pause(0.001)
+
+			# print("norm at 30 100", norm[30][100])
+			# print("norm at 50 200", norm[50][200])
+			# print("norm at 70 300", norm[70][300])
+
+			fig, axs = plt.subplots(3)
+			fig.suptitle('Vorticity, density, velocity')
+
+			# plt.cla()
 			ux[cylinder] = 0
 			uy[cylinder] = 0
 			vorticity = (np.roll(ux, -1, axis=0) - np.roll(ux, 1, axis=0)) - (np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1))
 			vorticity[cylinder] = np.nan
 			vorticity = np.ma.array(vorticity, mask=cylinder)
-			plt.imshow(vorticity, cmap='bwr')
-			plt.imshow(~cylinder, cmap='gray', alpha=0.3)
-			plt.clim(-.1, .1)
-			ax = plt.gca()
-			ax.invert_yaxis()
-			ax.get_xaxis().set_visible(False)
-			ax.get_yaxis().set_visible(False)	
-			ax.set_aspect('equal')	
-			plt.pause(0.001)
+			# axs[0].imshow(vorticity, cmap='bwr')
+			# axs[0].imshow(~cylinder, cmap='gray', alpha=0.3)
+			# plt.clim(-.1, .1)
+			# axs[0].clim(-.1, .1)
+			# ax = plt.gca()
+			# ax.invert_yaxis()
+			# ax.get_xaxis().set_visible(False)
+			# ax.get_yaxis().set_visible(False)	
+			# ax.set_aspect('equal')	
+			# plt.pause(0.001)
+
+			# plt.cla()
+			rho = np.ma.array(rho, mask=cylinder)
+			# axs[1].imshow(rho, cmap='bwr')
+			# axs[1].imshow(~cylinder, cmap='gray', alpha=0.3)
+
+			norm = np.ma.array(norm, mask=cylinder)
+			# axs[2].imshow(norm, cmap='bwr')
+			# axs[2].imshow(~cylinder, cmap='gray', alpha=0.3)
+			# plt.clim(-.1, .1)
+			# ax = plt.gca()
+			# plt.pause(0.01)
+			plt.close()
+
+			# ret, frame = cap.read()
+			final_frame = cv2.vconcat((vorticity, rho))
+			final_frame = cv2.vconcat((final_frame, norm))
+			# print(final_frame.shape)
+			# cv2.imshow('frame',final_frame)
+
+			out.write(final_frame.astype('uint8'))
+				# out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
+
+			if it == 300:
+				# fig.savefig("Vorticity, density, velocity t=3000")
+				out.release()
+				print("Created:", video_name)
+				input("x")
+
+			# # vel_x = np.ma.array(vel_x, mask=cylinder)
+			# # axs[1].imshow(vel_x, cmap='bwr')
+			# # axs[1].imshow(~cylinder, cmap='gray', alpha=0.3)
+		
+			# # add density and velolicites to list
+			# # each 10th timestep
+			# density.append(rho)
+			# vel_x.append(ux)
+			# vel_y.append(uy)
 		
 			# add density and velolicites to list
 			# each 10th timestep

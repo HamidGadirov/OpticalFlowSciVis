@@ -86,8 +86,8 @@ grid = np.zeros((grit_t, grid_x, grid_y), dtype=np.float32)
 velocities_x = np.zeros((grit_t, grid_x, grid_y), dtype=np.float32)
 velocities_y = np.zeros((grit_t, grid_x, grid_y), dtype=np.float32)
 
-box_dim_x = 40
-box_dim_y = 60
+box_dim_x = 60 # 40
+box_dim_y = 80 # 60
 # 25x40 is 6% of pixels - loss distill necomes nan, 
 box = np.ones((box_dim_x, box_dim_y), dtype=np.float32)
 # box = np.zeros((box_dim_x, box_dim_y), dtype=int)
@@ -110,7 +110,7 @@ box *= 255.
 step_size = 4
 for i in range(0, box_dim_x, step_size):
     for j in range(0, box_dim_y, step_size):
-        rand_value = np.random.randint(256)
+        rand_value = np.random.randint(20, 256)
         # print(rand_value)
         box[i:i+step_size, j:j+step_size] = rand_value
 box /= 255. # to 0...1
@@ -235,7 +235,7 @@ visualize_series_flow(data[:100], velocities_x[:100], velocities_y[:100],
 input("velocities")
 
 # pkl_filename = "rectangle2d" + ".pkl" 
-pkl_filename = "rectangle2d_hftext" + "_flow" + ".pkl" 
+pkl_filename = "rectangle2d_big_hftext" + "_flow" + ".pkl" 
 
 print("data:", data.shape)
 data = data[:, np.newaxis, ...]
