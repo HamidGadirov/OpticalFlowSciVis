@@ -35,16 +35,17 @@ def plotly_fig2array(fig):
 
 def plot_loss(loss, dir_res, name="loss.png", save=False):
     fig = plt.figure(figsize=(8, 4))
-    labels = ('total', 'lapl', 'tea', 'distill', 'reg', 'photo')
-    colors = ('b', 'r', 'g', 'c', 'm', 'y')
+    labels = ('total', 'lapl', 'tea', 'distill', 'reg', 'photo', 'flow')
+    colors = ('r', 'g', 'b', 'c', 'm', 'y', 'orange')
+    markers = ("_", "x", "+", "*", ".", "d", "v")
     print(loss.shape)
     for j in range(loss.shape[1]): # how many loss components
-        plt.plot(loss[:, j], colors[j])
+        plt.plot(loss[:, j], colors[j], marker=markers[j])
     # input("x")
     plt.title('validation losses')
     plt.xlabel('epoch')
     plt.ylabel('loss')
-    plt.legend(['total', 'lapl', 'tea', 'dist', 'reg', 'photo'], loc='upper right')
+    plt.legend(['total', 'lapl', 'tea', 'dist', 'reg', 'photo', 'flow'], loc='upper right')
     # plt.legend()
     if save:
         res_path = os.path.join(dir_res, name)

@@ -55,7 +55,7 @@ class Model:
             
         if rank <= 0:
             self.flownet.load_state_dict(convert(torch.load('{}/{}'.format(path, model_name))))
-            print("loaded {}".format(model_name))
+            print("Loaded {}".format(model_name))
             # print("loaded flownet_l1_reg.pkl") flownet_lapl_reg_
         
     def save_model(self, model_name, path, rank=0):
@@ -175,9 +175,11 @@ class Model:
         l1_norm = block2_params
         l1_reg = l1_norm # l1_lambda * l1_norm
 
-        def charbonnier(x, alpha=0.25, epsilon=1.e-9):
+        def charbonnier(x, alpha=0.25, epsilon=1.e-9): # for photo or smooth loss
             return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
 
+        """ Smoothness consistency """
+        """
         def smoothness_loss(flow):
             # print("Smoothness loss")
             flow_0 = flow[0]
@@ -205,7 +207,10 @@ class Model:
         loss_smooth = smoothness_loss(flow)
         # smooth_lambda = 0.01
         # loss_smooth = smooth_lambda * smooth
+        """
+        """ end Smoothness consistency """
 
+        """ Photometric consistency """
         def generate_grid(B, H, W, device):
             xx = torch.arange(0, W).view(1, -1).repeat(H, 1)
             # print(xx.size())
@@ -261,14 +266,15 @@ class Model:
         loss_photo /= 2
         # print(loss_photo)
         # input("x")
+        """ end Photometric consistency """
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
         lambda_distill = 0.01 # 0.01 0.1
-        lambda_reg = 1e-6 # 1e-6 best
-        lambda_photo = 1e-5 # 1e-5 # 2 3 4 5 # 1e-5 best
+        lambda_reg = 0 # 1e-6 best
+        lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0 # 0.01 1
+        lambda_flow = 0.2 # 0.01 0.2 1
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter
@@ -280,10 +286,10 @@ class Model:
         if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
             or dataset == "rectangle2d" or dataset == "lbs2d" : # flow loss separately
             loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
-                    loss_flow * lambda_flow + l1_reg * lambda_reg + loss_photo * lambda_photo
+                    l1_reg * lambda_reg + loss_photo * lambda_photo + loss_flow * lambda_flow 
         else:
             loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
-                    l1_reg * lambda_reg + loss_photo * lambda_photo + loss_smooth * lambda_smooth
+                    l1_reg * lambda_reg + loss_photo * lambda_photo # + loss_smooth * lambda_smooth
 
         if training:
             self.optimG.zero_grad()
@@ -304,9 +310,6 @@ class Model:
             flow_teacher = flow[2]
             merged_teacher = merged[2]
         
-        loss_distill *= lambda_distill
-        l1_reg *= lambda_reg
-        loss_photo *= lambda_photo
 
         return merged[2], {
             'merged_tea': merged_teacher,
@@ -314,10 +317,11 @@ class Model:
             'mask_tea': mask,
             'flow': flow[2][:, :2],
             'flow_tea': flow_teacher,
-            'loss_l1': loss_l1,
-            'loss_tea': loss_tea,
-            'loss_distill': loss_distill,
-            'l1_reg': l1_reg,
-            'loss_photo': loss_photo,
+            'loss_l1': loss_l1 * lambda_l1,
+            'loss_tea': loss_tea * lambda_tea,
+            'loss_distill': loss_distill * lambda_distill,
+            'l1_reg': l1_reg * lambda_reg,
+            'loss_photo': loss_photo * lambda_photo,
+            'loss_flow': loss_flow * lambda_flow,
             'loss_G': loss_G
             }

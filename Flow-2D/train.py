@@ -454,8 +454,12 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
         # loss_l1_list.append(info['loss_l1'].cpu().numpy())
         # loss_tea_list.append(info['loss_tea'].cpu().numpy())
         # loss_distill_list.append(info['loss_distill'].cpu().numpy())
+        # for key, value in info.items():
+        #     print (key, value)
+        # input("x")
         loss_all = (info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
-            info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy())
+            info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy(), 
+            info['loss_flow'].cpu().numpy())
         # loss_G_list.append(loss_all)
         # loss_G_list.append(info['loss_G'].cpu().numpy())
         # for j in range(gt.shape[0]):
@@ -645,7 +649,9 @@ if __name__ == "__main__":
 
     model_name = "flownet_lapl_dist_photo1e-5_refine_v2_128_rect_big_hftext.pkl" # no
     model_name = "flownet_lapl_dist_refine_v2_128_rect_big_hftext.pkl" # no
-    model_name = "flownet_flowonly_v2_128_rect_big_hftext.pkl" # 
+    model_name = "flownet_flowonly_v2_128_rect_big_hftext.pkl" # bad interpol, flow could be better
+    model_name = "flownet_lapl_dist_flow_v2_128_rect_big_hftext.pkl" #
+
 
     """ lbs2d """
     # model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
@@ -723,7 +729,7 @@ if __name__ == "__main__":
 
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_piped.pkl" # 600 ep: very good interpol, not accurate flow
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_piped.pkl" # this was not so bad, improve???
-    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_1K_piped.pkl" # best result for unsupervised!
+    # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_1K_piped.pkl" # best result for unsupervised!
     # model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_v2_128_1K_piped.pkl" # same, reg1e-6 is netter for loss values
     # model_name = "flownet_lapl_dist_v2_128_1K_piped.pkl" # very good interpol, not accurate flow (wrong direction)
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-4_v2_128_1K_piped.pkl" # photo1e-5 was better
