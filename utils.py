@@ -37,10 +37,10 @@ def plot_loss(loss, dir_res, name="loss.png", save=False):
     fig = plt.figure(figsize=(8, 4))
     labels = ('total', 'lapl', 'tea', 'distill', 'reg', 'photo', 'flow')
     colors = ('r', 'g', 'b', 'c', 'm', 'y', 'orange')
-    markers = ("_", "x", "+", "*", ".", "d", "v")
+    # markers = ("_", "x", "+", "*", ".", "d", "v")
     print(loss.shape)
     for j in range(loss.shape[1]): # how many loss components
-        plt.plot(loss[:, j], colors[j], marker=markers[j])
+        plt.plot(loss[:, j], colors[j]) # , marker=markers[j])
     # input("x")
     plt.title('validation losses')
     plt.xlabel('epoch')
@@ -211,12 +211,16 @@ def visualize_large(original_data, interpol_data, diffs,
         if int((i-1)/columns) == 0: # gt
             img = original_data[round(index)]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
-            if index % 3 == 0:
-                ax.set_title('t=0') # can we help model with info of seq?
-            elif index % 3 == 1:
-                ax.set_title('t=1')
-            else:
-                ax.set_title('t=2')
+            # if index % 3 == 0:
+            #     ax.set_title('t=0') # can we help model with info of seq?
+            # elif index % 3 == 1:
+            #     ax.set_title('t=1')
+            # else:
+            #     ax.set_title('t=2')
+            ax_title = "t=" + str(index)
+            if index % 3 == 1:
+                ax_title += "*"
+            ax.set_title(ax_title, fontsize=8)
         if int((i-1)/columns) == 1 and round(index - 1) % 3 == 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
             img = interpol_data[round(index)] # [index-columns*2,...]
@@ -359,7 +363,8 @@ def visualize_large(original_data, interpol_data, diffs,
             index = 0
 
     fig = plt.gcf()
-    plt.suptitle(title) 
+    suptitle = dataset + str(factor) + "x"
+    plt.suptitle(suptitle) 
     # print(matplotlib.get_backend())
     fig.set_size_inches(20, 3)
     # wspace is x; hspace is y 

@@ -270,7 +270,7 @@ class Model:
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.01 # 0.01 0.1
+        lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
         lambda_reg = 0 # 1e-6 best
         lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important

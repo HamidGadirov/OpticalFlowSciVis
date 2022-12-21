@@ -45,13 +45,12 @@ device = torch.device("cuda")
 log_path = 'train_log'
 
 def get_learning_rate(step):
-    step_threshold = 1000. # 2000.
-    if step < step_threshold:
-        mul = step / step_threshold
+    if step < 2000:
+        mul = step / 2000.
         return 3e-4 * mul
     else:
-        mul = np.cos((step - step_threshold) / (args.epoch * args.step_per_epoch - step_threshold) * math.pi) * 0.5 + 0.5
-        return (3e-4 - 3e-5) * mul + 3e-5
+        mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
+        return (3e-4 - 3e-6) * mul + 3e-6
 
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
@@ -650,7 +649,9 @@ if __name__ == "__main__":
     model_name = "flownet_lapl_dist_photo1e-5_refine_v2_128_rect_big_hftext.pkl" # no
     model_name = "flownet_lapl_dist_refine_v2_128_rect_big_hftext.pkl" # no
     model_name = "flownet_flowonly_v2_128_rect_big_hftext.pkl" # bad interpol, flow could be better
-    model_name = "flownet_lapl_dist_flow_v2_128_rect_big_hftext.pkl" #
+    model_name = "flownet_lapl_dist_flow_v2_128_rect_big_hftext.pkl" # slowly converges?
+    # model_name = "flownet_lapl_flow_v2_128_rect_big_hftext.pkl" # bad
+    # model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext.pkl" # not so good
 
 
     """ lbs2d """
