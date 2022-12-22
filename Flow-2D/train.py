@@ -261,13 +261,21 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             # input("x")
             # data = np.expand_dims(data, axis=0)
             if dataset == "vimeo2d":
-                print("vimeo2d")
+                # print("vimeo2d")
                 data_gpu, timestep = data
                 for b in range(data_gpu.shape[0]):
                     data_test_combined.append(np.asarray(data_gpu[b, 0] / 255.))
                     data_test_combined.append(np.asarray(data_gpu[b, 2] / 255.))
                     data_test_combined.append(np.asarray(data_gpu[b, 1] / 255.))
                 data_gpu = data_gpu.to(device, non_blocking=True) / 255.
+            elif dataset == "droplet2d":
+                # print("droplet2d")
+                data_gpu = data
+                for b in range(data_gpu.shape[0]):
+                    data_test_combined.append(np.asarray(data_gpu[b, 0] ))
+                    data_test_combined.append(np.asarray(data_gpu[b, 2] ))
+                    data_test_combined.append(np.asarray(data_gpu[b, 1] ))
+                data_gpu = data_gpu.to(device, non_blocking=True) 
             else:
                 data_gpu = data
                 for b in range(data_gpu.shape[0]):
@@ -280,16 +288,16 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             imgs = data_gpu[:, :2]
             gt = data_gpu[:, 2:3]
 
-            flow_gt = data_gpu[:,:,1:3] # only flow in x and y
-            # input(flow_gt.shape)
-            flow_gt_array = np.asarray(flow_gt.detach().cpu().numpy())
-            for b in range(data_gpu.shape[0]):
-                flow_gt_combined.append(flow_gt_array[b, 0])
-                flow_gt_combined.append(flow_gt_array[b, 2])
-                flow_gt_combined.append(flow_gt_array[b, 1])
-
             if dataset == "pipedcylinder2d"  or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
                 or dataset == "rectangle2d" or dataset == "lbs2d":
+                flow_gt = data_gpu[:,:,1:3] # only flow in x and y
+                # input(flow_gt.shape)
+                flow_gt_array = np.asarray(flow_gt.detach().cpu().numpy())
+                for b in range(data_gpu.shape[0]):
+                    flow_gt_combined.append(flow_gt_array[b, 0])
+                    flow_gt_combined.append(flow_gt_array[b, 2])
+                    flow_gt_combined.append(flow_gt_array[b, 1])
+
                 imgs = imgs[:, :, 0]
                 gt = gt[:, :, 0]
 
@@ -407,8 +415,6 @@ def train(model, dataset, exp, model_name, mode, local_rank):
 
         plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
 
-        if dataset == "vimeo2d":
-            data_test = np.array(data_test_combined) # vimeo
         data_test = np.array(data_test_combined)
         print("data_test:", data_test.shape)
         # if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" or dataset == "rectangle2d":
@@ -443,7 +449,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
             data_gpu = data
             data_gpu = data_gpu.to(device, non_blocking=True)
         # data_gpu = data_gpu.permute(0, 3, 1, 2)
-        print("data to gpu:", data_gpu.shape)
+        # print("data to gpu:", data_gpu.shape)
         # input(i)
         imgs = data_gpu[:, :2]
         gt = data_gpu[:, 2:3]
@@ -692,6 +698,9 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_all_v2_64_3rd_drop50K.pkl" # coeffs: 
     # model_name = "flownet_lapl_all_10e5_v2_64_3rd_drop50K.pkl" # coeffs: 
     # model_name = "flownet_flowonly_v2_64_tl_infer_drop50K.pkl" # tl flrom pipedc: 
+    # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K.pkl" # reg was too much
+    # model_name = "flownet_lapl_dist_photo1e-5_v2_128_drop50K.pkl" # best so far: interpol and flow, how improve?
+    model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" #
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"
@@ -734,6 +743,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-5_photo1e-5_v2_128_1K_piped.pkl" # same, reg1e-6 is netter for loss values
     # model_name = "flownet_lapl_dist_v2_128_1K_piped.pkl" # very good interpol, not accurate flow (wrong direction)
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-4_v2_128_1K_piped.pkl" # photo1e-5 was better
+    # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_1K_piped.pkl" # best result for unsupervised!
 
     """ FluidSimML2d """
     # model_name = "flownet_lapl_3rd_c_Fluid.pkl" # not good
@@ -779,7 +789,10 @@ if __name__ == "__main__":
         print("Saving at:", dir_model)
 
         data_test, interpol_data, flow, flow_gt, mask = train(model, args.dataset, args.exp, model_name, args.mode, args.local_rank)
-        # print(data_test.shape, interpol_data.shape, flow.shape, mask.shape)
+        print("data_test:", data_test.shape)
+        print("interpol_data:", interpol_data.shape)
+        print("flow:", flow.shape)
+        print("mask:", mask.shape)
         # input("inf")
         # original_data = data_test[:, 2, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
         original_data = data_test[:, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
@@ -789,10 +802,7 @@ if __name__ == "__main__":
 
         # flow droplet2d:
         # print(flow.shape, flow_gt.shape)
-        if dataset == "vimeo2d": 
-            flow_gt = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
         
-        flow_gt = flow_gt[:, :, :flow.shape[2], :flow.shape[3]]
         # interpol_data = interpol_data
         # print(original_data.shape, interpol_data.shape, flow.shape, flow_gt.shape)
         print("original data is in range %f to %f" % (np.min(original_data), np.max(original_data)))
@@ -803,8 +813,9 @@ if __name__ == "__main__":
         diffs = calculate_diff(original_data, interpol_data, dataset, factor, dir_model)
         print("diffs:", diffs.shape)
 
-        if dataset != "vimeo2d": 
-            print("!= vimeo2d")
+        if dataset != "vimeo2d" and dataset != "droplet2d":
+            print("GT flow available")
+            flow_gt = flow_gt[:, :, :flow.shape[2], :flow.shape[3]]
             u_gt = flow_gt[:, 0, ...]
             v_gt = flow_gt[:, 1, ...]
             norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
@@ -838,11 +849,14 @@ if __name__ == "__main__":
             # u_diff = (u_diff - np.min(u_diff)) / (np.max(u_diff) - np.min(u_diff))
             # v_diff = (v_diff - np.min(v_diff)) / (np.max(v_diff) - np.min(v_diff))
         else:
+            print("no GT flow available")
             # diffs = np.zeros((original_data.shape[0], original_data.shape[1], original_data.shape[2]), dtype=np.float32)
             diffs_flow = np.zeros((original_data.shape[0], original_data.shape[1], original_data.shape[2]), dtype=np.float32)
             flow_gt = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
-            u_diff = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
-            v_diff = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
+            # u_diff = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
+            # v_diff = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
+            u_diff = np.zeros((flow.shape[0], flow.shape[2], flow.shape[3]), dtype=np.float32)
+            v_diff = np.zeros((flow.shape[0], flow.shape[2], flow.shape[3]), dtype=np.float32)
 
         print("Flow gt mean and std:", np.mean(flow_gt), np.std(flow_gt))
         print("Flow pred mean and std:", np.mean(flow), np.std(flow))

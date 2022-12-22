@@ -67,6 +67,8 @@ def main():
 	density = []
 	vel_x = []
 	vel_y = []
+	magnitude = []
+	vort = []
 	# Simulation Main Loop
 	for it in range(Nt):
 		print(it)
@@ -105,14 +107,6 @@ def main():
 		# Apply boundary 
 		F[cylinder,:] = bndryF
 
-		# create video from fields
-		# cap = cv2.VideoCapture(0)
-		# ret, frame = cap.read()
-		video_name = "LBS" + "_10fps.mp4"
-		fps = 10
-		sizeY = 100
-		sizeX = 400
-		out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
 		
 		# plot in real time - color 1/2 particles blue, other half red
 		if (plotRealTime and (it % 10) == 0) or (it == Nt-1):
@@ -196,20 +190,20 @@ def main():
 			# plt.pause(0.01)
 			plt.close()
 
-			# ret, frame = cap.read()
-			final_frame = cv2.vconcat((vorticity, rho))
-			final_frame = cv2.vconcat((final_frame, norm))
-			# print(final_frame.shape)
-			# cv2.imshow('frame',final_frame)
+			# # ret, frame = cap.read()
+			# final_frame = cv2.vconcat((vorticity, rho))
+			# final_frame = cv2.vconcat((final_frame, norm))
+			# # print(final_frame.shape)
+			# # cv2.imshow('frame',final_frame)
+			# out.write(final_frame.astype('uint8'))
+			# 	# out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
 
-			out.write(final_frame.astype('uint8'))
-				# out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
-
-			if it == 300:
+			if it == 3000:
 				# fig.savefig("Vorticity, density, velocity t=3000")
-				out.release()
-				print("Created:", video_name)
-				input("x")
+				# out.release()
+				# print("Created:", video_name)
+				# input("x")
+				break
 
 			# # vel_x = np.ma.array(vel_x, mask=cylinder)
 			# # axs[1].imshow(vel_x, cmap='bwr')
@@ -226,12 +220,68 @@ def main():
 			density.append(rho)
 			vel_x.append(ux)
 			vel_y.append(uy)
+			magnitude.append(norm)
+			vort.append(vorticity)
 
+	vorticity = np.array(vort)
 	density = np.array(density)
 	vel_x = np.array(vel_x)
 	vel_y = np.array(vel_y)
+	magnitude = np.array(magnitude)
+	print("vorticity:", vorticity.shape)
 	print("density:", density.shape)
 	print("vel_x:", vel_x.shape)
+	print("magnitude:", magnitude.shape)
+	# input("X")
+
+	video = np.concatenate((vorticity, density), axis=1)
+	video = np.concatenate((video, magnitude), axis=1)
+	print("video data:", video.shape)
+
+	# video_name = "LBS_Vorticity_Density_Velocity" + "_10fps.mp4"
+	# fps = 10
+	# sizeY = 400
+	# sizeX = 300
+	# out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+	# for i in range(len(video)):
+	# 	out.write(video[i].astype('uint8'))
+    #     # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
+	# out.release()
+	# input("X")
+	# input("X")
+
+	fps = 10
+	sizeY = 400
+	sizeX = 100
+
+	video_name = "LBS_Vorticity" + "_10fps.mp4"
+	out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+	for i in range(len(vorticity)):
+		out.write(vorticity[i].astype('uint8'))
+        # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
+	out.release()
+	input("Vorticity")
+
+	video_name = "LBS_Density" + "_10fps.mp4"
+	out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+	for i in range(len(density)):
+		out.write(density[i].astype('uint8'))
+        # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
+	out.release()
+	input("Density")
+
+	video_name = "LBS_Velocity" + "_10fps.mp4"
+	out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+	for i in range(len(magnitude)):
+		out.write(magnitude[i].astype('uint8'))
+        # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
+	out.release()
+	input("Velocity")
+
+	# for i in range(len(density)):
+	# 	out.write(density[i].astype('uint8'))
+    #     # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
+	# out.release()
 	# input("X")
 	
 	# # Save figure

@@ -201,6 +201,8 @@ def visualize_large(original_data, interpol_data, diffs,
     # norm_gt = np.sqrt(np.max(flow_u_gt) * np.max(flow_u_gt) + np.max(flow_v_gt) * np.max(flow_v_gt))
     # input(norm_gt)
 
+    # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
+
     index = 0
     for i in range(1, columns*rows+1):
         # index = (i-1)*2 # skip eaach second - do it defferently
@@ -237,7 +239,7 @@ def visualize_large(original_data, interpol_data, diffs,
         #     img = diffs_flow[round(index)] # [index-columns*2*2,...]
         #     plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
         if int((i-1)/columns) == 4 and round(index - 1) % 3 == 0: # flow gt
-            if dataset == "vimeo2d": # show pred flow in hsv-rgb instead of gt
+            if dataset == "vimeo2d" or dataset == "droplet2d": # show pred flow in hsv-rgb instead of gt
                 hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
                 hsv[:,:,1] = 255
                 mag, ang = cv2.cartToPolar(flow_u[round(index)], flow_v[round(index)])
@@ -363,13 +365,16 @@ def visualize_large(original_data, interpol_data, diffs,
             index = 0
 
     fig = plt.gcf()
-    suptitle = dataset + str(factor) + "x"
+    suptitle = dataset + "_" + str(factor) + "x"
     plt.suptitle(suptitle) 
     # print(matplotlib.get_backend())
     fig.set_size_inches(20, 3)
     # wspace is x; hspace is y 
     if "droplet2d" in dataset:
-        plt.subplots_adjust(wspace=0.01, hspace=-0.69)
+        plt.subplots_adjust(wspace=-0.9, hspace=0.01)
+        x = 0.18
+        y = 0.8
+        step = (y - 0.15) / 6.
     elif "FluidSimML2d" in dataset:
         plt.subplots_adjust(wspace=-0.21, hspace=-0.01)
     elif "pipedcylinder2d" in dataset:
@@ -399,7 +404,10 @@ def visualize_large(original_data, interpol_data, diffs,
     fig.text(x, y - step, 'Interpol', size=12)
     fig.text(x, y - step*2, 'Diff', size=12)
     fig.text(x, y - step*3, 'Mask', size=12)
-    fig.text(x, y - step*4, 'Flow GT', size=12)
+    if "droplet2d" in dataset or "vimeo2d" in dataset:
+        fig.text(x, y - step*4, 'Flow pred HSV', size=12)
+    else:
+        fig.text(x, y - step*4, 'Flow GT', size=12)
     fig.text(x, y - step*5, 'Flow pred', size=12)
     fig.text(x, y - step*6, 'Flow diff', size=12)
 

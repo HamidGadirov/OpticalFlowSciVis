@@ -271,10 +271,10 @@ class Model:
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
         lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 0 # 1e-6 best
-        lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
+        lambda_reg = 1e-7 # 1e-6 best on rectangle
+        lambda_photo = 1e-5 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.2 # 0.01 0.2 1
+        lambda_flow = 0 # 0.01 0.2 1
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter
@@ -282,14 +282,11 @@ class Model:
         # check if distill los is nan or overflow
         if math.isnan(loss_distill) or loss_distill > 10.:
             loss_distill = torch.tensor(0.)
+        if dataset == "droplet2d" or dataset == "vimeo2d":
+             loss_flow = torch.tensor(0.)
 
-        if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
-            or dataset == "rectangle2d" or dataset == "lbs2d" : # flow loss separately
-            loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
-                    l1_reg * lambda_reg + loss_photo * lambda_photo + loss_flow * lambda_flow 
-        else:
-            loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
-                    l1_reg * lambda_reg + loss_photo * lambda_photo # + loss_smooth * lambda_smooth
+        loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
+                l1_reg * lambda_reg + loss_photo * lambda_photo + loss_flow * lambda_flow # + loss_smooth * lambda_smooth
 
         if training:
             self.optimG.zero_grad()
