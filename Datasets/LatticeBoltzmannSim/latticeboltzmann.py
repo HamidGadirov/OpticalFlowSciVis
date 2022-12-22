@@ -71,7 +71,7 @@ def main():
 	vort = []
 	# Simulation Main Loop
 	for it in range(Nt):
-		print(it)
+		# print(it)
 		
 		# Drift
 		for i, cx, cy in zip(idxs, cxs, cys):
@@ -198,7 +198,7 @@ def main():
 			# out.write(final_frame.astype('uint8'))
 			# 	# out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
 
-			if it == 3000:
+			if it == 6000:
 				# fig.savefig("Vorticity, density, velocity t=3000")
 				# out.release()
 				# print("Created:", video_name)
@@ -222,6 +222,17 @@ def main():
 			vel_y.append(uy)
 			magnitude.append(norm)
 			vort.append(vorticity)
+
+			print("vorticity at 50 200", vorticity[50][200])
+			print("density at 50 200", rho[50][200])
+			print("magnitude at 50 200", norm[50][200])
+			print(it)
+			
+			# it = 5940
+			# vorticity at 50 200 0.010256654052211975
+			# density at 50 200 101.11102256448345
+			# magnitude at 50 200 0.08770241571151566
+			# why these values???
 
 	vorticity = np.array(vort)
 	density = np.array(density)
