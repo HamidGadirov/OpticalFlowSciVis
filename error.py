@@ -25,6 +25,16 @@ from utils import visualize_ind, visualize_series
 # show full video
 
 def calculate_psnr(img1, img2):
+    """
+    Calculate the peak signal-to-noise ratio (PSNR) between two images.
+    
+    Parameters:
+        img1 (numpy array): The first image.
+        img2 (numpy array): The second image.
+    
+    Returns:
+        float: The PSNR value between the two images.
+    """
     # img1 and img2 have range [0, 255]
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
@@ -34,6 +44,16 @@ def calculate_psnr(img1, img2):
     return 20 * math.log10(255.0 / math.sqrt(mse))
 
 def ssim(img1, img2):
+    """
+    Calculate the structural similarity index (SSIM) between two images.
+    
+    Parameters:
+        img1 (numpy array): The first image.
+        img2 (numpy array): The second image.
+    
+    Returns:
+        float: The SSIM value between the two images.
+    """
     C1 = (0.01 * 255)**2
     C2 = (0.03 * 255)**2
 
@@ -76,7 +96,18 @@ def calculate_ssim(img1, img2):
         raise ValueError('Wrong input image dimensions.')
 
 def calculate_metrics(original_data, interpol_data, factor):
-
+    """
+    Calculate the peak signal-to-noise ratio (PSNR) and structural similarity index (SSIM) between two datasets,
+    and return the mean values of these metrics.
+    
+    Parameters:
+        original_data (numpy array): The original data.
+        interpol_data (numpy array): The interpolated data.
+        factor (int): The factor by which the data is being interpolated.
+    
+    Returns:
+        tuple: A tuple containing the mean PSNR and SSIM values between the two datasets.
+    """
     psnr_scores_original = []
     ssim_scores_original = []
     psnr_scores_interpol = []
@@ -157,6 +188,18 @@ def calculate_metrics(original_data, interpol_data, factor):
     print("mean_ssim_scores", mean_ssim_scores)
 
 def create_data_for_interpol(factor, filename):
+    """
+    Creates a new array of data by selecting every 'factor'-th element of the data read from the specified 'filename' file. 
+    The data is first normalized so that the maximum value is 255, and the data type is changed to 'int'. 
+    The original data and the new data array are then returned.
+    
+    Parameters:
+    factor (int): The interval at which elements are selected from the data.
+    filename (str): The name of the file to read the data from.
+    
+    Returns:
+    tuple: A tuple containing the original data array and the new data array.
+    """
     # load member
     pkl_file = open(filename, 'rb')
     data = []
