@@ -123,10 +123,23 @@ class Model:
             gt_flow = gt_flow[:,:,:max_shape_2,:max_shape_3]
             # Flow loss
             # flow and flow_uv
-            # print(flow[2].shape)
-            # print(gt_flow.shape)
+            # print("flow[2]:", flow[2].shape) # 2nd IFBlock, 4 channels: Ft->0 and Ft->1 x and y
+            # print("gt_flow", gt_flow.shape)
             # input("flow")
-            loss_flow = torch.nn.functional.l1_loss(flow[2][:, :2], gt_flow) #
+            # loss_flow = torch.nn.functional.l1_loss(flow[2][:, :2], gt_flow) # this was wrong!
+            # flow[:, :2] is Ft->0 and flow[:, 2:4] is Ft->1
+            # TODO: add to all blocks +
+            loss_flow = torch.nn.functional.l1_loss(flow[0][:, 2:4], gt_flow)
+            loss_flow += torch.nn.functional.l1_loss(flow[1][:, 2:4], gt_flow)
+            loss_flow += torch.nn.functional.l1_loss(flow[2][:, 2:4], gt_flow)
+            # TODO: add Ft->0 to all blocks using reverted gt_flow
+            loss_flow += torch.nn.functional.l1_loss(flow[0][:, :2], -gt_flow)
+            loss_flow += torch.nn.functional.l1_loss(flow[1][:, :2], -gt_flow)
+            loss_flow += torch.nn.functional.l1_loss(flow[2][:, :2], -gt_flow)
+            # TODO: add this to Tea block +
+            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, 2:4], gt_flow)
+            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, :2], -gt_flow)
+            loss_flow /= 8.
 
         # replacing laplacian loss with l1
         # print("Laplace pyramid + L1 + AdamW (L2) + smoothness loss")
@@ -268,13 +281,13 @@ class Model:
         # input("x")
         """ end Photometric consistency """
 
-        lambda_l1 = 1 # 1
-        lambda_tea = 1 # 1
-        lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 1e-7 # 1e-6 best on rectangle
-        lambda_photo = 1e-5 # 1e-5 # 2 3 4 5 # 1e-5 best
+        lambda_l1 = 0 # 1
+        lambda_tea = 0 # 1
+        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_reg = 0 # 1e-6 best on rectangle 1e-7
+        lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0 # 0.01 0.2 1
+        lambda_flow = 1 # 0.01 0.2 1
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter

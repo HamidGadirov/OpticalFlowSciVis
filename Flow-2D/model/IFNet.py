@@ -146,7 +146,7 @@ class IFNet(nn.Module):
         img1 = x[:, 1:2] # 3:6
         gt = x[:, 2:3] # 6:   In inference time, gt is None
 
-        flow_list = []
+        flow_list = [] # flow_list represents flow predictions by each IFBlock, 4 channels, Ft->0, Ft->1
         merged = []
         mask_list = []
         warped_img0 = img0
@@ -188,8 +188,8 @@ class IFNet(nn.Module):
             img1 = img1[:,:,:max_shape_2,:max_shape_3]
             mask_list.append(torch.sigmoid(mask))
             flow_list.append(flow)
-            warped_img0 = warp(img0, flow[:, :2])
-            warped_img1 = warp(img1, flow[:, 2:4])
+            warped_img0 = warp(img0, flow[:, :2]) # Ft->0
+            warped_img1 = warp(img1, flow[:, 2:4]) # Ft->1
             merged_student = (warped_img0, warped_img1)
             merged.append(merged_student)
 

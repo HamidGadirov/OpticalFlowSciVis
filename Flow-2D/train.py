@@ -100,7 +100,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             data_test = DataLoader(dataset_test, batch_size=16, pin_memory=True, num_workers=8)
         else:
             data_test = load_data(dataset, exp, mode)
-            data_test = DataLoader(data_test, batch_size=16, shuffle=True, pin_memory=True, num_workers=8)
+            data_test = DataLoader(data_test, batch_size=16, pin_memory=True, num_workers=8)
 
     # model_name = "flownet"
     # model_name += "_lapl" if lapl_loss else ""
@@ -333,7 +333,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 # flow_array_ = flow[2].detach().cpu().numpy()
                 # flow_combined.extend(flow_l[:,0:4,:,:].squeeze())
                 # flow_combined.extend(flow_m[:,0:4,:,:].squeeze())
-                # flow_combined.extend(flow_r[:,0:4,:,:].squeeze()) # 0:4 because in x and y and for F_t->0, F_t->1 intermediate flows
+                # flow_combined.extend(flow_r[:,0:4,:,:].squeeze()) # 0:4 because in x and y for Ft->0 and Ft->1 intermediate flows
                 # print(flow.shape)
                 mask_l = np.asarray(mask[0].detach().cpu().numpy())
                 mask_r = np.asarray(mask[1].detach().cpu().numpy())
@@ -363,7 +363,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 flow_middle = np.asarray(flow_middle)
                 flow_right = np.asarray(flow_right)
                 flow_array_ = flow_left[2].detach().cpu().numpy()
-                flow_combined.append(flow_array_[:,0:4,:,:].squeeze()) # 0:4 because in x and y and for F_t->0, F_t->1 intermediate flows
+                flow_combined.append(flow_array_[:,0:4,:,:].squeeze()) # 0:4 because in x and y for Ft->0, Ft->1 intermediate flows
                 flow_array_ = flow_middle[2].detach().cpu().numpy()
                 flow_combined.append(flow_array_[:,0:4,:,:].squeeze())
                 flow_array_ = flow_right[2].detach().cpu().numpy()
@@ -553,7 +553,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=500, type=int) # 300 1000
+    parser.add_argument('--epoch', default=1000, type=int) # 300 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -657,14 +657,21 @@ if __name__ == "__main__":
     model_name = "flownet_flowonly_v2_128_rect_big_hftext.pkl" # bad interpol, flow could be better
     model_name = "flownet_lapl_dist_flow_v2_128_rect_big_hftext.pkl" # slowly converges?
     # model_name = "flownet_lapl_flow_v2_128_rect_big_hftext.pkl" # bad
-    # model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext.pkl" # not so good
-
+    model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext.pkl" # not so good, v1
+    model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext_v2.pkl" # v2
+    # distill loss increase: why? -> we have flow loss now -> but i apply it to last layer only?
+    # check Ft->0 and Ft->1 and to which I apply flow gt
+    model_name = "flownet_lapl_flow2e-1_v2_128_rect_big_hftext.pkl" # v2
+    model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext_v3.pkl" # v3: flow loss fix
+    model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext_v4.pkl" # v4: flow loss to all blocks
+    model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext_v4_inv.pkl"
 
     """ lbs2d """
     # model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs.pkl" # 200 ep: very good interpol, bad flow
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs_skip.pkl" # 250 ep: perf interpol, good flow but it was too easy
     # model_name = "flownet_flowonly_v2_128_lbs_skip.pkl" # 175 ep: 
+    # TODO: analyze dataset and ? create ensembles
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -679,6 +686,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist01_v2_128_vimeo.pkl"
     # model_name = "flownet_lapl_dist_v2_240_vimeo.pkl" # very good interpol, ? good flow
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_vimeo.pkl" # very good interpol, ? good flow
+    # I can reproduce results, there no additional tricks
 
     """ droplet2d """
     # model_name = "flownet_lapl_reg_nosmooth_3rd_drop50K.pkl"
@@ -700,7 +708,8 @@ if __name__ == "__main__":
     # model_name = "flownet_flowonly_v2_64_tl_infer_drop50K.pkl" # tl flrom pipedc: 
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K.pkl" # reg was too much
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_drop50K.pkl" # best so far: interpol and flow, how improve?
-    model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" #
+    # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" # not so bad, reg might be higher
+    # we don't have flow for supervision
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"
@@ -744,6 +753,10 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_v2_128_1K_piped.pkl" # very good interpol, not accurate flow (wrong direction)
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-4_v2_128_1K_piped.pkl" # photo1e-5 was better
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_1K_piped.pkl" # best result for unsupervised!
+    # supervised: very good interpol and flow
+    # unsupervised: very good interpol, some flow
+    model_name = "flownet_flowonly_v2_128_piped_allBlocks.pkl" # veru good flow and interpol
+    # model_name = "flownet_flowonly_v2_128_piped_allBlocks_inv.pkl" # test, inverse
 
     """ FluidSimML2d """
     # model_name = "flownet_lapl_3rd_c_Fluid.pkl" # not good
@@ -769,7 +782,17 @@ if __name__ == "__main__":
     # model_name = "flownet_flowonly_v2_128_tl_cylinder.pkl" # good, nothing surprising
     # model_name = "flownet_lapl_distill_v2_128_tl_cylinder.pkl" # from piped: no
     # model_name = "flownet_lapl_distill_v2_128_tl1_cylinder.pkl" # from cylinder: no, same
-    # model_name = "flownet_flowonly_v2_64_tl_infer_cylinder.pkl" # tl flrom pipedc: good interpol, not good flow
+    # model_name = "flownet_flowonly_v2_64_tl_infer_cylinder.pkl" # tl from pipedc: good interpol, not good flow
+    # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_1K_cylinder.pkl" # very good interpol, but not flow
+    # supervised: very good interpol and flow
+    # unsupervised: very good interpol, not good flow
+
+    # It also sounds quite promising from your description what you got in terms of results. 
+    # In general, I would recommend to concentrate on getting good supervised flow first across datasets before going back to unsupervised 
+    # (I think it probably makes sense not to have both unsupervised and supervised in one paper, 
+    # let's concentrate on one solution first, unsupervised could maybe be done in a follow-up paper). 
+    # Once we get good results with supervised, let's do a closer analysis of its accuracy, and then I think we should 
+    # concentrate on demonstrating the utility of supervised for visualization purposes.
 
     # print(model_name)
     # input("x")
@@ -819,8 +842,9 @@ if __name__ == "__main__":
             u_gt = flow_gt[:, 0, ...]
             v_gt = flow_gt[:, 1, ...]
             norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
-            u = flow[:, 0, ...]
-            v = flow[:, 1, ...]
+            # viz Ft->1 in the end, that is flow[2][:, 2:4]
+            u = flow[:, 2, ...] # flow[:, 0, ...]
+            v = flow[:, 3, ...] # flow[:, 1, ...]
             norm = np.sqrt(u * u + v * v)
             norm_gt = norm_gt[:, :norm.shape[1], :norm.shape[2]]
             # print(norm_gt.shape, norm.shape)

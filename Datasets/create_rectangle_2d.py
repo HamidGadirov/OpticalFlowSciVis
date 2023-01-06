@@ -107,18 +107,18 @@ box = np.ones((box_dim_x, box_dim_y), dtype=np.float32)
 # add high freq texture to the box
 # 4x4 areas with diff values
 box *= 255.
-step_size = 4
+step_size = 5 # 4
 for i in range(0, box_dim_x, step_size):
     for j in range(0, box_dim_y, step_size):
-        rand_value = np.random.randint(20, 256)
+        rand_value = np.random.randint(30, 256)
         # print(rand_value)
         box[i:i+step_size, j:j+step_size] = rand_value
 box /= 255. # to 0...1
 # print(box)
 # input("x")
 
-vel_min = -8
-vel_max = 8
+vel_min = -6 # -8 
+vel_max = 6 # 8
 
 pos_x = random.randint(0, grid_x - box_dim_x)
 pos_y = random.randint(0, grid_y - box_dim_y)
@@ -147,7 +147,7 @@ vel_x = random.randint(vel_min, vel_max)
 vel_y = random.randint(vel_min, vel_max)
 # print("vel_x, vel_y:", vel_x, vel_y)
 
-max_seq = 10
+max_seq = 15 # 10
 seq = max_seq
 for i in range(grit_t):
     if seq == 0: # till new direction
@@ -235,7 +235,7 @@ visualize_series_flow(data[:100], velocities_x[:100], velocities_y[:100],
 input("velocities")
 
 # pkl_filename = "rectangle2d" + ".pkl" 
-pkl_filename = "rectangle2d_big_hftext" + "_flow" + ".pkl" 
+pkl_filename = "rectangle2d_big_hftext" + "_flow" + "_v2" + ".pkl" 
 
 print("data:", data.shape)
 data = data[:, np.newaxis, ...]
