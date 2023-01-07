@@ -51,6 +51,7 @@ def get_learning_rate(step):
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
         return (3e-4 - 3e-6) * mul + 3e-6
+    # return 1e-6
 
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
@@ -666,6 +667,10 @@ if __name__ == "__main__":
     model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext_v4.pkl" # v4: flow loss to all blocks
     model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext_v4_inv.pkl"
 
+    model_name = "flownet_flowonly_v2_128_rect_big_hftext_allBlocks.pkl" #
+    model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext_allBlocks.pkl" #
+    model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_flow2e-1_v2_128_rect_big_hftext_allBlocks.pkl" #
+
     """ lbs2d """
     # model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs.pkl" # 200 ep: very good interpol, bad flow
@@ -755,8 +760,9 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_1K_piped.pkl" # best result for unsupervised!
     # supervised: very good interpol and flow
     # unsupervised: very good interpol, some flow
-    model_name = "flownet_flowonly_v2_128_piped_allBlocks.pkl" # veru good flow and interpol
+    # model_name = "flownet_flowonly_v2_128_piped_allBlocks.pkl" # veru good flow and interpol
     # model_name = "flownet_flowonly_v2_128_piped_allBlocks_inv.pkl" # test, inverse
+    # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_1K_piped_photofix.pkl" # best result for unsupervised!
 
     """ FluidSimML2d """
     # model_name = "flownet_lapl_3rd_c_Fluid.pkl" # not good

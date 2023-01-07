@@ -271,23 +271,23 @@ class Model:
             return torch.sum(p_loss) / frame1.size(0)
         
         frame1 = img0
-        warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
+        warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2]) # :2 was wrong!
         loss_photo = photometric_loss(warped_frame2, frame1)
         frame3 = img1
-        warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
+        warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2]) # 2:4 was wrong!
         loss_photo += photometric_loss(warped_frame2, frame3)
         loss_photo /= 2
         # print(loss_photo)
         # input("x")
         """ end Photometric consistency """
 
-        lambda_l1 = 0 # 1
-        lambda_tea = 0 # 1
-        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 0 # 1e-6 best on rectangle 1e-7
-        lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
+        lambda_l1 = 1 # 1
+        lambda_tea = 1 # 1
+        lambda_distill = 0.02 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_reg = 1e-7 # 1e-6 best on rectangle 1e-7
+        lambda_photo = 1e-5 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 1 # 0.01 0.2 1
+        lambda_flow = 0.2 # 0.01 0.2 1
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter
