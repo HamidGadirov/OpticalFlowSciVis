@@ -51,7 +51,7 @@ def get_learning_rate(step):
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
         return (3e-4 - 3e-6) * mul + 3e-6
-    # return 1e-6
+    # return 1e-6 # worse
 
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
@@ -670,6 +670,13 @@ if __name__ == "__main__":
     model_name = "flownet_flowonly_v2_128_rect_big_hftext_allBlocks.pkl" #
     model_name = "flownet_lapl_dist2e-2_flow2e-1_v2_128_rect_big_hftext_allBlocks.pkl" #
     model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_flow2e-1_v2_128_rect_big_hftext_allBlocks.pkl" #
+    model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_flow2e-1_v2_128_rect_big_hftextv3_allBlocks.pkl" #
+    model_name = "flownet_lapl_flow2e-1_v2_128_rect_big_hftextv3_allBlocks.pkl" #
+    model_name = "flownet_lapl_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_lr.pkl" # no, fixed lr is bad
+    model_name = "flownet_lapl_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_norm.pkl" #
+    model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv2.pkl" #
+    model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # best supervised!
+    model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # good interpol, very bad flow
 
     """ lbs2d """
     # model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
@@ -677,6 +684,8 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs_skip.pkl" # 250 ep: perf interpol, good flow but it was too easy
     # model_name = "flownet_flowonly_v2_128_lbs_skip.pkl" # 175 ep: 
     # TODO: analyze dataset and ? create ensembles
+    model_name = "flownet_lapl_flow_v2_128_lbs_skip.pkl" # TODO: normalize +
+    # model_name = "flownet_test_v2_128_lbs_skip.pkl"
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -715,6 +724,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_drop50K.pkl" # best so far: interpol and flow, how improve?
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" # not so bad, reg might be higher
     # we don't have flow for supervision
+    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl"
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"

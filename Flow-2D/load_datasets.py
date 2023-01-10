@@ -60,7 +60,7 @@ def load_data(dataset, exp, mode):
             # flow_fln = "../Datasets/rectangle2d_text_flow.pkl"
             # flow_fln = "../Datasets/rectangle2d_hftext_flow.pkl"
             # flow_fln = "../Datasets/rectangle2d_big_hftext_flow.pkl"
-            flow_fln = "../Datasets/rectangle2d_big_hftext_flow_v2.pkl"
+            flow_fln = "../Datasets/rectangle2d_big_hftext_flow_v3.pkl"
             # flow_fln = "../Datasets/rectangles2d_text_flow.pkl"
         if dataset == 'lbs2d':
             # filename += "LatticeBoltzmannSim/lbs2d.pkl"
@@ -83,13 +83,49 @@ def load_data(dataset, exp, mode):
             with open(flow_fln, 'rb') as flow_file:
                 data = pickle.load(flow_file)
             data = np.float32(data)
+            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             print(data.shape)
+            data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
+            # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], -1., 1., cv2.NORM_MINMAX)
+            # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], -1., 1., cv2.NORM_MINMAX)
+            print("Normalized!")
+            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+            print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+            # input("Data range")
             # flip flow directions
             # data[:, 1] *= -1
             # data[:, 2] *= -1
             # input("x")
         # if dataset == "droplet2d" or dataset == "cylinder2d" or dataset == "FluidSimML":
+        elif dataset == "lbs2d":
+            with open(filename, 'rb') as pkl_file:
+                data = pickle.load(pkl_file)
+            print(data.shape)
+            data = np.float32(data)
+            print("Data is in range %f to %f" % (np.min(data), np.max(data)))
+            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+            print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+            print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
+            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            data = (data - np.min(data)) / (np.max(data) - np.min(data))
+            # data = data * 255.0
+            # data = data.astype(int)
+            # data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
+            data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
+            data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], 0., 1., cv2.NORM_MINMAX)
+            data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], 0., 1., cv2.NORM_MINMAX)
+            # print(data)
+            print("Normalized!")
+            print("Data is in range %f to %f" % (np.min(data), np.max(data)))
+            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+            print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+            print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
+            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            input("Data range")
         else:
             with open(filename, 'rb') as pkl_file:
                 data = pickle.load(pkl_file)
@@ -162,6 +198,8 @@ def load_data(dataset, exp, mode):
             if "lbs2d" in filename: # 6K in total, skip first 3K; 3K in total, each 10th
                 data_train = data[:2205]
                 data_val = data[2370:2685]
+                # data_train = data[:300]
+                # data_val = data[:300]
             if "droplet2d" in filename:
                 data_train = data[:51300] # 46800 15120
                 data_val = data[51300:54000] # 18000 54000
@@ -342,6 +380,7 @@ def load_data(dataset, exp, mode):
                 data_test = data[2685:3000] # div to 3, 5, 9 and 7
             if "lbs2d" in filename:
                 data_test = data[2685:3000] # [5685:6000]
+                # data_test = data[:300]
             elif "droplet2d" in filename:
                 data_test = data[:2700]
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:

@@ -37,7 +37,7 @@ def main():
 	Ny                     = 100    # resolution y-dir
 	rho0                   = 100    # average density
 	tau                    = 0.6    # collision timescale
-	Nt                     = 30000   # number of timesteps # 4000
+	Nt                     = 33000   # number of timesteps # 4000; skip first 3000
 	plotRealTime = True # switch on for plotting as the simulation goes along
 	
 	# Lattice speeds / weights
@@ -59,7 +59,8 @@ def main():
 	
 	# Cylinder boundary
 	X, Y = np.meshgrid(range(Nx), range(Ny))
-	cylinder = (X - Nx/5)**2 + (Y - Ny/2.5)**2 < (Ny/4)**2
+	cylinder = (X - Nx/4)**2 + (Y - Ny/2)**2 < (Ny/4)**2
+	# cylinder = (X - Nx/5)**2 + (Y - Ny/2.5)**2 < (Ny/4)**2
 	
 	# Prep figure
 	fig = plt.figure(figsize=(4,2), dpi=80)
@@ -110,7 +111,11 @@ def main():
 		
 		# plot in real time - color 1/2 particles blue, other half red
 		if (plotRealTime and (it % 10) == 0) or (it == Nt-1):
-			plt.cla()
+			if it < 3000: # skip beginning
+				pass
+				# continue
+			### original vorticity viz
+			# plt.cla()
 			# ux[cylinder] = 0
 			# uy[cylinder] = 0
 			# vorticity = (np.roll(ux, -1, axis=0) - np.roll(ux, 1, axis=0)) - (np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1))
@@ -125,6 +130,7 @@ def main():
 			# ax.get_yaxis().set_visible(False)	
 			# ax.set_aspect('equal')	
 			# plt.pause(0.001)
+			###
 
 			# plt.cla()
 			# rho[cylinder] = 0
@@ -166,8 +172,8 @@ def main():
 			vorticity = (np.roll(ux, -1, axis=0) - np.roll(ux, 1, axis=0)) - (np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1))
 			vorticity[cylinder] = np.nan
 			vorticity = np.ma.array(vorticity, mask=cylinder)
-			# axs[0].imshow(vorticity, cmap='bwr')
-			# axs[0].imshow(~cylinder, cmap='gray', alpha=0.3)
+			axs[0].imshow(vorticity, cmap='bwr')
+			axs[0].imshow(~cylinder, cmap='gray', alpha=0.3)
 			# plt.clim(-.1, .1)
 			# axs[0].clim(-.1, .1)
 			# ax = plt.gca()
@@ -179,16 +185,16 @@ def main():
 
 			# plt.cla()
 			rho = np.ma.array(rho, mask=cylinder)
-			# axs[1].imshow(rho, cmap='bwr')
-			# axs[1].imshow(~cylinder, cmap='gray', alpha=0.3)
+			axs[1].imshow(rho, cmap='bwr')
+			axs[1].imshow(~cylinder, cmap='gray', alpha=0.3)
 
 			norm = np.ma.array(norm, mask=cylinder)
-			# axs[2].imshow(norm, cmap='bwr')
-			# axs[2].imshow(~cylinder, cmap='gray', alpha=0.3)
+			axs[2].imshow(norm, cmap='bwr')
+			axs[2].imshow(~cylinder, cmap='gray', alpha=0.3)
 			# plt.clim(-.1, .1)
 			# ax = plt.gca()
 			# plt.pause(0.01)
-			plt.close()
+			# plt.close()
 
 			# # ret, frame = cap.read()
 			# final_frame = cv2.vconcat((vorticity, rho))
@@ -198,12 +204,16 @@ def main():
 			# out.write(final_frame.astype('uint8'))
 			# 	# out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
 
-			if it == 6000:
+			if it == 8000:
 				# fig.savefig("Vorticity, density, velocity t=3000")
 				# out.release()
 				# print("Created:", video_name)
 				# input("x")
 				break
+			str_it = str(it) if len(str(it)) == 4 else (4 - len(str(it))) * "0" + str(it) 
+			title = "Vorticity, density, velocity " + "t=" + str_it
+			print(title)
+			fig.savefig(os.path.join("video", title))
 
 			# # vel_x = np.ma.array(vel_x, mask=cylinder)
 			# # axs[1].imshow(vel_x, cmap='bwr')
@@ -223,16 +233,31 @@ def main():
 			magnitude.append(norm)
 			vort.append(vorticity)
 
-			print("vorticity at 50 200", vorticity[50][200])
-			print("density at 50 200", rho[50][200])
-			print("magnitude at 50 200", norm[50][200])
+			# print("vorticity at 50 200", vorticity[50][200])
+			# print("density at 50 200", rho[50][200])
+			# print("magnitude at 50 200", norm[50][200])
 			print(it)
+			# print(cylinder[50, 75])
 			
 			# it = 5940
 			# vorticity at 50 200 0.010256654052211975
 			# density at 50 200 101.11102256448345
 			# magnitude at 50 200 0.08770241571151566
 			# why these values???
+
+	# density = density.replace('--', 0)
+	# print(density[0, 50, 75])
+	# input("x")
+	density = np.where(~cylinder, density, 0)
+	# print(density[0, 50, 100])
+	# print(density[0, 50, 175])
+	# input("x")
+	vel_x = np.where(~cylinder, vel_x, 0)
+	vel_y = np.where(~cylinder, vel_y, 0)
+	# print(vel_x[0, 50, 100])
+	# print(vel_y[0, 50, 100])
+	# print(vel_x[0, 50, 175])
+	# input("x")
 
 	vorticity = np.array(vort)
 	density = np.array(density)
@@ -245,9 +270,9 @@ def main():
 	print("magnitude:", magnitude.shape)
 	# input("X")
 
-	video = np.concatenate((vorticity, density), axis=1)
-	video = np.concatenate((video, magnitude), axis=1)
-	print("video data:", video.shape)
+	# video = np.concatenate((vorticity, density), axis=1)
+	# video = np.concatenate((video, magnitude), axis=1)
+	# print("video data:", video.shape)
 
 	# video_name = "LBS_Vorticity_Density_Velocity" + "_10fps.mp4"
 	# fps = 10
@@ -261,33 +286,33 @@ def main():
 	# input("X")
 	# input("X")
 
-	fps = 10
-	sizeY = 400
-	sizeX = 100
+	# fps = 10
+	# sizeY = 400
+	# sizeX = 100
 
-	video_name = "LBS_Vorticity" + "_10fps.mp4"
-	out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
-	for i in range(len(vorticity)):
-		out.write(vorticity[i].astype('uint8'))
-        # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
-	out.release()
-	input("Vorticity")
+	# video_name = "LBS_Vorticity" + "_10fps.mp4"
+	# out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+	# for i in range(len(vorticity)):
+	# 	out.write(vorticity[i].astype('uint8'))
+    #     # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
+	# out.release()
+	# input("Vorticity")
 
-	video_name = "LBS_Density" + "_10fps.mp4"
-	out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
-	for i in range(len(density)):
-		out.write(density[i].astype('uint8'))
-        # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
-	out.release()
-	input("Density")
+	# video_name = "LBS_Density" + "_10fps.mp4"
+	# out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+	# for i in range(len(density)):
+	# 	out.write(density[i].astype('uint8'))
+    #     # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
+	# out.release()
+	# input("Density")
 
-	video_name = "LBS_Velocity" + "_10fps.mp4"
-	out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
-	for i in range(len(magnitude)):
-		out.write(magnitude[i].astype('uint8'))
-        # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
-	out.release()
-	input("Velocity")
+	# video_name = "LBS_Velocity" + "_10fps.mp4"
+	# out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, (sizeY, sizeX), False)
+	# for i in range(len(magnitude)):
+	# 	out.write(magnitude[i].astype('uint8'))
+    #     # out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
+	# out.release()
+	# input("Velocity")
 
 	# for i in range(len(density)):
 	# 	out.write(density[i].astype('uint8'))
@@ -300,7 +325,7 @@ def main():
 	# plt.show()
 
 	# save data to pkl
-	pkl_filename = "lbs2d_skip" + ".pkl" 
+	pkl_filename = "lbs2d_skip_" + ".pkl" 
 
 	# data = np.zeros((Nt, Ny, Nx), dtype=np.float32)
 	data = density

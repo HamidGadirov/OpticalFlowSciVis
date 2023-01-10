@@ -107,7 +107,7 @@ box = np.ones((box_dim_x, box_dim_y), dtype=np.float32)
 # add high freq texture to the box
 # 4x4 areas with diff values
 box *= 255.
-step_size = 5 # 4
+step_size = 10 # 4 5
 for i in range(0, box_dim_x, step_size):
     for j in range(0, box_dim_y, step_size):
         rand_value = np.random.randint(30, 256)
@@ -235,7 +235,7 @@ visualize_series_flow(data[:100], velocities_x[:100], velocities_y[:100],
 input("velocities")
 
 # pkl_filename = "rectangle2d" + ".pkl" 
-pkl_filename = "rectangle2d_big_hftext" + "_flow" + "_v2" + ".pkl" 
+pkl_filename = "rectangle2d_big_hftext" + "_flow" + "_v3" + ".pkl" 
 
 print("data:", data.shape)
 data = data[:, np.newaxis, ...]

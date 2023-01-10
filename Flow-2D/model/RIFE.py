@@ -23,8 +23,8 @@ class Model:
         else:
             self.flownet = IFNet()
         self.device()
-        # self.optimG = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3) # use large weight decay may avoid NaN loss
-        self.optimG = AdamW(self.flownet.parameters(), lr=1e-3, weight_decay=1e-2)
+        self.optimG = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3) # use large weight decay may avoid NaN loss
+        # self.optimG = AdamW(self.flownet.parameters(), lr=1e-3, weight_decay=1e-2)
         self.epe = EPE()
         self.lap = LapLoss()
         self.sobel = SOBEL()
@@ -126,13 +126,12 @@ class Model:
             # print("flow[2]:", flow[2].shape) # 2nd IFBlock, 4 channels: Ft->0 and Ft->1 x and y
             # print("gt_flow", gt_flow.shape)
             # input("flow")
-            # loss_flow = torch.nn.functional.l1_loss(flow[2][:, :2], gt_flow) # this was wrong!
             # flow[:, :2] is Ft->0 and flow[:, 2:4] is Ft->1
             # TODO: add to all blocks +
             loss_flow = torch.nn.functional.l1_loss(flow[0][:, 2:4], gt_flow)
             loss_flow += torch.nn.functional.l1_loss(flow[1][:, 2:4], gt_flow)
             loss_flow += torch.nn.functional.l1_loss(flow[2][:, 2:4], gt_flow)
-            # TODO: add Ft->0 to all blocks using reverted gt_flow
+            # TODO: add Ft->0 to all blocks using reverted gt_flow +
             loss_flow += torch.nn.functional.l1_loss(flow[0][:, :2], -gt_flow)
             loss_flow += torch.nn.functional.l1_loss(flow[1][:, :2], -gt_flow)
             loss_flow += torch.nn.functional.l1_loss(flow[2][:, :2], -gt_flow)
@@ -271,10 +270,10 @@ class Model:
             return torch.sum(p_loss) / frame1.size(0)
         
         frame1 = img0
-        warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2]) # :2 was wrong!
+        warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
         loss_photo = photometric_loss(warped_frame2, frame1)
         frame3 = img1
-        warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2]) # 2:4 was wrong!
+        warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
         loss_photo += photometric_loss(warped_frame2, frame3)
         loss_photo /= 2
         # print(loss_photo)
@@ -283,11 +282,11 @@ class Model:
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.02 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 1e-7 # 1e-6 best on rectangle 1e-7
+        lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_reg = 1e-6 # 1e-6 best on rectangle 1e-7
         lambda_photo = 1e-5 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.2 # 0.01 0.2 1
+        lambda_flow = 0 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter
