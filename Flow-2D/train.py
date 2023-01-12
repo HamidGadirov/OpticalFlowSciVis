@@ -101,7 +101,10 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             data_test = DataLoader(dataset_test, batch_size=16, pin_memory=True, num_workers=8)
         else:
             data_test = load_data(dataset, exp, mode)
-            data_test = DataLoader(data_test, batch_size=16, pin_memory=True, num_workers=8)
+            shuffle = False
+            if dataset == "droplet2d": 
+                shuffle = True
+            data_test = DataLoader(data_test, batch_size=16, shuffle=shuffle, pin_memory=True, num_workers=8)
 
     # model_name = "flownet"
     # model_name += "_lapl" if lapl_loss else ""
@@ -163,6 +166,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 if exp == 1: # # img0, img1, gt
                     imgs = data_gpu[:, :2] # :6
                     gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
+                    # gt = data_gpu # use flows from im0 and im1
                     # print(imgs.shape)
                     # print(gt.shape)
                     # input("x")
@@ -288,6 +292,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             # input("data")
             imgs = data_gpu[:, :2]
             gt = data_gpu[:, 2:3]
+            # gt = data_gpu
 
             if dataset == "pipedcylinder2d"  or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
                 or dataset == "rectangle2d" or dataset == "lbs2d":
@@ -454,6 +459,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
         # input(i)
         imgs = data_gpu[:, :2]
         gt = data_gpu[:, 2:3]
+        # gt = data_gpu
         with torch.no_grad():
             pred, info = model.update(imgs, gt, dataset, training=False)
             merged_img = info['merged_tea']
@@ -677,6 +683,11 @@ if __name__ == "__main__":
     model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv2.pkl" #
     model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # best supervised!
     model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # good interpol, very bad flow
+    model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_lastBlock_normv3.pkl" # not bad but allBlocks better
+    # why unsupervised interpolation better ???
+    # add separate layer for supervised flow
+    model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_flow5e-1_v2_128_rect_big_hftextv3_allBlocks.pkl" # distill exploded
+    model_name = "flownet_lapl_reg1e-7_photo1e-5_flow5e-1_v2_128_rect_big_hftextv3_allBlocks.pkl"
 
     """ lbs2d """
     # model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
@@ -684,7 +695,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_lbs_skip.pkl" # 250 ep: perf interpol, good flow but it was too easy
     # model_name = "flownet_flowonly_v2_128_lbs_skip.pkl" # 175 ep: 
     # TODO: analyze dataset and ? create ensembles
-    model_name = "flownet_lapl_flow_v2_128_lbs_skip.pkl" # TODO: normalize +
+    # model_name = "flownet_lapl_flow_v2_128_lbs_skip.pkl" # TODO: normalize +
     # model_name = "flownet_test_v2_128_lbs_skip.pkl"
 
     """ vimeo2d """
@@ -724,7 +735,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_drop50K.pkl" # best so far: interpol and flow, how improve?
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" # not so bad, reg might be higher
     # we don't have flow for supervision
-    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl"
+    # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad, reg might be higher
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"
@@ -770,7 +781,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_1K_piped.pkl" # best result for unsupervised!
     # supervised: very good interpol and flow
     # unsupervised: very good interpol, some flow
-    # model_name = "flownet_flowonly_v2_128_piped_allBlocks.pkl" # veru good flow and interpol
+    # model_name = "flownet_flowonly_v2_128_piped_allBlocks.pkl" # very good flow and interpol
     # model_name = "flownet_flowonly_v2_128_piped_allBlocks_inv.pkl" # test, inverse
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_1K_piped_photofix.pkl" # best result for unsupervised!
 
@@ -859,8 +870,10 @@ if __name__ == "__main__":
             v_gt = flow_gt[:, 1, ...]
             norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
             # viz Ft->1 in the end, that is flow[2][:, 2:4]
-            u = flow[:, 2, ...] # flow[:, 0, ...]
-            v = flow[:, 3, ...] # flow[:, 1, ...]
+            # u = flow[:, 2, ...] # flow[:, 0, ...] unsup
+            # v = flow[:, 3, ...] # flow[:, 1, ...] unsup
+            u = flow[:, 0, ...] # sup
+            v = flow[:, 1, ...] # sup
             norm = np.sqrt(u * u + v * v)
             norm_gt = norm_gt[:, :norm.shape[1], :norm.shape[2]]
             # print(norm_gt.shape, norm.shape)

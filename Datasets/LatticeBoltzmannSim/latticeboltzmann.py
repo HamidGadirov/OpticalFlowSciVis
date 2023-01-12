@@ -204,7 +204,7 @@ def main():
 			# out.write(final_frame.astype('uint8'))
 			# 	# out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
 
-			if it == 8000:
+			if it == 3100:
 				# fig.savefig("Vorticity, density, velocity t=3000")
 				# out.release()
 				# print("Created:", video_name)
@@ -254,10 +254,14 @@ def main():
 	# input("x")
 	vel_x = np.where(~cylinder, vel_x, 0)
 	vel_y = np.where(~cylinder, vel_y, 0)
-	# print(vel_x[0, 50, 100])
-	# print(vel_y[0, 50, 100])
-	# print(vel_x[0, 50, 175])
-	# input("x")
+	print(vel_x[0, 50, 100])
+	print(vel_y[0, 50, 100])
+	print(vel_x[0, 50, 175])
+	print(vel_x[300, 50, 100])
+	print(vel_y[300, 50, 100])
+	print(vel_x[300, 50, 175])
+	print("vel_x mean and std:", np.mean(vel_x[300]), np.std(vel_x[300])) # 0.07 0.08
+	input("x")
 
 	vorticity = np.array(vort)
 	density = np.array(density)
