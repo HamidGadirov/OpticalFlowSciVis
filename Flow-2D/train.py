@@ -315,25 +315,25 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             if exp == 1: # # img0, img1, gt
                 # middle, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
                 merged, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
-                left = np.asarray(merged[0].detach().cpu().numpy())
-                right = np.asarray(merged[1].detach().cpu().numpy())
-                middle = np.asarray(merged[2].detach().cpu().numpy())
+                merged_0 = np.asarray(merged[0].detach().cpu().numpy())
+                merged_1 = np.asarray(merged[1].detach().cpu().numpy())
+                merged_2 = np.asarray(merged[2].detach().cpu().numpy())
                 # print(middle.shape)
                 # input("x")
                 # interpol_data.extend(middle.transpose((0,2,3,1))) # append
                 for b in range(data_gpu.shape[0]):
-                    interpol_data.append(left[b].transpose((1,2,0)))
-                    interpol_data.append(middle[b].transpose((1,2,0)))
-                    interpol_data.append(right[b].transpose((1,2,0)))
+                    interpol_data.append(merged_0[b].transpose((1,2,0)))
+                    interpol_data.append(merged_1[b].transpose((1,2,0)))
+                    interpol_data.append(merged_2[b].transpose((1,2,0)))
                 # print(middle.shape)
                 # input("x")
-                flow_l = np.asarray(flow[0].detach().cpu().numpy())
-                flow_r = np.asarray(flow[1].detach().cpu().numpy())
-                flow_m = np.asarray(flow[2].detach().cpu().numpy())
+                flow_0 = np.asarray(flow[0].detach().cpu().numpy())
+                flow_1 = np.asarray(flow[1].detach().cpu().numpy())
+                flow_2 = np.asarray(flow[2].detach().cpu().numpy())
                 for b in range(data_gpu.shape[0]):
-                    flow_combined.append(flow_l[b])
-                    flow_combined.append(flow_m[b])
-                    flow_combined.append(flow_r[b])
+                    flow_combined.append(flow_0[b])
+                    flow_combined.append(flow_1[b])
+                    flow_combined.append(flow_2[b])
                 # print(flow_l.shape)
                 # input("x")
                 # flow_array_ = flow[2].detach().cpu().numpy()
@@ -341,13 +341,13 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 # flow_combined.extend(flow_m[:,0:4,:,:].squeeze())
                 # flow_combined.extend(flow_r[:,0:4,:,:].squeeze()) # 0:4 because in x and y for Ft->0 and Ft->1 intermediate flows
                 # print(flow.shape)
-                mask_l = np.asarray(mask[0].detach().cpu().numpy())
-                mask_r = np.asarray(mask[1].detach().cpu().numpy())
-                mask_m = np.asarray(mask[2].detach().cpu().numpy())
+                mask_0 = np.asarray(mask[0].detach().cpu().numpy())
+                mask_1 = np.asarray(mask[1].detach().cpu().numpy())
+                mask_2 = np.asarray(mask[2].detach().cpu().numpy())
                 for b in range(data_gpu.shape[0]):
-                    mask_combined.extend(mask_l[b])
-                    mask_combined.extend(mask_m[b])
-                    mask_combined.extend(mask_r[b])
+                    mask_combined.extend(mask_0[b])
+                    mask_combined.extend(mask_1[b])
+                    mask_combined.extend(mask_2[b])
                 # print("mask:", mask.shape)
                 # input("mask")
                 # mask_combined.extend(mask_l)
@@ -389,8 +389,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         flow_gt_combined = np.array(flow_gt_combined)
         print("Flow:", flow_combined.shape)
         # print(interpol_data.dtype)
-        flow_u = flow_combined[:, 0, ...]
-        flow_v = flow_combined[:, 1, ...]
+        flow_u = flow_combined[:, 2, ...]
+        flow_v = flow_combined[:, 3, ...]
         title = "inference_flow_arrows_" + str(factor) + "x"
         # if "2d" in dataset:
         #     visualize_series_flow(interpol_data, flow_u, flow_v, dataset, dir_res, title=title, show=False, save=True)
@@ -687,7 +687,14 @@ if __name__ == "__main__":
     # why unsupervised interpolation better ???
     # add separate layer for supervised flow
     model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_flow5e-1_v2_128_rect_big_hftextv3_allBlocks.pkl" # distill exploded
-    model_name = "flownet_lapl_reg1e-7_photo1e-5_flow5e-1_v2_128_rect_big_hftextv3_allBlocks.pkl"
+    model_name = "flownet_lapl_reg1e-7_photo1e-5_flow5e-1_v2_128_rect_big_hftextv3_allBlocks.pkl" # best interpol, bad flow
+
+    model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_nohf_allBlocks.pkl" # bad interpol, very bad flow ???
+
+    model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocksv2_normv3.pkl" # blurred flow, not accurate interpol
+    model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocksEq.pkl" # same as prev: best supervised ? no ???
+    # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocksEq1.pkl" # 1 1 1 is bad
+    model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocksEq2.pkl" # 370 ep: not bad
 
     """ lbs2d """
     # model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
@@ -785,6 +792,8 @@ if __name__ == "__main__":
     # model_name = "flownet_flowonly_v2_128_piped_allBlocks_inv.pkl" # test, inverse
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_1K_piped_photofix.pkl" # best result for unsupervised!
 
+    # model_name = "flownet_lapl_flow5e-1_v2_128_piped_allBlocks.pkl" # 1 1 1 is worse
+
     """ FluidSimML2d """
     # model_name = "flownet_lapl_3rd_c_Fluid.pkl" # not good
     # model_name = "flownet_lapl_3rd_cd_Fluid.pkl" # good 300 ep +
@@ -827,6 +836,7 @@ if __name__ == "__main__":
     if args.mode == "train":
         train(model, args.dataset, args.exp, model_name, args.mode, args.local_rank)
     else:
+        # TODO: fix pred results: I need only from last layer, not all!!!
         dataset = args.dataset
         print("inference...")
         factor = 2
@@ -863,6 +873,12 @@ if __name__ == "__main__":
         diffs = calculate_diff(original_data, interpol_data, dataset, factor, dir_model)
         print("diffs:", diffs.shape)
 
+        # test
+        # print(flow.shape)
+        # flow = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
+        # print(flow_gt.shape)
+        # flow_gt = np.zeros((flow_gt.shape[0], flow_gt.shape[1], flow_gt.shape[2], flow_gt.shape[3]), dtype=np.float32)
+
         if dataset != "vimeo2d" and dataset != "droplet2d":
             print("GT flow available")
             flow_gt = flow_gt[:, :, :flow.shape[2], :flow.shape[3]]
@@ -870,10 +886,11 @@ if __name__ == "__main__":
             v_gt = flow_gt[:, 1, ...]
             norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
             # viz Ft->1 in the end, that is flow[2][:, 2:4]
-            # u = flow[:, 2, ...] # flow[:, 0, ...] unsup
-            # v = flow[:, 3, ...] # flow[:, 1, ...] unsup
-            u = flow[:, 0, ...] # sup
-            v = flow[:, 1, ...] # sup
+            u = flow[:, 2, ...] # flow[:, 0, ...] unsup
+            v = flow[:, 3, ...] # flow[:, 1, ...] unsup
+            # u = flow[:, 0, ...] # sup
+            # v = flow[:, 1, ...] # sup
+
             norm = np.sqrt(u * u + v * v)
             norm_gt = norm_gt[:, :norm.shape[1], :norm.shape[2]]
             # print(norm_gt.shape, norm.shape)
@@ -888,6 +905,16 @@ if __name__ == "__main__":
             print("u is in range %f to %f" % (np.min(u), np.max(u)))
             print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
             print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
+
+            print("norm:", norm_gt.shape)
+            print(norm_gt[0, 10, 10])
+            print(norm_gt[0, 100, 100])
+            print(norm_gt[100, 10, 10])
+            print(norm_gt[100, 100, 100])
+            print("10", norm_gt[10])
+            print("100", norm_gt[100])
+            print("200", norm_gt[200])
+            # norm = max(norm, norm_gt)
 
             diffs_flow = calculate_diff(norm_gt, norm, dataset, factor, dir_model)
 

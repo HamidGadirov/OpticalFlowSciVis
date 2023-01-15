@@ -233,16 +233,17 @@ def calculate_diff(original_data, interpol_data, dataset, factor, dir_res):
         for i in range(data_range):
             # diffs.append(cv2.absdiff(np.int32(original_data[i]), np.int32(interpol_data[i])))
             # diffs.append(cv2.absdiff(np.float32(original_data[i]), np.float32(interpol_data[i])))
-            diffs.append(cv2.absdiff(original_data[i], interpol_data[i]))
-            print("original_data mean and std:", np.mean(original_data[i]), np.std(original_data[i]))
-            print("interpol_data mean and std:", np.mean(interpol_data[i]), np.std(interpol_data[i]))
+            # diffs.append(cv2.absdiff(original_data[i], interpol_data[i])) # absdiff will lose sign
+            diffs.append(original_data[i] - interpol_data[i])
+            # print("original_data mean and std:", np.mean(original_data[i]), np.std(original_data[i]))
+            # print("interpol_data mean and std:", np.mean(interpol_data[i]), np.std(interpol_data[i]))
 
         diffs = np.array(diffs)
         # print(diffs[0])
         # input("x")
         # contrast stretching
         print("Diff", diffs.min(), diffs.max())
-        diffs = (diffs - diffs.min()) / (diffs.max() - diffs.min())
+        # diffs = (diffs - diffs.min()) / (diffs.max() - diffs.min())
         # diffs = (diffs - diffs.min()) / (diffs.max() - diffs.min()) * 255. # no need if 0..1 range
         # print("Diff after stretch", diffs.min(), diffs.max())
         print("Diff min max:", diffs.min(), diffs.max())

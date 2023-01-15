@@ -193,16 +193,18 @@ def visualize_large(original_data, interpol_data, diffs,
     data_to_vis = original_data
     flow_u_gt = flow_gt[:, 0, ...]
     flow_v_gt = flow_gt[:, 1, ...]
-    # flow_u = flow[:, 2, ...] # flow[:, 0, ...] unsup
-    # flow_v = flow[:, 3, ...] # flow[:, 1, ...] unsup
-    flow_u = flow[:, 0, ...] # sup
-    flow_v = flow[:, 1, ...] # sup
+    flow_u = flow[:, 2, ...] # flow[:, 0, ...] unsup
+    flow_v = flow[:, 3, ...] # flow[:, 1, ...] unsup
+    # flow_u = flow[:, 0, ...] # sup
+    # flow_v = flow[:, 1, ...] # sup
 
     print("flow_u_gt is in range %f to %f" % (np.min(flow_u_gt), np.max(flow_u_gt))) # -2 to 4 -8 to 8
     print("flow_v_gt is in range %f to %f" % (np.min(flow_v_gt), np.max(flow_v_gt)))
     # input("x")
     # norm_gt = np.sqrt(np.max(flow_u_gt) * np.max(flow_u_gt) + np.max(flow_v_gt) * np.max(flow_v_gt))
     # input(norm_gt)
+
+    # TODO: set norm as max from gt and pred -
 
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
 

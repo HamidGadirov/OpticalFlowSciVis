@@ -29,8 +29,8 @@ class Model:
         self.lap = LapLoss()
         self.sobel = SOBEL()
         if local_rank != -1:
-            # self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank)
-            self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
+            self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank)
+            # self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
     def train(self):
         self.flownet.train()
@@ -68,12 +68,13 @@ class Model:
         # print(self.flownet) # IFNet summary
         # input("x")
         imgs = torch.cat((img0, img1), 1)
-        flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
+        # flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
         print("back to RIFE from IFNet")
         if TTA == False:
             # return merged[2], flow, mask # get the flow too
-            # return merged, flow, mask # get all 3 frames
-            return merged, sup_flow, mask # supervised flow
+            return merged, flow, mask # get all 3 frames
+            # return merged, sup_flow, mask # supervised flow
         else:
             flow2, mask2, merged2, flow_teacher2, merged_teacher2, loss_distill2 = self.flownet(imgs.flip(2).flip(3), scale_list, timestep=timestep)
             return (merged[2] + merged2[2].flip(2).flip(3)) / 2
@@ -112,8 +113,9 @@ class Model:
             self.train()
         else:
             self.eval()
-        flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
-        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
+        # flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         mask = mask[2] # only gt (pred) durig training
          # correct shapes
         max_shape_2 = min(img0.shape[2], mask.shape[2])
@@ -129,23 +131,24 @@ class Model:
             # input("flow")
             # flow[:, :2] is Ft->0 and flow[:, 2:4] is Ft->1
             # TODO: add to all blocks +
-            loss_flow = 0
-            # loss_flow += torch.nn.functional.l1_loss(flow[0][:, 2:4], gt_flow)
-            # loss_flow += torch.nn.functional.l1_loss(flow[1][:, 2:4], gt_flow)
-            # loss_flow += torch.nn.functional.l1_loss(flow[2][:, 2:4], gt_flow)
+            loss_flow = 0.
+            loss_flow += torch.nn.functional.l1_loss(flow[0][:, 2:4], gt_flow) # * 1
+            loss_flow += torch.nn.functional.l1_loss(flow[1][:, 2:4], gt_flow) # * 2
+            loss_flow += torch.nn.functional.l1_loss(flow[2][:, 2:4], gt_flow) # * 4
             # TODO: add Ft->0 to all blocks using reverted gt_flow +
-            # loss_flow += torch.nn.functional.l1_loss(flow[0][:, :2], -gt_flow)
-            # loss_flow += torch.nn.functional.l1_loss(flow[1][:, :2], -gt_flow)
-            # loss_flow += torch.nn.functional.l1_loss(flow[2][:, :2], -gt_flow)
+            loss_flow += torch.nn.functional.l1_loss(flow[0][:, :2], -gt_flow) # * 1
+            loss_flow += torch.nn.functional.l1_loss(flow[1][:, :2], -gt_flow) # * 2
+            loss_flow += torch.nn.functional.l1_loss(flow[2][:, :2], -gt_flow) # * 4
             # TODO: add this to Tea block +
-            # loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, 2:4], gt_flow)
-            # loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, :2], -gt_flow)
-            # loss_flow /= 2.
+            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, 2:4], gt_flow) # * 1
+            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, :2], -gt_flow) # * 1
+            loss_flow /= 8.
 
-            loss_flow += torch.nn.functional.l1_loss(sup_flow[0], gt_flow)
-            loss_flow += torch.nn.functional.l1_loss(sup_flow[1], gt_flow)
-            loss_flow += torch.nn.functional.l1_loss(sup_flow[2], gt_flow) * 2
-            loss_flow /= 4.
+            # supervised flow
+            # loss_flow += torch.nn.functional.l1_loss(sup_flow[0], gt_flow)
+            # loss_flow += torch.nn.functional.l1_loss(sup_flow[1], gt_flow)
+            # loss_flow += torch.nn.functional.l1_loss(sup_flow[2], gt_flow) * 2
+            # loss_flow /= 4.
 
         # replacing laplacian loss with l1
         # print("Laplace pyramid + L1 + AdamW (L2) + smoothness loss")
@@ -290,8 +293,8 @@ class Model:
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
         lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 1e-7 # 1e-6 best on rectangle 1e-7
-        lambda_photo = 1e-5 # 1e-5 # 2 3 4 5 # 1e-5 best
+        lambda_reg = 0 # 1e-6 best on rectangle 1e-7
+        lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
         lambda_flow = 0.5 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
@@ -331,7 +334,7 @@ class Model:
             'merged_tea': merged_teacher,
             'mask': mask,
             'mask_tea': mask,
-            'flow': sup_flow[2], # flow[2][:, :2],
+            'flow': flow[2][:, :2], # sup_flow[2],
             'flow_tea': flow_teacher,
             'loss_l1': loss_l1 * lambda_l1,
             'loss_tea': loss_tea * lambda_tea,

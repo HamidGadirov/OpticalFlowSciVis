@@ -61,6 +61,7 @@ def load_data(dataset, exp, mode):
             # flow_fln = "../Datasets/rectangle2d_hftext_flow.pkl"
             # flow_fln = "../Datasets/rectangle2d_big_hftext_flow.pkl"
             flow_fln = "../Datasets/rectangle2d_big_hftext_flow_v3.pkl"
+            # flow_fln = "../Datasets/rectangle2d_big_nohf_flow.pkl"
             # flow_fln = "../Datasets/rectangles2d_text_flow.pkl"
         if dataset == 'lbs2d':
             # filename += "LatticeBoltzmannSim/lbs2d.pkl"
