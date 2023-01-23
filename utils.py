@@ -35,7 +35,7 @@ def plotly_fig2array(fig):
 
 def plot_loss(loss, dir_res, name="loss.png", save=False):
     fig = plt.figure(figsize=(8, 4))
-    labels = ('total', 'lapl', 'tea', 'distill', 'reg', 'photo', 'flow')
+    # labels = ('total', 'lapl', 'tea', 'distill', 'reg', 'photo', 'flow')
     colors = ('r', 'g', 'b', 'c', 'm', 'y', 'orange')
     # markers = ("_", "x", "+", "*", ".", "d", "v")
     print(loss.shape)
@@ -45,7 +45,8 @@ def plot_loss(loss, dir_res, name="loss.png", save=False):
     plt.title('validation losses')
     plt.xlabel('epoch')
     plt.ylabel('loss')
-    plt.legend(['total', 'lapl', 'tea', 'dist', 'reg', 'photo', 'flow'], loc='upper right')
+    # plt.legend(['total', 'lapl', 'tea', 'dist', 'reg', 'photo', 'flow'], loc='upper right')
+    plt.legend(['Total', 'L1', 'Teacher', 'Distill', 'Reg', 'Photo', 'Flow'], loc='upper right')
     # plt.legend()
     if save:
         res_path = os.path.join(dir_res, name)
@@ -198,9 +199,15 @@ def visualize_large(original_data, interpol_data, diffs,
     # flow_u = flow[:, 0, ...] # sup
     # flow_v = flow[:, 1, ...] # sup
 
+    print("original_data is in range %f to %f" % (np.min(original_data), np.max(original_data))) # -2 to 4 -8 to 8
+    print("interpol_data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
+
+    print("original_data mean & std:", original_data.mean(), original_data.std())
+    print("interpol_data mean & std:", interpol_data.mean(), interpol_data.std())
+
     print("flow_u_gt is in range %f to %f" % (np.min(flow_u_gt), np.max(flow_u_gt))) # -2 to 4 -8 to 8
     print("flow_v_gt is in range %f to %f" % (np.min(flow_v_gt), np.max(flow_v_gt)))
-    # input("x")
+    # input("viz")
     # norm_gt = np.sqrt(np.max(flow_u_gt) * np.max(flow_u_gt) + np.max(flow_v_gt) * np.max(flow_v_gt))
     # input(norm_gt)
 
@@ -217,7 +224,12 @@ def visualize_large(original_data, interpol_data, diffs,
         # print(int(i/columns))
         if int((i-1)/columns) == 0: # gt
             img = original_data[round(index)]
-            plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+            if dataset == "lbs2d":
+                plt.imshow(img, vmin=0.85, vmax=data_to_vis.max())
+                # plt.imshow(img, vmin=original_data.std()-original_data.mean(), vmax=data_to_vis.max())
+            else:
+                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+            # print("original_data:", original_data[round(index)])
             # if index % 3 == 0:
             #     ax.set_title('t=0') # can we help model with info of seq?
             # elif index % 3 == 1:
@@ -230,15 +242,21 @@ def visualize_large(original_data, interpol_data, diffs,
             ax.set_title(ax_title, fontsize=8)
         if int((i-1)/columns) == 1 and round(index - 1) % 3 == 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
-            img = interpol_data[round(index)] # [index-columns*2,...]
-            plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+            img = interpol_data[round((index - 1) / 3)] # [index-columns*2,...] # (index - 1) % 3
+            if dataset == "lbs2d":
+                plt.imshow(img, vmin=0.85, vmax=data_to_vis.max())
+                # plt.imshow(img, vmin=interpol_data.std()-interpol_data.mean(), vmax=data_to_vis.max())
+            else:
+                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+            # print("index:", index)
+            # print("(index - 1) % 3:", (index - 1) / 3)
         if int((i-1)/columns) == 2 and round(index - 1) % 3 == 0: # diff
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
-            img = diffs[round(index)] # [index-columns*2*2,...]
+            img = diffs[round((index - 1) / 3)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
         if int((i-1)/columns) == 3 and round(index - 1) % 3 == 0: # mask
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
-            img = mask[round(index)] # [index-columns*2*2,...]
+            img = mask[round((index - 1) / 3)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
         # if int((i-1)/columns) == 6: # flow diff
         #     img = diffs_flow[round(index)] # [index-columns*2*2,...]
@@ -247,7 +265,7 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "vimeo2d" or dataset == "droplet2d": # show pred flow in hsv-rgb instead of gt
                 hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
                 hsv[:,:,1] = 255
-                mag, ang = cv2.cartToPolar(flow_u[round(index)], flow_v[round(index)])
+                mag, ang = cv2.cartToPolar(flow_u[round((index - 1) / 3)], flow_v[round((index - 1) / 3)])
                 hsv[..., 0] = ang * 180 / np.pi / 2
                 hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
 
@@ -257,14 +275,17 @@ def visualize_large(original_data, interpol_data, diffs,
                 # plt.imshow(bgr, vmin=data_to_vis.min(), vmax=data_to_vis.max())
                 plt.imshow(bgr)
             else:
-                u_gt = flow_u_gt[round(index)]
-                v_gt = flow_v_gt[round(index)]
+                u_gt = flow_u_gt[round((index - 1) / 3)]
+                v_gt = flow_v_gt[round((index - 1) / 3)]
                 norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
                 # print(norm_gt.mean())
                 # img = original_data[round(index)] # [index-columns*2*2*2]
                 img = np.zeros((original_data.shape[1], original_data.shape[2]))
                 plt.axis('off')
                 # ax = plt.gca()
+                print("u_gt is in range %f to %f" % (np.min(u_gt), np.max(u_gt)))
+                print("v_gt is in range %f to %f" % (np.min(v_gt), np.max(v_gt)))
+                print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
                 pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
                 # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
@@ -292,14 +313,17 @@ def visualize_large(original_data, interpol_data, diffs,
             # this was flipped. why?
             # u = - flow_u[round(index)]
             # v = - flow_v[round(index)]
-            u = flow_u[round(index)]
-            v = flow_v[round(index)]
+            u = flow_u[round((index - 1) / 3)]
+            v = flow_v[round((index - 1) / 3)]
             norm = np.sqrt(u * u + v * v)
             # print(norm.mean())
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
+            print("u is in range %f to %f" % (np.min(u), np.max(u)))
+            print("v is in range %f to %f" % (np.min(v), np.max(v_gt)))
+            print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
             pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
             # pyimof.display.plot(u, v, ax=ax, colorwheel=True) # rgb with colormap. correct direction!
@@ -325,11 +349,13 @@ def visualize_large(original_data, interpol_data, diffs,
             if round(index) >= data_range:
                 break
         if int((i-1)/columns) == 6 and round(index - 1) % 3 == 0: # flow diff vec
-            u_diff = flow_u_diff[round(index)]
-            v_diff = flow_v_diff[round(index)]
+            u_diff = flow_u_diff[round((index - 1) / 3)]
+            v_diff = flow_v_diff[round((index - 1) / 3)]
             norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff)
             # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
-            # print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
+            print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
+            print("v_diff is in range %f to %f" % (np.min(v_diff), np.max(v_diff)))
+            print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')

@@ -88,9 +88,9 @@ def load_data(dataset, exp, mode):
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             print(data.shape)
             data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
+            print("Density scaled to [0, 1] range!")
             # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], -1., 1., cv2.NORM_MINMAX)
             # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], -1., 1., cv2.NORM_MINMAX)
-            print("Normalized!")
             print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
             print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
             print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
@@ -111,22 +111,37 @@ def load_data(dataset, exp, mode):
             print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
             print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
             print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
-            data = (data - np.min(data)) / (np.max(data) - np.min(data))
+            # data = (data - np.min(data)) / (np.max(data) - np.min(data))
+            data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std()
+
             # data = data * 255.0
             # data = data.astype(int)
             # data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
             data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
             # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], -1., 1., cv2.NORM_MINMAX)
             # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], -1., 1., cv2.NORM_MINMAX)
+            # data[:, 0] = (data[:, 0] - np.min(data[:, 0])) / (np.max(data[:, 0]) - np.min(data[:, 0]))
+            # data[:, 1] = (data[:, 1] - np.min(data[:, 1])) / (np.max(data[:, 1]) - np.min(data[:, 1]))
+            # data[:, 2] = (data[:, 2] - np.min(data[:, 2])) / (np.max(data[:, 2]) - np.min(data[:, 2]))
             # print(data)
-            print("Normalized!")
+            print("Density scaled to [0, 1] range!")
+
+            
+            flow_x_mean = data[:, 1].mean()
+            flow_y_mean = data[:, 2].mean()
+            flow_x_std = data[:, 1].std()
+            flow_y_std = data[:, 2].std()
+            data[:, 1] = (data[:, 1] - data[:, 1].mean()) / data[:, 1].std()
+            data[:, 2] = (data[:, 2] - data[:, 2].mean()) / data[:, 2].std()
+            print("Normalized to mean 0 and std 1!")
+
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
             print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
             print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
             print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
             print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
-            input("Data range")
+            # input("Data range")
         else:
             with open(filename, 'rb') as pkl_file:
                 data = pickle.load(pkl_file)
@@ -134,9 +149,11 @@ def load_data(dataset, exp, mode):
             data = np.float32(data)
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             data = (data - np.min(data)) / (np.max(data) - np.min(data))
+            print("Normalized to mean 0 and std 1!")
             # data = data * 255.0
             # data = data.astype(int)
             data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
+            print("Scaled to [0, 1] range!")
             # print(data)
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             # input("x")
@@ -197,8 +214,11 @@ def load_data(dataset, exp, mode):
                 data_train = data[:2205] # div to 3, 5, 9 and 7
                 data_val = data[2370:2685] # div to 3, 5, 9 and 7
             if "lbs2d" in filename: # 6K in total, skip first 3K; 3K in total, each 10th
-                data_train = data[:2205]
-                data_val = data[2370:2685]
+                # data_train = data[:2205]
+                data_train = data[:1000]
+                data_train = np.append(data_train, data[-1205:], axis=0)
+                # data_val = data[2370:2685]
+                data_val = data[1000:1315]
                 # data_train = data[:300]
                 # data_val = data[:300]
             if "droplet2d" in filename:
@@ -380,7 +400,8 @@ def load_data(dataset, exp, mode):
             if "rectangle2d" in filename:
                 data_test = data[2685:3000] # div to 3, 5, 9 and 7
             if "lbs2d" in filename:
-                data_test = data[2685:3000] # [5685:6000]
+                # data_test = data[2685:3000] # [5685:6000]
+                data_test = data[1315:1630] # [5685:6000]
                 # data_test = data[:300]
             elif "droplet2d" in filename:
                 data_test = data[:2700]
@@ -452,5 +473,8 @@ def load_data(dataset, exp, mode):
                         data_test[i+4], data_test[i+5], data_test[i+6], data_test[i+7]), axis=0)) 
                 data_test = np.array(data_test_three)
                 print("data_test in three:", data_test.shape)
-        
+
+        if dataset == "lbs2d":
+            return data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std
+        else:
             return data_test

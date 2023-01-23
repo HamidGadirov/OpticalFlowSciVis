@@ -79,6 +79,12 @@ class IFBlock(nn.Module):
                 nn.ConvTranspose2d(c//2, 1, 4, 2, 1), # mask
                 # input(c//2)
             )
+            # supervised flow
+            # self.conv3 = nn.Sequential(
+            #     nn.ConvTranspose2d(4, 4, 4, 2, 1),
+            #     nn.PReLU(4),
+            #     nn.ConvTranspose2d(4, 2, 4, 2, 1), # supervised flow, one direction
+            # )
 
     def forward(self, x, flow, scale):
         if scale != 1:
@@ -111,15 +117,19 @@ class IFBlock(nn.Module):
             flow = self.conv1(x)
             # print("conv1", flow.shape)
             # input("flow")
+
+            # supervised flow
+            # sup_flow = self.conv3(flow)
             mask = self.conv2(x)
             flow = F.interpolate(flow, scale_factor=scale, mode="bilinear", align_corners=False, recompute_scale_factor=False) * scale
             mask = F.interpolate(mask, scale_factor=scale, mode="bilinear", align_corners=False, recompute_scale_factor=False)
+            # sup_flow = F.interpolate(sup_flow, scale_factor=scale, mode="bilinear", align_corners=False, recompute_scale_factor=False) * scale
         # try reversing flow here
         # flow = - flow
         # mask = 1. - mask
         # flow *= 0. # that breaks
         # print("reversed mask!")
-        return flow, mask
+        return flow, mask # , sup_flow
     
 class IFNet(nn.Module):
     def __init__(self):
@@ -141,12 +151,16 @@ class IFNet(nn.Module):
             self.contextnet = Contextnet()
             self.unet = Unet()
 
-    def forward(self, x, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
+    def forward(self, x, gt_flow, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
         img0 = x[:, :1] # :3
         img1 = x[:, 1:2] # 3:6
         gt = x[:, 2:3] # 6:   In inference time, gt is None
+        # print("x:", x.shape)
+        # print("gt:", gt.shape)
+        # input("gt none")
 
         flow_list = [] # flow_list represents flow predictions by each IFBlock, 4 channels, Ft->0, Ft->1
+        # sup_flow_list = []
         merged = []
         mask_list = []
         warped_img0 = img0
@@ -171,6 +185,7 @@ class IFNet(nn.Module):
                 flow = flow[:,:,:max_shape_2,:max_shape_3]
                 # gt = gt[:,:,:max_shape_2,:max_shape_3]
                 # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
+                # flow_d, mask_d, sup_flow_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
                 flow_d, mask_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
                 flow_d = flow_d[:,:,:img0.shape[2],:img0.shape[3]]
                 mask_d = mask_d[:,:,:img0.shape[2],:img0.shape[3]]
@@ -179,17 +194,24 @@ class IFNet(nn.Module):
             else:
                 # print("cat", torch.cat((img0, img1), 1).shape)
                 flow, mask = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i])
+                # flow, mask, sup_flow = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i])
             # correct shapes
             flow = flow[:,:,:img0.shape[2],:img0.shape[3]]
             mask = mask[:,:,:img0.shape[2],:img0.shape[3]]
+            # sup_flow = sup_flow[:,:,:img0.shape[2],:img0.shape[3]]
             max_shape_2 = min(img0.shape[2], warped_img0.shape[2])
             max_shape_3 = min(img0.shape[3], warped_img0.shape[3])
             img0 = img0[:,:,:max_shape_2,:max_shape_3]
             img1 = img1[:,:,:max_shape_2,:max_shape_3]
             mask_list.append(torch.sigmoid(mask))
             flow_list.append(flow)
+            # sup_flow_list.append(sup_flow)
             warped_img0 = warp(img0, flow[:, :2]) # Ft->0
             warped_img1 = warp(img1, flow[:, 2:4]) # Ft->1
+            # experiment: use GT flow instead of pred for interpolation, results improve ??
+            # print("gt_flow:", gt_flow.shape)
+            # warped_img0 = warp(img0, -gt_flow) # Ft->0
+            # warped_img1 = warp(img1, gt_flow) # Ft->1
             merged_student = (warped_img0, warped_img1)
             merged.append(merged_student)
 
@@ -221,6 +243,7 @@ class IFNet(nn.Module):
 
             # print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
             flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+            # flow_d, mask_d, sup_flow_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
             flow_d = flow_d[:,:,:max_shape_2,:max_shape_3]
             mask_d = mask_d[:,:,:max_shape_2,:max_shape_3]
             
@@ -274,6 +297,7 @@ class IFNet(nn.Module):
             # print("refined")
         # return flow_list, mask_list[2], merged, flow_teacher, merged_teacher, loss_distill
         return flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill
+        # return flow_list, sup_flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill
 
 
 # (block2): IFBlock(                                                                                  

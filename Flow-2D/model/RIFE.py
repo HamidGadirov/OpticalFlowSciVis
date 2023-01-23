@@ -63,12 +63,13 @@ class Model:
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, scale_list=[4, 2, 1], TTA=False, timestep=0.5):
+    def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5):
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
         imgs = torch.cat((img0, img1), 1)
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, gt_flow, scale_list, timestep=timestep)
         # flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
         print("back to RIFE from IFNet")
         if TTA == False:
@@ -115,7 +116,9 @@ class Model:
             self.eval()
         # flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         mask = mask[2] # only gt (pred) durig training
          # correct shapes
         max_shape_2 = min(img0.shape[2], mask.shape[2])
@@ -155,13 +158,13 @@ class Model:
         # print("Laplace pyramid + L1 + AdamW (L2)")
         # print("Laplace pyramid + AdamW (L2)")
         # print(merged[2].shape, gt.shape)
-        loss_l1 = (self.lap(merged[2], gt)).mean()
+        # loss_l1 = (self.lap(merged[2], gt)).mean() # laplacian
         # print("L1 loss")
-        # print(merged[0].shape, gt.shape)
-        # loss_l1 = torch.nn.functional.l1_loss(merged[0], gt) # merged[2]
-        loss_tea = (self.lap(merged_teacher, gt)).mean()
+        # print(merged[2].shape, gt.shape)
+        loss_l1 = torch.nn.functional.l1_loss(merged[2], gt)
+        # loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
         # print(merged_teacher.shape, gt.shape)
-        # loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt)
+        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt)
         # sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
 
         # adding L1 reg: ? only to the last block
@@ -296,7 +299,7 @@ class Model:
         lambda_reg = 0 # 1e-6 best on rectangle 1e-7
         lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.5 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0.01 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter
