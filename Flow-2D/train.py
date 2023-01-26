@@ -95,7 +95,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             # input("train loaded")
             val_data = DataLoader(data_val, args.batch_size, pin_memory=True, num_workers=8)
             print("len:", len(val_data))
-    else:
+    else: # mode == "test"
         if dataset == "vimeo2d": 
             dataset_test = VimeoDataset('test')
             data_test = DataLoader(dataset_test, batch_size=16, pin_memory=True, num_workers=8)
@@ -435,7 +435,12 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         print(original_data.shape)
         print("Data is in range %f to %f" % (np.min(original_data), np.max(original_data)))
         # input("x")
-        return original_data, interpol_data, flow_combined, flow_gt_combined, mask_combined
+        
+        if dataset == "lbs2d":
+            statistics = {'flow_x_mean': flow_x_mean, 'flow_y_mean': flow_y_mean, 'flow_x_std': flow_x_std, 'flow_y_std': flow_y_std}
+        else:
+            statistics = {'flow_x_mean': 0, 'flow_y_mean': 0, 'flow_x_std': 0, 'flow_y_std': 0}
+        return original_data, interpol_data, flow_combined, flow_gt_combined, mask_combined, statistics
     
 def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
     print("Evaluate")
@@ -564,7 +569,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=500, type=int) # 300 1000
+    parser.add_argument('--epoch', default=1000, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -590,7 +595,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle2d":
         args.batch_size = 200
     if args.dataset == "lbs2d":
-        args.batch_size = 120
+        args.batch_size = 90 # 120
     if args.dataset == "FluidSimML2d":
         args.batch_size = 64
     if args.dataset == "pipedcylinder2d" or args.dataset == "cylinder2d":
@@ -713,11 +718,13 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_GTflowInterpol.pkl" # good interpol, very good flow
     # model_name = "flownet_l1_flow25e-2_v2_128_rect_big_hftextv3_allBlocks_GTflowInterpol.pkl" # again good interpol, very good flow
     # model_name = "flownet_l1_flow25e-2_v2_128_rect_big_hftextv3_allBlocks.pkl" # ? better interpol, good flow, can be better?
-    # model_name = "flownet_l1_flow5e-1_v2_128_rect_big_hftextv3_allBlocks.pkl" # interpol a tiny bit worse than with flow25e-2, flow25e-2 is preferable
+    model_name = "flownet_l1_flow5e-1_v2_128_rect_big_hftextv3_allBlocks.pkl" # interpol a tiny bit worse than with flow25e-2, flow25e-2 is preferable
     # model_name = "flownet_l1_flow3e-1_v2_128_rect_big_hftextv3_allBlocks_500ep.pkl"
+    # model_name = "flownet_l1_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_gamma.pkl" # flow was reverted, coeff to high
+    model_name = "flownet_l1_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_gamma.pkl"
 
-    # model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" - best interpol unsupervised
-    # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" - best supervised flow
+    # model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # - best interpol unsupervised
+    # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # - best supervised flow
     # L1 is better than Laplaccian for rectangle2d
 
     """ lbs2d """
@@ -736,8 +743,15 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow1e-1_v2_128_lbs_skip_NormAllScaleAll.pkl" # 500 ep; flow scaled to [-1..1]: loss descreased;
     # model_name = "flownet_l1_flow1e-2_v2_128_lbs_skip_NormAllScaleAll.pkl" # 500 ep; flow scaled to [-1..1]: loss descreased;
     # model_name = "flownet_l1_flow1e-1_v2_128_lbs_skip_ScaleAllNormAll.pkl" # 500 ep; flow1e-1; scale then norm: bad flow
-    model_name = "flownet_l1_flow1e-1_v2_128_lbs_skip_ScaleAllNormVel.pkl" # 500 ep; loss increased -
-    model_name = "flownet_l1_flow1e-2_v2_128_lbs_skip_ScaleAllNormVel.pkl" # 500 ep;
+    # model_name = "flownet_l1_flow1e-1_v2_128_lbs_skip_ScaleAllNormVel.pkl" # 500 ep; loss increased -
+    # model_name = "flownet_l1_flow1e-2_v2_128_lbs_skip_ScaleAllNormVel.pkl" # 500 ep; flow not accurate
+    # model_name = "flownet_l1_flow1e-2_v2_128_lbs_skip_ScaleAllScaleVel10NormVel.pkl" # vel scaled *10;
+    # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleAllScaleVel10NormVel.pkl" # vel scaled *10; no
+    # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10.pkl" # vel scaled *10; flow increased after 250ep; flow pos better but direction wrong
+    # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10v2.pkl" # vel scaled *10;
+    # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10v3.pkl" # vel scaled *10; flow x and y sep in loss
+    # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10_rev.pkl"
+    # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10_Magn.pkl"
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -882,7 +896,7 @@ if __name__ == "__main__":
         # input("x")
         print("Saving at:", dir_model)
 
-        data_test, interpol_data, flow, flow_original, mask = train(model, args.dataset, args.exp, model_name, args.mode, args.local_rank)
+        data_test, interpol_data, flow, flow_original, mask, statistics = train(model, args.dataset, args.exp, model_name, args.mode, args.local_rank)
         print("data_test:", data_test.shape)
         print("interpol_data:", interpol_data.shape)
         print("flow:", flow.shape)
@@ -905,14 +919,33 @@ if __name__ == "__main__":
         print("flow pred & mask:", flow.shape, mask.shape)
 
         if "lbs2d" in dataset: # denormalize
-            data_t, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std = load_data(dataset, args.exp, args.mode)
-            # original_data = original_data * original_data.std() + original_data.mean()
-            # interpol_data = interpol_data * interpol_data.std() + interpol_data.mean()
-            flow_original[:, 0] = flow_original[:, 0] * flow_x_std + flow_x_mean
-            flow_original[:, 1] = flow_original[:, 1] * flow_y_std + flow_y_mean
-            flow[:, 0] = flow[:, 0] * flow_x_std + flow_x_mean
-            flow[:, 1] = flow[:, 1] * flow_y_std + flow_y_mean
-            print("Denormalized from mean 0 and std 1!")
+            print("flow_original mean std", np.mean(flow_original), np.std(flow_original))
+            flow_original = flow_original / 10.
+            flow = flow / 10.
+            print("Vel rescaled to /10")
+            print("flow_original mean std", np.mean(flow_original), np.std(flow_original))
+        #     flow_x_mean = statistics['flow_x_mean']
+        #     flow_y_mean = statistics['flow_y_mean']
+        #     flow_x_std = statistics['flow_x_std']
+        #     flow_y_std = statistics['flow_y_std']
+        #     # data_t, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std = load_data(dataset, args.exp, args.mode)
+        #     # original_data = original_data * original_data.std() + original_data.mean()
+        #     # interpol_data = interpol_data * interpol_data.std() + interpol_data.mean()
+        #     flow_original[:, 0] = flow_original[:, 0] * flow_x_std + flow_x_mean
+        #     flow_original[:, 1] = flow_original[:, 1] * flow_y_std + flow_y_mean
+        #     c[:, 2] = flow[:, 2] * flow_x_std + flow_x_mean
+        #     flow[:, 3] = flow[:, 3] * flow_y_std + flow_y_mean
+        #     print("Denormalized from mean 0 and std 1!")
+        #     print("Vel x mean std", flow_original[:, 1].mean(), flow_original[:, 1].std())
+
+            print("flow_original:", flow_original[10, 0] )
+            print("flow:", flow[10, 2:3] )
+            # flow[0][:, 2:3]), gt_flow[:, 0])
+            # # loss_flow = torch.nn.functional.l1_loss(flow_original[10, :], flow[10, :] )
+            # l1_loss = abs(flow_original[10, :] - flow[10, 2:4] )
+            # mae_cost = l1_loss.mean()
+            # print("loss_flow:", mae_cost)
+            # input("x")
         
         # interpol_data = interpol_data
         # print(original_data.shape, interpol_data.shape, flow.shape, flow_gt.shape)

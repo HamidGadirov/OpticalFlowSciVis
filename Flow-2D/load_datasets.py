@@ -126,14 +126,30 @@ def load_data(dataset, exp, mode):
             # print(data)
             print("Density scaled to [0, 1] range!")
 
-            
-            flow_x_mean = data[:, 1].mean()
-            flow_y_mean = data[:, 2].mean()
-            flow_x_std = data[:, 1].std()
-            flow_y_std = data[:, 2].std()
-            data[:, 1] = (data[:, 1] - data[:, 1].mean()) / data[:, 1].std()
-            data[:, 2] = (data[:, 2] - data[:, 2].mean()) / data[:, 2].std()
-            print("Normalized to mean 0 and std 1!")
+            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            data[:, 1] = data[:, 1] * 10.
+            data[:, 2] = data[:, 2] * 10.
+            print("Vel scaled to *10")
+            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+
+            # flow_x_mean = data[:, 1].mean()
+            # flow_y_mean = data[:, 2].mean()
+            # flow_x_std = data[:, 1].std()
+            # flow_y_std = data[:, 2].std()
+            # data[:, 1] = (data[:, 1] - flow_x_mean) / flow_x_std
+            # data[:, 2] = (data[:, 2] - flow_y_mean) / flow_y_std
+            # print("Normalized to mean 0 and std 1!")
+            # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+
+            # print("data[:, 1]):", data[:, 1])
+
+            # # test
+            # data[:, 1]  = data[:, 1]  * flow_x_std + flow_x_mean
+            # data[:, 2]  = data[:, 2]  * flow_y_std + flow_y_mean
+            # print("Denormalized from mean 0 and std 1!")
+            # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            # print("data[:, 1]):", data[:, 1])
+            # input("norm")
 
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
@@ -141,6 +157,7 @@ def load_data(dataset, exp, mode):
             print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
             print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
             print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            print("Data shape:", data.shape)
             # input("Data range")
         else:
             with open(filename, 'rb') as pkl_file:
@@ -403,6 +420,45 @@ def load_data(dataset, exp, mode):
                 # data_test = data[2685:3000] # [5685:6000]
                 data_test = data[1315:1630] # [5685:6000]
                 # data_test = data[:300]
+                # print("Data shape:", data.shape)
+                # input("Data range")
+
+                # print("Vel x mean std", np.mean(data_test[:, :, 1]), np.std(data_test[:, :, 1]))
+                # # data_test[:, 1] = data_test[:, 1] * 10.
+                # # data_test[:, 2] = data_test[:, 2] * 10.
+                # # print("Vel scaled to *10")
+                # print("Vel x mean std", np.mean(data_test[:, :, 1]), np.std(data_test[:, :, 1]))
+
+                # print("##########")
+                flow_x = data_test[:, :, 1]
+                # print("Data data_test:", flow_x.mean(), flow_x.std())
+                flow_x_mean = flow_x.mean()
+                flow_x_std = flow_x.std()
+                # flow_x = (flow_x - flow_x.mean()) / flow_x.std()
+                # print("Normalized to mean 0 and std 1!")
+                # print("Data data_test:", flow_x.mean(), flow_x.std())
+                flow_y = data_test[:, :, 2]
+                flow_y_mean = flow_y.mean()
+                flow_y_std = flow_y.std()
+                # print("Data data_test:", flow_y.mean(), flow_y.std())
+                # flow_y = (flow_y - flow_y.mean()) / flow_y.std()
+                # print("Normalized to mean 0 and std 1!")
+                # print("Data data_test:", flow_y.mean(), flow_y.std())
+                # # print("Vel x mean std", np.mean(data[:, :, 1]), np.std(data[:, :, 1]))
+                # input("xxx")
+
+                # # flow_x_mean = data_test[:, :, 1].mean()
+                # # flow_y_mean = data_test[:, :, 2].mean()
+                # # flow_x_std = data_test[:, :, 1].std()
+                # # flow_y_std = data_test[:, :, 2].std()
+                # # data_test[:, :, 1] = (data_test[:, :, 1] - flow_x_mean) / flow_x_std
+                # # data_test[:, :, 2] = (data_test[:, :, 2] - flow_y_mean) / flow_y_std
+                # data_test[:, :, 1] = flow_x
+                # data_test[:, :, 2] = flow_y
+                # print("Normalized to mean 0 and std 1!")
+                # print("Vel x mean std", data_test[:, :, 1].mean(), data_test[:, :, 1].std())
+                # print("Vel y mean std", data_test[:, :, 2].mean(), data_test[:, :, 2].std())
+                # input("xxxx")
             elif "droplet2d" in filename:
                 data_test = data[:2700]
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:

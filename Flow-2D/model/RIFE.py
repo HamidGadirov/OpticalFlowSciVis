@@ -100,12 +100,27 @@ class Model:
             # print(img0_data.shape, img1_flow.shape)
             # input("x")
             # img0_flow_uv = imgs[:, :2] # (b_s, 3, 3, 450, 150)
+
+            # using density:
             img0 = img0_data
             img1 = img1_data
             imgs = torch.cat((img0, img1), 1)
             gt = gt_data
-            # print(imgs.shape)
-            # input("x")
+            
+            # test: replace density with flow magnitude
+            # img0 = img0_data
+            # img1 = img1_data
+            # img0_flow_magn = torch.sqrt(img0_flow[:, 0:1] * img0_flow[:, 0:1] + img0_flow[:, 1:2] * img0_flow[:, 1:2])
+            # img1_flow_magn = torch.sqrt(img1_flow[:, 0:1] * img1_flow[:, 0:1] + img1_flow[:, 1:2] * img1_flow[:, 1:2])
+            # gt_flow_magn = torch.sqrt(gt_flow[:, 0:1] * gt_flow[:, 0:1] + gt_flow[:, 1:2] * gt_flow[:, 1:2])
+            # # imgs = torch.cat((img0, img1), 1)
+            # # print(imgs.shape)
+            # imgs = torch.cat((img0_flow_magn, img1_flow_magn), 1)
+            # # print(imgs.shape)
+            # # input("x")
+            # gt = gt_flow_magn
+            # # print(gt.shape)
+            # # input("x")
         else:
             img0 = imgs[:, :1]
             img1 = imgs[:, 1:2]
@@ -127,6 +142,8 @@ class Model:
         if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
             or dataset == "rectangle2d" or dataset == "lbs2d":
             gt_flow = gt_flow[:,:,:max_shape_2,:max_shape_3]
+            # test: reverse flow:
+            # gt_flow = - gt_flow
             # Flow loss
             # flow and flow_uv
             # print("flow[2]:", flow[2].shape) # 2nd IFBlock, 4 channels: Ft->0 and Ft->1 x and y
@@ -135,17 +152,34 @@ class Model:
             # flow[:, :2] is Ft->0 and flow[:, 2:4] is Ft->1
             # TODO: add to all blocks +
             loss_flow = 0.
-            loss_flow += torch.nn.functional.l1_loss(flow[0][:, 2:4], gt_flow) # * 1
-            loss_flow += torch.nn.functional.l1_loss(flow[1][:, 2:4], gt_flow) # * 2
-            loss_flow += torch.nn.functional.l1_loss(flow[2][:, 2:4], gt_flow) # * 4
+            # TODO: add gamma for each block (from RAFT) +
+            loss_flow += torch.nn.functional.l1_loss(flow[0][:, 2:4], gt_flow) * 0.64 # * 1
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 2:3]), gt_flow[:, 0])
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 3:4]), gt_flow[:, 1])
+            loss_flow += torch.nn.functional.l1_loss(flow[1][:, 2:4], gt_flow) * 0.8 # * 2
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 2:3]), gt_flow[:, 0])
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 3:4]), gt_flow[:, 1])
+            loss_flow += torch.nn.functional.l1_loss(flow[2][:, 2:4], gt_flow) * 1. # * 4
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 2:3]), gt_flow[:, 0])
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 3:4]), gt_flow[:, 1])
             # TODO: add Ft->0 to all blocks using reverted gt_flow +
-            loss_flow += torch.nn.functional.l1_loss(flow[0][:, :2], -gt_flow) # * 1
-            loss_flow += torch.nn.functional.l1_loss(flow[1][:, :2], -gt_flow) # * 2
-            loss_flow += torch.nn.functional.l1_loss(flow[2][:, :2], -gt_flow) # * 4
+            loss_flow += torch.nn.functional.l1_loss(flow[0][:, :2], -gt_flow) * 0.64 # * 1
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 0:1]), -gt_flow[:, 0])
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 1:2]), -gt_flow[:, 1])
+            loss_flow += torch.nn.functional.l1_loss(flow[1][:, :2], -gt_flow) * 0.8 # * 2
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 0:1]), -gt_flow[:, 0])
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 1:2]), -gt_flow[:, 1])
+            loss_flow += torch.nn.functional.l1_loss(flow[2][:, :2], -gt_flow) * 1 # * 4
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 0:1]), -gt_flow[:, 0])
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 1:2]), -gt_flow[:, 1])
             # TODO: add this to Tea block +
-            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, 2:4], gt_flow) # * 1
-            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, :2], -gt_flow) # * 1
-            loss_flow /= 8.
+            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, 2:4], gt_flow) * 1 # * 1
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 2:3]), gt_flow[:, 0])
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 3:4]), gt_flow[:, 1])
+            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, :2], -gt_flow) * 1 # * 1
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 0:1]), -gt_flow[:, 0])
+            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 1:2]), -gt_flow[:, 1])
+            loss_flow /= 2.
 
             # supervised flow
             # loss_flow += torch.nn.functional.l1_loss(sup_flow[0], gt_flow)
@@ -299,7 +333,7 @@ class Model:
         lambda_reg = 0 # 1e-6 best on rectangle 1e-7
         lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.01 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0.5 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter

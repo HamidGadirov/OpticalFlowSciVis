@@ -46,7 +46,7 @@ def plot_loss(loss, dir_res, name="loss.png", save=False):
     plt.xlabel('epoch')
     plt.ylabel('loss')
     # plt.legend(['total', 'lapl', 'tea', 'dist', 'reg', 'photo', 'flow'], loc='upper right')
-    plt.legend(['Total', 'L1', 'Teacher', 'Distill', 'Reg', 'Photo', 'Flow'], loc='upper right')
+    plt.legend(['Total', 'Laplacian', 'Teacher', 'Distill', 'Reg', 'Photo', 'Flow'], loc='upper right') # Laplacian
     # plt.legend()
     if save:
         res_path = os.path.join(dir_res, name)
@@ -178,7 +178,7 @@ def visualize_large(original_data, interpol_data, diffs,
         columns = 20
     elif dataset == "vimeo2d":
         columns = 28
-    quiver_steps = 4 # 5
+    quiver_steps = 2 # 5
     rows = 7 # 4
     skip = 1
     if factor == 8:
@@ -212,6 +212,11 @@ def visualize_large(original_data, interpol_data, diffs,
     # input(norm_gt)
 
     # TODO: set norm as max from gt and pred -
+    # norm_gt = np.sqrt(flow_u_gt * flow_u_gt + flow_v_gt * flow_v_gt)
+    # norm_pred = np.sqrt(flow_u * flow_u + flow_v * flow_v)
+    # print(max(norm_gt, norm_pred))
+    norm_coeff = 6.
+    # input("norm")
 
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
 
@@ -277,7 +282,7 @@ def visualize_large(original_data, interpol_data, diffs,
             else:
                 u_gt = flow_u_gt[round((index - 1) / 3)]
                 v_gt = flow_v_gt[round((index - 1) / 3)]
-                norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
+                norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt) # / norm_coeff
                 # print(norm_gt.mean())
                 # img = original_data[round(index)] # [index-columns*2*2*2]
                 img = np.zeros((original_data.shape[1], original_data.shape[2]))
@@ -287,6 +292,7 @@ def visualize_large(original_data, interpol_data, diffs,
                 print("v_gt is in range %f to %f" % (np.min(v_gt), np.max(v_gt)))
                 print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
                 pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
+                # pyimof.display.quiver(u_gt, u_gt, c=u_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
                 # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
 
@@ -310,21 +316,19 @@ def visualize_large(original_data, interpol_data, diffs,
                 if round(index) >= data_range:
                     break
         if int((i-1)/columns) == 5 and round(index - 1) % 3 == 0: # flow pred; only for interpolated!
-            # this was flipped. why?
-            # u = - flow_u[round(index)]
-            # v = - flow_v[round(index)]
             u = flow_u[round((index - 1) / 3)]
             v = flow_v[round((index - 1) / 3)]
-            norm = np.sqrt(u * u + v * v)
+            norm = np.sqrt(u * u + v * v) # / norm_coeff
             # print(norm.mean())
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
             print("u is in range %f to %f" % (np.min(u), np.max(u)))
-            print("v is in range %f to %f" % (np.min(v), np.max(v_gt)))
+            print("v is in range %f to %f" % (np.min(v), np.max(v)))
             print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
             pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
+            # pyimof.display.quiver(u, u, c=u, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
             # pyimof.display.plot(u, v, ax=ax, colorwheel=True) # rgb with colormap. correct direction!
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
@@ -351,7 +355,7 @@ def visualize_large(original_data, interpol_data, diffs,
         if int((i-1)/columns) == 6 and round(index - 1) % 3 == 0: # flow diff vec
             u_diff = flow_u_diff[round((index - 1) / 3)]
             v_diff = flow_v_diff[round((index - 1) / 3)]
-            norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff)
+            norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff) # / norm_coeff
             # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
             print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
             print("v_diff is in range %f to %f" % (np.min(v_diff), np.max(v_diff)))
