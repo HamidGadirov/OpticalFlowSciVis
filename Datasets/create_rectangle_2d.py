@@ -103,22 +103,31 @@ box = np.ones((box_dim_x, box_dim_y), dtype=np.float32)
 # box[:, 28:32] = 128.
 # box[:, 43:47] = 128.
 # box /= 255. # to 0...1
-
-# # add high freq texture to the box
-# # 4x4 areas with diff values
-# box *= 255.
-# step_size = 10 # 4 5
-# for i in range(0, box_dim_x, step_size):
-#     for j in range(0, box_dim_y, step_size):
-#         rand_value = np.random.randint(30, 256)
-#         # print(rand_value)
-#         box[i:i+step_size, j:j+step_size] = rand_value
+ 
+# add high freq texture to the box
+# 4x4 areas with diff values
+box *= 255.
+step_size = 20 # 10 # 4 5
+for i in range(0, box_dim_x, step_size):
+    for j in range(0, box_dim_y, step_size):
+        rand_value = np.random.randint(50, 256) # 20 30
+        # print(rand_value)
+        box[i:i+step_size, j:j+step_size] = rand_value
 # box /= 255. # to 0...1
-# # print(box)
-# # input("x")
+# add boundary to check if that forces to learn sharp edges
+bound_value = 255
+bound_width = 5
+box[0:bound_width, :] = bound_value
+box[-bound_width:, :] = bound_value
 
-vel_min = -6 # -8 
-vel_max = 6 # 8
+box[:, 0:bound_width] = bound_value
+box[:, -bound_width:] = bound_value
+box /= 255. # to 0...1
+# print(box)
+# input("x")
+
+vel_min = -5 # -8 -6
+vel_max = 5 # 8 5
 
 pos_x = random.randint(0, grid_x - box_dim_x)
 pos_y = random.randint(0, grid_y - box_dim_y)
@@ -236,7 +245,8 @@ input("velocities")
 
 # pkl_filename = "rectangle2d" + ".pkl" 
 # pkl_filename = "rectangle2d_big_hftext" + "_flow" + "_v3" + ".pkl" 
-pkl_filename = "rectangle2d_big_nohf" + "_flow" + ".pkl" 
+# pkl_filename = "rectangle2d_big_nohf" + "_flow" + ".pkl" 
+pkl_filename = "rectangle2d_big_f_bb" + "_flow" + ".pkl" 
 
 print("data:", data.shape)
 data = data[:, np.newaxis, ...]

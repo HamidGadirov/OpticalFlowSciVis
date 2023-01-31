@@ -46,7 +46,7 @@ def plot_loss(loss, dir_res, name="loss.png", save=False):
     plt.xlabel('epoch')
     plt.ylabel('loss')
     # plt.legend(['total', 'lapl', 'tea', 'dist', 'reg', 'photo', 'flow'], loc='upper right')
-    plt.legend(['Total', 'Laplacian', 'Teacher', 'Distill', 'Reg', 'Photo', 'Flow'], loc='upper right') # Laplacian
+    plt.legend(['Total', 'L1', 'Teacher', 'Distill', 'Reg', 'Photo', 'Flow'], loc='upper right') # Laplacian vs L1(MAE)
     # plt.legend()
     if save:
         res_path = os.path.join(dir_res, name)
@@ -215,7 +215,10 @@ def visualize_large(original_data, interpol_data, diffs,
     # norm_gt = np.sqrt(flow_u_gt * flow_u_gt + flow_v_gt * flow_v_gt)
     # norm_pred = np.sqrt(flow_u * flow_u + flow_v * flow_v)
     # print(max(norm_gt, norm_pred))
-    norm_coeff = 6.
+    # norm_coeff = 6.
+    max_flow_gt = 6.
+    # max_flow_pred = ?
+    # max_flow_diff = ?
     # input("norm")
 
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
@@ -291,7 +294,9 @@ def visualize_large(original_data, interpol_data, diffs,
                 print("u_gt is in range %f to %f" % (np.min(u_gt), np.max(u_gt)))
                 print("v_gt is in range %f to %f" % (np.min(v_gt), np.max(v_gt)))
                 print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
-                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
+                #  pyimof.display.quiver(u, v, c, ax=ax, clim=(-5, 5)) --- use clim
+                # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
+                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', clim=(-max_flow_gt, max_flow_gt), bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, u_gt, c=u_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
                 # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')

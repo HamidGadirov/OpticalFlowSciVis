@@ -721,7 +721,15 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow5e-1_v2_128_rect_big_hftextv3_allBlocks.pkl" # interpol a tiny bit worse than with flow25e-2, flow25e-2 is preferable
     # model_name = "flownet_l1_flow3e-1_v2_128_rect_big_hftextv3_allBlocks_500ep.pkl"
     # model_name = "flownet_l1_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_gamma.pkl" # flow was reverted, coeff to high
-    model_name = "flownet_l1_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_gamma.pkl"
+    model_name = "flownet_l1_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_gamma.pkl" # coeff too high
+    model_name = "flownet_l1_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_gamma.pkl" # not better than without gamma
+    model_name = "flownet_l1_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_gamma_RIFE.pkl" # is it same?? yes.
+    model_name = "flownet_l1_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_gamma_RIFE_forw.pkl" # only one direction: a bit worse than before
+    model_name = "flownet_l1_flow2e-1_v1_128_rect_big_hftextv3_allBlocks_gamma_RIFE.pkl"
+
+    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks.pkl" # interpol considerably better, flow also good; this was only 1 dir RIFE loss
+    # model_name = "flownet_l1_flow5e-1_v2_128_rect_big_fbb_allBlocks.pkl" # interpol not accurate
+    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_2.pkl" # two dir flow loss: 
 
     # model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # - best interpol unsupervised
     # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # - best supervised flow
@@ -751,7 +759,9 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10v2.pkl" # vel scaled *10;
     # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10v3.pkl" # vel scaled *10; flow x and y sep in loss
     # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10_rev.pkl"
-    # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10_Magn.pkl"
+    # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10_Magn.pkl" # use flow magnitute instead of density: very bad flow?
+    # model_name = "flownet_l1_flow2e-1_v2_128_lbs_skip_ScaleVel10_gamma_RIFE.pkl" # loss increased after 200 ep
+    # model_name = "flownet_l1_flow2e-1_v2_128_lbs_skip_ScaleVel10_gamma_RIFE_200.pkl"
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow

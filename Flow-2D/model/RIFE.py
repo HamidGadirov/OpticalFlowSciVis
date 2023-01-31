@@ -151,34 +151,49 @@ class Model:
             # input("flow")
             # flow[:, :2] is Ft->0 and flow[:, 2:4] is Ft->1
             # TODO: add to all blocks +
+            # loss_flow = 0.
+            # # TODO: add gamma for each block (from RAFT) +
+            # loss_flow += torch.nn.functional.l1_loss(flow[0][:, 2:4], gt_flow) * 0.64 # * 1
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 2:3]), gt_flow[:, 0])
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 3:4]), gt_flow[:, 1])
+            # loss_flow += torch.nn.functional.l1_loss(flow[1][:, 2:4], gt_flow) * 0.8 # * 2
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 2:3]), gt_flow[:, 0])
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 3:4]), gt_flow[:, 1])
+            # loss_flow += torch.nn.functional.l1_loss(flow[2][:, 2:4], gt_flow) * 1. # * 4
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 2:3]), gt_flow[:, 0])
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 3:4]), gt_flow[:, 1])
+            # # TODO: add Ft->0 to all blocks using reverted gt_flow +
+            # loss_flow += torch.nn.functional.l1_loss(flow[0][:, :2], -gt_flow) * 0.64 # * 1
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 0:1]), -gt_flow[:, 0])
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 1:2]), -gt_flow[:, 1])
+            # loss_flow += torch.nn.functional.l1_loss(flow[1][:, :2], -gt_flow) * 0.8 # * 2
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 0:1]), -gt_flow[:, 0])
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 1:2]), -gt_flow[:, 1])
+            # loss_flow += torch.nn.functional.l1_loss(flow[2][:, :2], -gt_flow) * 1 # * 4
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 0:1]), -gt_flow[:, 0])
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 1:2]), -gt_flow[:, 1])
+            # # TODO: add this to Tea block +
+            # loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, 2:4], gt_flow) * 1 # * 1
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 2:3]), gt_flow[:, 0])
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 3:4]), gt_flow[:, 1])
+            # loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, :2], -gt_flow) * 1 # * 1
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 0:1]), -gt_flow[:, 0])
+            # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 1:2]), -gt_flow[:, 1])
+            # loss_flow /= 2.
+
+            # TODO: RIFE loss: same as l1 that I have? Yes.
+            # i_weight = gamma**(n_predictions - i - 1)
+            # i_loss = (flow_preds[i] - flow_gt).abs()
+            # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
             loss_flow = 0.
-            # TODO: add gamma for each block (from RAFT) +
-            loss_flow += torch.nn.functional.l1_loss(flow[0][:, 2:4], gt_flow) * 0.64 # * 1
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 2:3]), gt_flow[:, 0])
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 3:4]), gt_flow[:, 1])
-            loss_flow += torch.nn.functional.l1_loss(flow[1][:, 2:4], gt_flow) * 0.8 # * 2
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 2:3]), gt_flow[:, 0])
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 3:4]), gt_flow[:, 1])
-            loss_flow += torch.nn.functional.l1_loss(flow[2][:, 2:4], gt_flow) * 1. # * 4
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 2:3]), gt_flow[:, 0])
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 3:4]), gt_flow[:, 1])
-            # TODO: add Ft->0 to all blocks using reverted gt_flow +
-            loss_flow += torch.nn.functional.l1_loss(flow[0][:, :2], -gt_flow) * 0.64 # * 1
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 0:1]), -gt_flow[:, 0])
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[0][:, 1:2]), -gt_flow[:, 1])
-            loss_flow += torch.nn.functional.l1_loss(flow[1][:, :2], -gt_flow) * 0.8 # * 2
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 0:1]), -gt_flow[:, 0])
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[1][:, 1:2]), -gt_flow[:, 1])
-            loss_flow += torch.nn.functional.l1_loss(flow[2][:, :2], -gt_flow) * 1 # * 4
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 0:1]), -gt_flow[:, 0])
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow[2][:, 1:2]), -gt_flow[:, 1])
-            # TODO: add this to Tea block +
-            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, 2:4], gt_flow) * 1 # * 1
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 2:3]), gt_flow[:, 0])
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 3:4]), gt_flow[:, 1])
-            loss_flow += torch.nn.functional.l1_loss(flow_teacher[:, :2], -gt_flow) * 1 # * 1
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 0:1]), -gt_flow[:, 0])
-            # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 1:2]), -gt_flow[:, 1])
+            loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
+            loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
+            loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 1.
+            loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
+            loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
+            loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
+            loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
+            loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             loss_flow /= 2.
 
             # supervised flow

@@ -183,6 +183,8 @@ def main():
 			# ax.set_aspect('equal')	
 			# plt.pause(0.001)
 
+			# TODO: add legend everywhere
+
 			# plt.cla()
 			rho = np.ma.array(rho, mask=cylinder)
 			axs[1].imshow(rho, cmap='bwr')
@@ -208,7 +210,7 @@ def main():
 				# fig.savefig("Vorticity, density, velocity t=3000")
 				# out.release()
 				# print("Created:", video_name)
-				# input("x")
+				input("x")
 				break
 			str_it = str(it) if len(str(it)) == 4 else (4 - len(str(it))) * "0" + str(it) 
 			title = "Vorticity, density, velocity " + "t=" + str_it
