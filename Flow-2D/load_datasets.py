@@ -60,13 +60,14 @@ def load_data(dataset, exp, mode):
             # flow_fln = "../Datasets/rectangle2d_text_flow.pkl"
             # flow_fln = "../Datasets/rectangle2d_hftext_flow.pkl"
             # flow_fln = "../Datasets/rectangle2d_big_hftext_flow.pkl"
-            # flow_fln = "../Datasets/rectangle2d_big_hftext_flow_v3.pkl"
-            flow_fln = "../Datasets/rectangle2d_big_f_bb_flow.pkl"
+            flow_fln = "../Datasets/rectangle2d_big_hftext_flow_v3.pkl"
+            # flow_fln = "../Datasets/rectangle2d_big_f_bb_flow.pkl"
             # flow_fln = "../Datasets/rectangle2d_big_nohf_flow.pkl"
             # flow_fln = "../Datasets/rectangles2d_text_flow.pkl"
         if dataset == 'lbs2d':
             # filename += "LatticeBoltzmannSim/lbs2d.pkl"
-            filename += "LatticeBoltzmannSim/lbs2d_skip.pkl"
+            # filename += "LatticeBoltzmannSim/lbs2d_skip.pkl"
+            filename += "LatticeBoltzmannSim/lbs2d_skip5.pkl"
         if dataset == "droplet2d":
             filename += "drop2D/droplet2d.pkl" if mode == "train" else "drop2D/droplet2d_test.pkl"
         elif dataset == "pipedcylinder2d":
@@ -119,8 +120,8 @@ def load_data(dataset, exp, mode):
             # data = data.astype(int)
             # data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
             data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
-            # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], -1., 1., cv2.NORM_MINMAX)
-            # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], -1., 1., cv2.NORM_MINMAX)
+            data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], -1., 1., cv2.NORM_MINMAX)
+            data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], -1., 1., cv2.NORM_MINMAX)
             # data[:, 0] = (data[:, 0] - np.min(data[:, 0])) / (np.max(data[:, 0]) - np.min(data[:, 0]))
             # data[:, 1] = (data[:, 1] - np.min(data[:, 1])) / (np.max(data[:, 1]) - np.min(data[:, 1]))
             # data[:, 2] = (data[:, 2] - np.min(data[:, 2])) / (np.max(data[:, 2]) - np.min(data[:, 2]))
@@ -128,10 +129,10 @@ def load_data(dataset, exp, mode):
             print("Density scaled to [0, 1] range!")
 
             print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
-            data[:, 1] = data[:, 1] * 10.
-            data[:, 2] = data[:, 2] * 10.
-            print("Vel scaled to *10")
-            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            # data[:, 1] = data[:, 1] * 10.
+            # data[:, 2] = data[:, 2] * 10.
+            # print("Vel scaled to *10")
+            # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
 
             # flow_x_mean = data[:, 1].mean()
             # flow_y_mean = data[:, 2].mean()

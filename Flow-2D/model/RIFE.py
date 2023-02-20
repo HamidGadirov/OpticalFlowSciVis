@@ -63,7 +63,7 @@ class Model:
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5):
+    def inference(self, img0, img1, gt_flow, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # 4, 2, 1
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
@@ -132,8 +132,8 @@ class Model:
         # flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
-        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         mask = mask[2] # only gt (pred) durig training
          # correct shapes
         max_shape_2 = min(img0.shape[2], mask.shape[2])
@@ -182,6 +182,7 @@ class Model:
             # loss_flow /= 2.
 
             # TODO: RIFE loss: same as l1 that I have? Yes.
+            # try gamma = 0.5
             # i_weight = gamma**(n_predictions - i - 1)
             # i_loss = (flow_preds[i] - flow_gt).abs()
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
@@ -189,12 +190,45 @@ class Model:
             loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
             loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
             loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 1.
-            loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
-            loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
-            loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
+            # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
+            # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
+            # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
             loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
-            loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
+            # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
+            # loss_flow /= 2.
+            
+            """
+            # TODO: flow magn of diff vec loss: no improvements
+            loss_flow = 0.
+            # loss_flow += torch.norm(flow[0][:, 2:4] - gt_flow) * 0.64
+            # loss_flow += torch.norm(flow[1][:, 2:4] - gt_flow) * 0.8
+            loss_flow += torch.norm(flow[2][:, 2:4] - gt_flow) * 1.
+            loss_flow += torch.norm(flow_teacher[:, 2:4] - gt_flow) * 1.
+            """
+            
+            # TODO: flow magn loss: No!
+            """"
+            # norm = np.sqrt(u * u + v * v)
+            norm_flow_gt = torch.sqrt(gt_flow[:, 0] * gt_flow[:, 0] + gt_flow[:, 1] * gt_flow[:, 1])
+            loss_flow = 0.
+            u = flow[0][:, 2:3]
+            v = flow[0][:, 3:4]
+            norm_flow = torch.sqrt(u * u + v * v)
+            loss_flow += (norm_flow - norm_flow_gt).mean() * 0.64
+            u = flow[1][:, 2:3]
+            v = flow[1][:, 3:4]
+            norm_flow = torch.sqrt(u * u + v * v)
+            loss_flow += (norm_flow - norm_flow_gt).mean() * 0.8
+            u = flow[2][:, 2:3]
+            v = flow[2][:, 3:4]
+            norm_flow = torch.sqrt(u * u + v * v)
+            loss_flow += (norm_flow - norm_flow_gt).mean() * 1.
+            u = flow_teacher[:, 2:3]
+            v = flow_teacher[:, 3:4]
+            norm_flow = torch.sqrt(u * u + v * v)
+            loss_flow += (norm_flow - norm_flow_gt).mean() * 1.
             loss_flow /= 2.
+            """
 
             # supervised flow
             # loss_flow += torch.nn.functional.l1_loss(sup_flow[0], gt_flow)

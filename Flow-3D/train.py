@@ -41,6 +41,7 @@ from utils import plot_loss, visualize_ind, visualize_series, visualize_series_f
 # implement laplacian pyramid loss +
 # merge with 2D model -
 # fix bug with 3rd dim -
+# fix bugs that I found in 2D model: flow, data -
 
 device = torch.device("cuda")
 
@@ -53,7 +54,8 @@ def get_learning_rate(step):
         return 3e-4 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
-        return (3e-4 - 3e-5) * mul + 3e-5
+        return (3e-4 - 3e-6) * mul + 3e-6
+    # return 1e-6 # worse
 
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
@@ -65,7 +67,7 @@ def flow2rgb(flow_map_np):
     rgb_map[:, :, 2] += normalized_flow_map[:, :, 1]
     return rgb_map.clip(0, 1)
 
-early_stop_patience = 1000
+early_stop_patience = 1001
 early_stop_k = 0
 val_loss_best = 0.
 
@@ -78,18 +80,16 @@ def train(model, dataset, model_name, mode, local_rank):
 
     if mode == "train":
         data_train, data_val = load_data(dataset, mode)
-
         # sampler = DistributedSampler(data_train)
         # train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
         train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True)
         args.step_per_epoch = train_data.__len__()
         # input("train loaded")
-        # print(len(data_train))
-        # print(data_train[0].shape)
+        print(len(data_train))
+        print(data_train[0].shape)
         val_data = DataLoader(data_val, batch_size=args.batch_size, pin_memory=True, num_workers=8)
-
+        print("len:", len(val_data))
         # print(len(train_data.dataset))
-
         # for i, data in enumerate(train_data):
         #     print(i)
     else:
@@ -117,11 +117,12 @@ def train(model, dataset, model_name, mode, local_rank):
 
     # model.load_model(model_name, log_path)
     try:
-        model.load_model(model_name, log_path) # won't work - we changed loss and pyramid
-        print("Loaded RIFE model.")
+        model.load_model(model_name, log_path)
+        # print("Loaded RIFE model.")
         # print(model) # RIFE is not a neural net
     except:
         print("No weights found, training from scratch.")
+        print("model name:", model_name)
     # input("x")
 
     # def count_parameters(model):

@@ -37,7 +37,8 @@ def main():
 	Ny                     = 100    # resolution y-dir
 	rho0                   = 100    # average density
 	tau                    = 0.6    # collision timescale
-	Nt                     = 33000   # number of timesteps # 4000; skip first 3000
+	# Nt                     = 33000   # number of timesteps # 4000; skip first 3000
+	Nt                     = 18000   # skip first 3000, save rest: each 5th
 	plotRealTime = True # switch on for plotting as the simulation goes along
 	
 	# Lattice speeds / weights
@@ -110,10 +111,10 @@ def main():
 
 		
 		# plot in real time - color 1/2 particles blue, other half red
-		if (plotRealTime and (it % 10) == 0) or (it == Nt-1):
+		if (plotRealTime and (it % 5) == 0) or (it == Nt-1): # 10
 			if it < 3000: # skip beginning
-				pass
-				# continue
+				# pass # for video
+				continue # for data
 			### original vorticity viz
 			# plt.cla()
 			# ux[cylinder] = 0
@@ -162,9 +163,10 @@ def main():
 			# print("norm at 30 100", norm[30][100])
 			# print("norm at 50 200", norm[50][200])
 			# print("norm at 70 300", norm[70][300])
-
+			"""
 			fig, axs = plt.subplots(3)
 			fig.suptitle('Vorticity, density, velocity')
+			"""
 
 			# plt.cla()
 			ux[cylinder] = 0
@@ -172,8 +174,10 @@ def main():
 			vorticity = (np.roll(ux, -1, axis=0) - np.roll(ux, 1, axis=0)) - (np.roll(uy, -1, axis=1) - np.roll(uy, 1, axis=1))
 			vorticity[cylinder] = np.nan
 			vorticity = np.ma.array(vorticity, mask=cylinder)
+			"""
 			axs[0].imshow(vorticity, cmap='bwr')
 			axs[0].imshow(~cylinder, cmap='gray', alpha=0.3)
+			"""
 			# plt.clim(-.1, .1)
 			# axs[0].clim(-.1, .1)
 			# ax = plt.gca()
@@ -187,12 +191,16 @@ def main():
 
 			# plt.cla()
 			rho = np.ma.array(rho, mask=cylinder)
+			"""
 			axs[1].imshow(rho, cmap='bwr')
 			axs[1].imshow(~cylinder, cmap='gray', alpha=0.3)
+			"""
 
 			norm = np.ma.array(norm, mask=cylinder)
+			"""
 			axs[2].imshow(norm, cmap='bwr')
 			axs[2].imshow(~cylinder, cmap='gray', alpha=0.3)
+			"""
 			# plt.clim(-.1, .1)
 			# ax = plt.gca()
 			# plt.pause(0.01)
@@ -206,16 +214,19 @@ def main():
 			# out.write(final_frame.astype('uint8'))
 			# 	# out.write(np.invert(data_for_interpol[i].astype('uint8'))) # try invert for droplet2d
 
-			if it == 3100:
-				# fig.savefig("Vorticity, density, velocity t=3000")
-				# out.release()
-				# print("Created:", video_name)
-				input("x")
-				break
+			# if it == 3100:
+			# 	# fig.savefig("Vorticity, density, velocity t=3000")
+			# 	# out.release()
+			# 	# print("Created:", video_name)
+			# 	input("x")
+			# 	break
+			"""
 			str_it = str(it) if len(str(it)) == 4 else (4 - len(str(it))) * "0" + str(it) 
 			title = "Vorticity, density, velocity " + "t=" + str_it
 			print(title)
-			fig.savefig(os.path.join("video", title))
+			# fig.savefig(os.path.join("video", title))
+			fig.savefig(os.path.join("video_5", title))
+			"""
 
 			# # vel_x = np.ma.array(vel_x, mask=cylinder)
 			# # axs[1].imshow(vel_x, cmap='bwr')
@@ -331,7 +342,7 @@ def main():
 	# plt.show()
 
 	# save data to pkl
-	pkl_filename = "lbs2d_skip_" + ".pkl" 
+	pkl_filename = "lbs2d_skip5" + ".pkl" 
 
 	# data = np.zeros((Nt, Ny, Nx), dtype=np.float32)
 	data = density

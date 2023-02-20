@@ -101,10 +101,10 @@ class IFBlock(nn.Module):
         x = self.conv0(x)
         # print("conv0:", x.shape)
         if version == 1:
-            x = self.convblock(x) + x
+            x = self.convblock(x) + x # according to ECCV version, for shortcut
             # print("convblock:", x.shape)
             # input("x")
-            tmp = self.lastconv(x)
+            tmp = self.lastconv(x) # ConvTranspose2d
             tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="bilinear", align_corners=False)
             flow = tmp[:, :4] * scale * 2
             mask = tmp[:, 4:5]

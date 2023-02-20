@@ -121,7 +121,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
 
     # model.load_model(model_name, log_path)
     try:
-        model.load_model(model_name, log_path) # won't work - we changed loss and pyramid
+        model.load_model(model_name, log_path)
         # print("Loaded RIFE model:", model_name)
         # print(model) # RIFE is not a neural net
     except:
@@ -248,8 +248,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # input("x")
         print("Saving at:", dir_model)
         # data = data_train
-        # scale_list = [1, 1, 1]
-        scale_list = [4, 2, 1]
+        scale_list = [1, 1, 1]
+        # scale_list = [4, 2, 1]
         # print(data.shape)
         # input("x")
         # for i in range(0, data.shape[0], 2):
@@ -727,13 +727,41 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_gamma_RIFE_forw.pkl" # only one direction: a bit worse than before
     model_name = "flownet_l1_flow2e-1_v1_128_rect_big_hftextv3_allBlocks_gamma_RIFE.pkl"
 
-    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks.pkl" # interpol considerably better, flow also good; this was only 1 dir RIFE loss
-    # model_name = "flownet_l1_flow5e-1_v2_128_rect_big_fbb_allBlocks.pkl" # interpol not accurate
-    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_2.pkl" # two dir flow loss: 
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks.pkl" # interpol considerably better, flow also good; this was only 1 dir RIFE loss
+    # # model_name = "flownet_l1_flow5e-1_v2_128_rect_big_fbb_allBlocks.pkl" # interpol not accurate
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_2.pkl" # two dir flow loss: interpol worse ?
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE.pkl" # one dir flow: + best! both flow & interpol good +
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_eqRIFE.pkl" # one dir flow: flow worse than with gamma
 
+    # model_name = "flownet_l1_flow_v1_128_rect_big_fbb_allBlocks_gamma_RIFE.pkl" # too high flow loss: interpol worsened, flow no better
+
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_magn.pkl" # test using flow magn loss: No!
+
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_300ep.pkl" # one dir flow: only 300ep: flow not accurate at edges
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_500ep.pkl" # one dir flow: only 500ep: boundaries still not sharp
+
+    # model_name = "flownet_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_OnlyFlow.pkl" # no better -
+
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_3K.pkl" # nothing new, still same mistakes in flow
+
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_MagnDiff.pkl" 
+    # model_name = "flownet_l1_flow5e-4_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_MagnDiff2.pkl" # flow no better, intrpol bad
+    # model_name = "flownet_l1_flow5e-4_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_MagnDiffLast.pkl" # flow worse, bad interpol
+
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma05_RIFE.pkl" # 
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_nohf_allBlocks_gamma_RIFE.pkl" # 
+
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE.pkl" # one dir flow: + best! both flow & interpol good +
+
+    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" # not bad! is it better??
+    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_2_eqRes.pkl" # two dir flow loss: flow a bit worse, interpol bad
+    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # ?
+    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_hftextv3_allBlocks_RIFE_eqRes.pkl" # interpol is not very accurate, flow is good but magn errors sometimes
+    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_hftextv3_allBlocks_gamma_RIFE_eqRes.pkl" # very similar to the prev., without gamma a tiny bit better
+ 
     # model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # - best interpol unsupervised
     # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # - best supervised flow
-    # L1 is better than Laplaccian for rectangle2d
+    # L1 is better than Laplacian for rectangle2d
 
     """ lbs2d """
     # model_name = "flownet_flowonly_v2_128_lbs.pkl" # 665 ep: perf interpol, good flow but it was too easy
@@ -762,6 +790,13 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow5e-1_v2_128_lbs_skip_ScaleVel10_Magn.pkl" # use flow magnitute instead of density: very bad flow?
     # model_name = "flownet_l1_flow2e-1_v2_128_lbs_skip_ScaleVel10_gamma_RIFE.pkl" # loss increased after 200 ep
     # model_name = "flownet_l1_flow2e-1_v2_128_lbs_skip_ScaleVel10_gamma_RIFE_200.pkl"
+
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip_ScaleVel10_gamma_RIFE.pkl"
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip_ScaleVel100_gamma_RIFE.pkl"
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel10_gamma_RIFE.pkl" # loss stabilized but not accurate
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel100_gamma_RIFE.pkl" loss increased -
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE.pkl" # 
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAll_gamma_RIFE.pkl" # loss stab very quickly, flow not accurate.
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -930,9 +965,9 @@ if __name__ == "__main__":
 
         if "lbs2d" in dataset: # denormalize
             print("flow_original mean std", np.mean(flow_original), np.std(flow_original))
-            flow_original = flow_original / 10.
-            flow = flow / 10.
-            print("Vel rescaled to /10")
+            # flow_original = flow_original / 10.
+            # flow = flow / 10.
+            # print("Vel rescaled to /10")
             print("flow_original mean std", np.mean(flow_original), np.std(flow_original))
         #     flow_x_mean = statistics['flow_x_mean']
         #     flow_y_mean = statistics['flow_y_mean']

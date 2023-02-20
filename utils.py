@@ -178,7 +178,6 @@ def visualize_large(original_data, interpol_data, diffs,
         columns = 20
     elif dataset == "vimeo2d":
         columns = 28
-    quiver_steps = 2 # 5
     rows = 7 # 4
     skip = 1
     if factor == 8:
@@ -207,6 +206,12 @@ def visualize_large(original_data, interpol_data, diffs,
 
     print("flow_u_gt is in range %f to %f" % (np.min(flow_u_gt), np.max(flow_u_gt))) # -2 to 4 -8 to 8
     print("flow_v_gt is in range %f to %f" % (np.min(flow_v_gt), np.max(flow_v_gt)))
+
+    print("flow_u is in range %f to %f" % (np.min(flow_u), np.max(flow_u))) 
+    print("flow_v is in range %f to %f" % (np.min(flow_v), np.max(flow_v)))
+
+    print("flow_u_diff is in range %f to %f" % (np.min(flow_u_diff), np.max(flow_u_diff))) 
+    print("flow_v_diff is in range %f to %f" % (np.min(flow_v_diff), np.max(flow_v_diff)))
     # input("viz")
     # norm_gt = np.sqrt(np.max(flow_u_gt) * np.max(flow_u_gt) + np.max(flow_v_gt) * np.max(flow_v_gt))
     # input(norm_gt)
@@ -215,10 +220,19 @@ def visualize_large(original_data, interpol_data, diffs,
     # norm_gt = np.sqrt(flow_u_gt * flow_u_gt + flow_v_gt * flow_v_gt)
     # norm_pred = np.sqrt(flow_u * flow_u + flow_v * flow_v)
     # print(max(norm_gt, norm_pred))
-    # norm_coeff = 6.
-    max_flow_gt = 6.
-    # max_flow_pred = ?
-    # max_flow_diff = ?
+    # quiver plot params:
+    if "rectangle2d" in dataset:
+        quiver_steps = 2 # 5
+        max_flow_gt = 5.
+        # max_flow_pred = ?
+        # max_flow_diff = ?
+        scale = 1.
+        # clim=(0, max_flow_gt)
+    elif "lbs2d" in dataset:
+        quiver_steps = 4
+        max_flow_gt = None # 0.1
+        max_flow_pred = 0.5
+        scale = None
     # input("norm")
 
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
@@ -293,10 +307,12 @@ def visualize_large(original_data, interpol_data, diffs,
                 # ax = plt.gca()
                 print("u_gt is in range %f to %f" % (np.min(u_gt), np.max(u_gt)))
                 print("v_gt is in range %f to %f" % (np.min(v_gt), np.max(v_gt)))
+                # print("u_gt at 300, 25:", u_gt[25, 300])
+                # print("u_gt at 300, 75:", u_gt[75, 300])
                 print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
                 #  pyimof.display.quiver(u, v, c, ax=ax, clim=(-5, 5)) --- use clim
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
-                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', clim=(-max_flow_gt, max_flow_gt), bg_cmap='gray', step=quiver_steps)
+                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, u_gt, c=u_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
                 # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
@@ -331,8 +347,10 @@ def visualize_large(original_data, interpol_data, diffs,
             # ax = plt.gca()
             print("u is in range %f to %f" % (np.min(u), np.max(u)))
             print("v is in range %f to %f" % (np.min(v), np.max(v)))
+            # print("u at 300, 25:", u[25, 300])
+            # print("u at 300, 75:", u[75, 300])
             print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
-            pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
+            pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, u, c=u, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
             # pyimof.display.plot(u, v, ax=ax, colorwheel=True) # rgb with colormap. correct direction!
@@ -369,7 +387,7 @@ def visualize_large(original_data, interpol_data, diffs,
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
-            pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
+            pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap='jet', scale = scale, bg_cmap='gray', step=quiver_steps)
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
             data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
             # print(data_range)
