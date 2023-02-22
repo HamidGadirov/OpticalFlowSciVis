@@ -105,7 +105,7 @@ box = np.ones((box_dim_x, box_dim_y), dtype=np.float32)
 # box /= 255. # to 0...1
  
 # add high freq texture to the box
-# 4x4 areas with diff values
+# NxN areas with diff values
 box *= 255.
 step_size = 20 # 10 # 4 5
 for i in range(0, box_dim_x, step_size):

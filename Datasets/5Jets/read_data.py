@@ -45,49 +45,54 @@ def getListOfFiles(dirName):
                 
     return allFiles  
 
-# dirName = 'Density'
-dirName = 'Velocity'
+dirNames = ['Velocity'] # 'Density', 
 
-# Get the list of all files in directory tree at given path
-listOfFiles = getListOfFiles(dirName)
-listOfFiles.sort()
-print("listOfFiles is sorted!")
-for k in range(10):
-    print(listOfFiles[k])
-    # print(len(listOfFiles))
-input("files")
+for dirName in dirNames:
+    print(dirName)
+    # Get the list of all files in directory tree at given path
+    listOfFiles = getListOfFiles(dirName)
+    listOfFiles.sort()
+    print("listOfFiles is sorted!")
+    # for k in range(10):
+    #     print(listOfFiles[k])
+        # print(len(listOfFiles))
+    # input("files")
 
-data = []
-count = 0
-# dims = 128 * 128 * 128
+    data = []
+    count = 0
+    # dims = 128 * 128 * 128
 
-# Print the files
-with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
-    for elem in listOfFiles:
-        if count % 10 == 0: # downloading every 10th time step
-            print(elem)
-            if count > 1875 and count < 1905: # skip this, check where are they
-                count += 1
-                bar.next()
-                continue
-            # if (count==101): # 
-            #     break
+    # Print the files
+    with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
+        for elem in listOfFiles:
+            if count % 10 == 0: # downloading every 10th time step
+                print(elem)
+                # if count > 1875 and count < 1905: # skip this, check where are they
+                #     count += 1
+                #     bar.next()
+                #     continue
+                # if (count==101): # 
+                #     break
 
-            tmp_data = np.fromfile(elem, dtype='uint8')
-            # print(tmp_data.shape)
-            # input("x")
-            # tmp_data.resize(128, 128, 128, 1) # density
-            tmp_data.resize(128, 128, 128, 3) # vel
-            # print(tmp_data.shape)
-            # input("x")
+                tmp_data = np.fromfile(elem, dtype='uint8')
+                # print(tmp_data.shape) # 8388608 dens; 25165824 vel
+                # input("x")
+                # tmp_data.resize(128, 128, 128, 1) # density
+                tmp_data.resize(128, 128, 128, 3) # vel
+                # print(tmp_data.shape)
+                # input("x")
 
-            data.append(tmp_data)
+                data.append(tmp_data)
 
-            # tmp_data = np.flip(tmp_data, 1)
-            # data = np.concatenate((data, tmp_data), axis=0)
-                
-        count += 1
-        bar.next()
+                # tmp_data = np.flip(tmp_data, 1)
+                # data = np.concatenate((data, tmp_data), axis=0)
+                    
+            count += 1
+            bar.next()
+
+    print(len(data))
+    print(np.array(data).shape)
+    input("data")
 
 print(len(data))
 input("data")
@@ -116,6 +121,7 @@ data = []
 data = pickle.load(pkl_file)
 pkl_file.close
 print(data.shape)
+input("Data")
 input("Data")
 
 

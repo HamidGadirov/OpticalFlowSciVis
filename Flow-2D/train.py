@@ -248,8 +248,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # input("x")
         print("Saving at:", dir_model)
         # data = data_train
-        scale_list = [1, 1, 1]
         # scale_list = [4, 2, 1]
+        scale_list = [1, 1, 1]
         # print(data.shape)
         # input("x")
         # for i in range(0, data.shape[0], 2):
@@ -755,9 +755,13 @@ if __name__ == "__main__":
 
     model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" # not bad! is it better??
     # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_2_eqRes.pkl" # two dir flow loss: flow a bit worse, interpol bad
-    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # ?
+    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # not bad! very similar to the one with gamma
     model_name = "flownet_l1_flow5e-1_v1_128_rect_big_hftextv3_allBlocks_RIFE_eqRes.pkl" # interpol is not very accurate, flow is good but magn errors sometimes
     model_name = "flownet_l1_flow5e-1_v1_128_rect_big_hftextv3_allBlocks_gamma_RIFE_eqRes.pkl" # very similar to the prev., without gamma a tiny bit better
+
+    # TODO: check distill with latest models
+    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" # best?
+    # model_name = "flownet_l1_dist1e-1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" # distill jumps: worse interpol and flow -
  
     # model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # - best interpol unsupervised
     # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # - best supervised flow
@@ -929,7 +933,6 @@ if __name__ == "__main__":
     if args.mode == "train":
         train(model, args.dataset, args.exp, model_name, args.mode, args.local_rank)
     else:
-        # TODO: fix pred results: I need only from last layer, not all!!!
         dataset = args.dataset
         print("inference...")
         factor = 2

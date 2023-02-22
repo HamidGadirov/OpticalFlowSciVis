@@ -1,5 +1,6 @@
 # ssh -Y hamid@129.125.75.167
-# python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=droplet3d --mode=train
+# conda activate gpu
+# python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=rectangle3d --mode=train
 
 # rsync -avz -e 'ssh' hamid@129.125.75.167:~/Desktop/OpticalFlow/RIFE/train_log/ /Users/hamidgadirov/Desktop/OpticalFlow/RIFE/train_log/
 
@@ -71,7 +72,7 @@ early_stop_patience = 1001
 early_stop_k = 0
 val_loss_best = 0.
 
-def train(model, dataset, model_name, mode, local_rank):
+def train(model, dataset, exp, model_name, mode, local_rank):
     # if local_rank == 0:
     #     writer = SummaryWriter('train')
     #     writer_val = SummaryWriter('validate')
@@ -144,7 +145,7 @@ def train(model, dataset, model_name, mode, local_rank):
                 # data = torch.zeros([16, 9, 150, 450], dtype=torch.float)
                 data_gpu = data.to(device, non_blocking=True) # / 255.
                 # data_gpu = data_gpu.permute(0, 3, 1, 2)
-                print("data to gpu:", data_gpu.shape)
+                # print("data to gpu:", data_gpu.shape)
                 # print(type(data_gpu[0,0,0,0,0]))
                 # data_gpu = data_gpu.float16()
                 # input("x")
@@ -152,10 +153,12 @@ def train(model, dataset, model_name, mode, local_rank):
                 imgs = data_gpu[:, :2] # :6
                 gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
                 # print("Training")
-                print(imgs.shape, gt.shape)
+                # print("imgs, gt:", imgs.shape, gt.shape)
                 # input("x")
-                imgs = imgs.permute(0, 1, 4, 2, 3) # 3rd is dim0
-                gt = gt.permute(0, 1, 4, 2, 3)
+                # imgs = imgs.permute(0, 1, 4, 2, 3) # 3rd is dim0
+                # gt = gt.permute(0, 1, 4, 2, 3)
+                imgs = imgs.permute(0, 1, 2, 5, 3, 4) # 3rd is dim0
+                gt = gt.permute(0, 1, 2, 5, 3, 4)
                 # print("permuted:", imgs.shape, gt.shape)
 
                 # g_t = gt.detach().cpu().numpy()
@@ -167,16 +170,17 @@ def train(model, dataset, model_name, mode, local_rank):
                 # learning_rate = get_learning_rate(step)
                 learning_rate = get_learning_rate(step) * args.world_size / 4
                 # with torch.autograd.detect_anomaly():
-                pred, info = model.update(imgs, gt, learning_rate, training=True)
+                pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
                 
-                pred = pred.permute(0, 1, 3, 4, 2)
-                gt = gt.permute(0, 1, 3, 4, 2)
-                info['mask'] = info['mask'].permute(0, 1, 3, 4, 2)
-                info['mask_tea'] = info['mask_tea'].permute(0, 1, 3, 4, 2)
-                info['merged_tea'] = info['merged_tea'].permute(0, 1, 3, 4, 2)
-                info['flow'] = info['flow'].permute(0, 1, 3, 4, 2)
-                info['flow_tea'] = info['flow_tea'].permute(0, 1, 3, 4, 2)
-                # print("permute back:", pred.shape, gt.shape)
+                # print(pred.shape, gt.shape, info['mask'].shape)
+                # pred = pred.permute(0, 1, 3, 4, 2) # (0, 1, 3, 4, 2)
+                # gt = gt.permute(0, 1, 3, 4, 2)
+                # info['mask'] = info['mask'].permute(0, 1, 3, 4, 2)
+                # info['mask_tea'] = info['mask_tea'].permute(0, 1, 3, 4, 2)
+                # info['merged_tea'] = info['merged_tea'].permute(0, 1, 3, 4, 2)
+                # info['flow'] = info['flow'].permute(0, 1, 3, 4, 2)
+                # info['flow_tea'] = info['flow_tea'].permute(0, 1, 3, 4, 2)
+                # # print("permute back:", pred.shape, gt.shape)
 
                 train_time_interval = time.time() - time_stamp
                 time_stamp = time.time()
@@ -231,8 +235,8 @@ def train(model, dataset, model_name, mode, local_rank):
         print("Saving at:", dir_model)
         # input("x")
         # data = data_train
-        scale_list = [4, 2, 1]
-        # scale_list = [1, 1, 1]
+        # scale_list = [4, 2, 1]
+        scale_list = [1, 1, 1]
         # scale_list = [2, 1]
         # print(data.shape)
         # input("x")
@@ -255,28 +259,29 @@ def train(model, dataset, model_name, mode, local_rank):
             gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
             # print("Training")
             print(imgs.shape, gt.shape)
-            imgs = imgs.permute(0, 1, 4, 2, 3) # 3rd is dim0
-            gt = gt.permute(0, 1, 4, 2, 3)
+            imgs = imgs.permute(0, 1, 2, 5, 3, 4) # 3rd is dim0
+            gt = gt.permute(0, 1, 2, 5, 3, 4)
             # print("permuted:", imgs.shape, gt.shape)
             # input("x")
             I0 = imgs[:, :1]
             I1 = imgs[:, 1:2]
-            middle, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
+            merged, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
 
-            middle = middle.permute(0, 1, 3, 4, 2)
+            merged = merged.permute(0, 1, 3, 4, 2)
             gt = gt.permute(0, 1, 3, 4, 2)
             flow[2] = flow[2].permute(0, 1, 3, 4, 2)
             mask = mask.permute(0, 1, 3, 4, 2)
             # print("permute back:", middle.shape, flow.shape)
 
-            middle = np.asarray(middle.detach().cpu().numpy())
-            interpol_data.append(middle.transpose((0, 2, 3, 4, 1)))
+            merged = np.asarray(merged.detach().cpu().numpy())
+            print(merged.shape)
+            interpol_data.append(merged[2].transpose((0, 2, 3, 4, 1)))
             gt = np.asarray(gt.detach().cpu().numpy())
             original_data.append(gt.transpose((0, 2, 3, 4, 1)))
-            print(middle.shape)
+            
             flow = np.asarray(flow)
             flow_array_ = flow[2].detach().cpu().numpy()
-            flow_combined.append(flow_array_[:,0:6,:,:].squeeze()) # ? 0:6 because in x, y, z and for F_t->0, F_t->1 intermediate flows
+            flow_combined.append(flow_array_[:,0:6,:,:].squeeze()) # 0:6 because in x, y, z and for F_t->0, F_t->1 intermediate flows
             print(flow.shape)
             mask = np.asarray(mask.detach().cpu().numpy())
             print(mask.shape)
@@ -308,8 +313,8 @@ def train(model, dataset, model_name, mode, local_rank):
         flow_combined = np.array(flow_combined)
         print("Flow:", flow_combined.shape)
         # input("infer")
-        flow_u = flow_combined[:, 0, :, :, slice_num]
-        flow_v = flow_combined[:, 1, :, :, slice_num]
+        flow_u = flow_combined[:, 2, :, :, slice_num]
+        flow_v = flow_combined[:, 3, :, :, slice_num]
         title = "inference_flow_arrows_" + str(factor) + "x"
         if "2d" in dataset:
             visualize_series_flow(interpol_data, flow_u, flow_v, dataset, dir_res, title=title, show=False, save=True)
@@ -319,38 +324,44 @@ def train(model, dataset, model_name, mode, local_rank):
         loss_path = 'loss.json'
         loss_path = os.path.join(dir_model, loss_path)
 
-        with open(loss_path, 'r') as loss_file:
-            loss_data = json.load(loss_file)
-        val_loss = loss_data['val_loss']
-        loss_file.close()   
+        try:
+            with open(loss_path, 'r') as loss_file:
+                loss_data = json.load(loss_file)
+            val_loss = loss_data['val_loss']
+            loss_file.close()   
 
-        from collections import Iterable
-        def flatten(lis):
-            for item in lis:
-                if isinstance(item, Iterable) and not isinstance(item, str):
-                    for x in flatten(item):
-                        yield x
-                else:        
-                    yield item
+            # from collections import Iterable
+            # def flatten(lis):
+            #     for item in lis:
+            #         if isinstance(item, Iterable) and not isinstance(item, str):
+            #             for x in flatten(item):
+            #                 yield x
+            #         else:        
+            #             yield item
 
-        val_loss = list(flatten(val_loss))
-        val_loss = np.array(val_loss)
-        print(val_loss.shape)
-        # input("x")
+            # val_loss = list(flatten(val_loss))
+            val_loss = np.array(val_loss)
+            # print(val_loss.shape)
+            # input("x")
+        except:
+            print("loss json doesn't exist")
 
         plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
 
-        return data_test, interpol_data, flow_combined
+        # return data_test, interpol_data, flow_combined
+        flow_gt_combined = 0
+        mask_combined = 0
+        return original_data, interpol_data, flow_combined, flow_gt_combined, mask_combined
     
 def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
     print("Evaluate")
     # writer = SummaryWriter('train') #
     # writer_val = SummaryWriter('validate') #
 
-    loss_l1_list = []
+    # loss_l1_list = []
     loss_G_list = []
-    loss_distill_list = []
-    loss_tea_list = []
+    # loss_distill_list = []
+    # loss_tea_list = []
     psnr_list = []
     psnr_list_teacher = []
     time_stamp = time.time()
@@ -358,63 +369,70 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
         data_gpu = data.to(device, non_blocking=True) # / 255.
         imgs = data_gpu[:, :2]
         gt = data_gpu[:, 2:3]
-        imgs = imgs.permute(0, 1, 4, 2, 3) # 3rd is dim0
-        gt = gt.permute(0, 1, 4, 2, 3)
+        imgs = imgs.permute(0, 1, 2, 5, 3, 4) # 3rd is dim0
+        gt = gt.permute(0, 1, 2, 5, 3, 4)
         print("permuted:", imgs.shape, gt.shape)
         with torch.no_grad():
-            pred, info = model.update(imgs, gt, training=False)
+            pred, info = model.update(imgs, gt, dataset, training=False)
             merged_img = info['merged_tea']
 
-        pred = pred.permute(0, 1, 3, 4, 2)
-        gt = gt.permute(0, 1, 3, 4, 2)
-        merged_img = merged_img.permute(0, 1, 3, 4, 2)
-        info['flow'] = info['flow'].permute(0, 1, 3, 4, 2)
-        info['flow_tea'] = info['flow_tea'].permute(0, 1, 3, 4, 2)
-        print("permute back:", pred.shape, info['flow'].shape)
+        # pred = pred.permute(0, 1, 3, 4, 2)
+        # gt = gt.permute(0, 1, 3, 4, 2)
+        # merged_img = merged_img.permute(0, 1, 3, 4, 2)
+        # info['flow'] = info['flow'].permute(0, 1, 3, 4, 2)
+        # info['flow_tea'] = info['flow_tea'].permute(0, 1, 3, 4, 2)
+        # print("permute back:", pred.shape, info['flow'].shape)
 
-        loss_l1_list.append(info['loss_l1'].cpu().numpy())
-        loss_tea_list.append(info['loss_tea'].cpu().numpy())
-        loss_distill_list.append(info['loss_distill'].cpu().numpy())
-        loss_G_list.append(info['loss_G'].cpu().numpy())
-        for j in range(gt.shape[0]):
-            max_shape_2 = min(gt.shape[2], pred.shape[2])
-            max_shape_3 = min(gt.shape[3], pred.shape[3])
-            max_shape_4 = min(gt.shape[4], pred.shape[4])
-            # print(max_shape_2, max_shape_3)
-            gt = gt[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
-            pred = pred[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
-            psnr = -10 * math.log10(torch.mean((gt[j] - pred[j]) * (gt[j] - pred[j])).cpu().data)
-            psnr_list.append(psnr)
-            psnr = -10 * math.log10(torch.mean((merged_img[j] - gt[j]) * (merged_img[j] - gt[j])).cpu().data)
-            psnr_list_teacher.append(psnr)
-        gt = (gt.permute(0, 2, 3, 4, 1).cpu().numpy() * 255).astype('uint8')
-        pred = (pred.permute(0, 2, 3, 4, 1).cpu().numpy() * 255).astype('uint8')
-        merged_img = (merged_img.permute(0, 2, 3, 4, 1).cpu().numpy() * 255).astype('uint8')
-        flow0 = info['flow'].permute(0, 2, 3, 4, 1).cpu().numpy()
-        flow1 = info['flow_tea'].permute(0, 2, 3, 4, 1).cpu().numpy()
+        loss_all = (info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
+            info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy(), 
+            info['loss_flow'].cpu().numpy())
+
+        # loss_l1_list.append(info['loss_l1'].cpu().numpy())
+        # loss_tea_list.append(info['loss_tea'].cpu().numpy())
+        # loss_distill_list.append(info['loss_distill'].cpu().numpy())
+        # loss_G_list.append(info['loss_G'].cpu().numpy())
+        # for j in range(gt.shape[0]):
+        #     max_shape_2 = min(gt.shape[2], pred.shape[2])
+        #     max_shape_3 = min(gt.shape[3], pred.shape[3])
+        #     max_shape_4 = min(gt.shape[4], pred.shape[4])
+        #     # print(max_shape_2, max_shape_3)
+        #     gt = gt[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+        #     pred = pred[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+        #     psnr = -10 * math.log10(torch.mean((gt[j] - pred[j]) * (gt[j] - pred[j])).cpu().data)
+        #     psnr_list.append(psnr)
+        #     psnr = -10 * math.log10(torch.mean((merged_img[j] - gt[j]) * (merged_img[j] - gt[j])).cpu().data)
+        #     psnr_list_teacher.append(psnr)
+        # gt = (gt.permute(0, 2, 3, 4, 1).cpu().numpy() * 255).astype('uint8')
+        # pred = (pred.permute(0, 2, 3, 4, 1).cpu().numpy() * 255).astype('uint8')
+        # merged_img = (merged_img.permute(0, 2, 3, 4, 1).cpu().numpy() * 255).astype('uint8')
+        # flow0 = info['flow'].permute(0, 2, 3, 4, 1).cpu().numpy()
+        # flow1 = info['flow_tea'].permute(0, 2, 3, 4, 1).cpu().numpy()
         # if i == 0 and local_rank == 0:
         #     for j in range(10):
         #         imgs = np.concatenate((merged_img[j], pred[j], gt[j]), 1)[:, :, ::-1]
         #         writer_val.add_image(str(j) + '/img', imgs.copy(), nr_eval, dataformats='HWC')
         #         writer_val.add_image(str(j) + '/flow', flow2rgb(flow0[j][:, :, ::-1]), nr_eval, dataformats='HWC')
 
-    # early stopping
-    val_loss_now = info['loss_G']
-    global val_loss_best 
-    global early_stop_k
-    if val_loss_now > val_loss_best:
-        early_stop_k += 1
-        if early_stop_k == early_stop_patience:
-            print("Early stopping")
-            sys.exit(0)
-    else:
-        early_stop_k = 0
-        val_loss_best = val_loss_now
-        model.save_model(model_name, log_path, local_rank) 
+    # # early stopping
+    # val_loss_now = info['loss_G']
+    # global val_loss_best 
+    # global early_stop_k
+    # if val_loss_now > val_loss_best:
+    #     early_stop_k += 1
+    #     if early_stop_k == early_stop_patience:
+    #         print("Early stopping")
+    #         sys.exit(0)
+    # else:
+    #     early_stop_k = 0
+    #     val_loss_best = val_loss_now
+    #     model.save_model(model_name, log_path, local_rank) 
+
+    model.save_model(model_name, log_path, local_rank) 
 
     val_loss = []
-    val_loss.append(float(np.array(loss_G_list).mean()))
-    # val_loss = val_loss.item().tolist()
+    # val_loss.append(float(np.array(loss_G_list).mean()))
+    loss_all = np.array(loss_all).tolist()
+    val_loss.append(loss_all)
     loss_path = 'loss.json'
     factor = 2
     dir_res = "Results"
@@ -426,7 +444,6 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
     # print(dir_model)
     # input("x")
     loss_path = os.path.join(dir_model, loss_path)
-
     loss_data = {'val_loss': val_loss}
 
     # load previous loss values if they exist
@@ -446,31 +463,9 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
         # print("dump loss to json")
     loss_file.close()
 
-        # train_loss = info['loss_G']
-        # print(type(train_loss))
-        # # train_loss = train_loss.detach().cpu().numpy()
-        # train_loss = train_loss.item()
-        # loss_path = 'loss.json'
-        # factor = 2
-        # dir_res = "Results"
-        # dir_res = os.path.join(dir_res, dataset)
-        # dir_res = os.path.join(dir_res, str(factor) + "x")
-        # loss_path = os.path.join(dir_res, loss_path)
-        # # print("Saving at:", dir_res)
-        # # load previous loss values if they exist
-        # # if (os.path.exists(loss_path)):
-        # #     loss_file = open(loss_path, 'r')
-        # #     loss_data = json.load(loss_file)
-        # #     loss = loss_data['loss']
-        # #     loss_file.close()
-
-        # loss_file = open(loss_path, 'w')
-        # loss_data = {'loss': train_loss, 'val_loss': train_loss}
-        # print(type(loss_data))
-        # json.dump(loss_data, loss_file, indent=4)
-        # loss_file.close()
-
     eval_time_interval = time.time() - time_stamp
+
+    del loss_all
 
     if local_rank != 0:
         return
@@ -479,12 +474,13 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=100, type=int)
+    parser.add_argument('--epoch', default=1000, type=int) # 300 500
     parser.add_argument('--batch_size', default=1, type=int, help='minibatch size') # default=16
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
+    parser.add_argument('--exp', dest='exp', type=int, default=1)
     args = parser.parse_args()
     assert (not args.dataset is None)
 
@@ -497,12 +493,14 @@ if __name__ == "__main__":
     torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.benchmark = True
     model = Model(args.local_rank)
+    if args.dataset == "rectangle3d":
+        args.batch_size = 20 # 30
+    if args.dataset == "jets3d":
+        args.batch_size = 2 # ?
     if args.dataset == "droplet3d":
         args.batch_size = 20
-    if args.dataset == "rectangle3d":
-        args.batch_size = 30
-    if args.dataset == "tangaroa3d":
-        args.batch_size = 15
+    # if args.dataset == "tangaroa3d":
+    #     args.batch_size = 15
 
     """ rectangle """
     model_name = "flownet_l1_nodistill_90_rect3d.pkl" # 0
@@ -527,10 +525,15 @@ if __name__ == "__main__":
     # model_name = "flownet2_l1_dim_90_aug_rect3d.pkl" # 
     model_name = "flownet_l1_dist_64_rect3d.pkl"
     model_name = "flownet_l1_64_rect3d.pkl"
+
+    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_RIFE_eqRes.pkl"
+
+    """ jets """
+    # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes.pkl"
     
     """ tangaroa """
     # model_name = "flownet_lapl_tangaroa3d.pkl"
-    model_name = "flownet_l1_tangaroa3d.pkl"
+    # model_name = "flownet_l1_tangaroa3d.pkl"
 
     """ droplet """
     # model_name = "flownet_lapl_droplet3d.pkl"
@@ -549,40 +552,107 @@ if __name__ == "__main__":
     # print(model_name)
     # input("x")
 
-    dataset = args.dataset
-    print("inference...")
-    factor = 2
-    dir_res = "Results"
-    dir_res = os.path.join(dir_res, dataset)
-    dir_res = os.path.join(dir_res, str(factor) + "x")
-    dir_model = os.path.join(dir_res, model_name[:-4])
-    # print(dir_model)
-    # input("x")
-    print("Saving at:", dir_model)
+    if args.mode == "train":
+        train(model, args.dataset, args.exp, model_name, args.mode, args.local_rank)
+    else:
+        dataset = args.dataset
+        print("inference...")
+        factor = 2
+        dir_res = "Results"
+        dir_res = os.path.join(dir_res, dataset)
+        dir_res = os.path.join(dir_res, str(factor) + "x")
+        dir_model = os.path.join(dir_res, model_name[:-4])
+        # print(dir_model)
+        # input("x")
+        print("Saving at:", dir_model)
 
-    # train(model, args.dataset, args.mode, args.local_rank)
-    data_test, interpol_data, flow_combined = train(model, args.dataset, model_name, args.mode, args.local_rank)
-    print(data_test.shape, interpol_data.shape, flow_combined.shape)
-    # input("inf")
-    # original_data = data_test[:,1,:interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
-    original_data = data_test[:,1,...]
-    # interpol_data = interpol_data
-    print(original_data.shape, interpol_data.shape, flow_combined.shape)
-    print("original data is in range %f to %f" % (np.min(original_data), np.max(original_data)))
-    print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
-    # input("x")
+        # train(model, args.dataset, args.mode, args.local_rank)
+        data_test, interpol_data, flow, flow_original, mask = train(model, args.dataset, model_name, args.mode, args.local_rank)
+        print("data_test:", data_test.shape)
+        print("interpol_data:", interpol_data.shape)
+        print("flow:", flow.shape)
+        print("mask:", mask.shape)
+        # input("inf")
+        # original_data = data_test[:,1,:interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
+        # original_data = data_test[:,1,...]
+        # original_data = data_test[:, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
+        original_data = data_test
+        print("original_data:", original_data.shape)
 
-    # print(original_data[0])
-    # print(interpol_data[0])
-    # input("x")
+        original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]
+        original_data_gt = np.array(original_data_gt)
 
-    slice_num = 40
-    # calc diff, metrics
-    # diffs = calculate_diff(original_data[..., slice_num], interpol_data[..., slice_num], dataset, factor, dir_model)
-    # print("diffs:", diffs.shape)
+        print("flow_original:", flow_original.shape)
+        flow_gt = [flow for i, flow in enumerate(flow_original) if (i - 1) % 3 == 0]
+        flow_gt = np.array(flow_gt)
 
-    title = "GT_Interpol_" + str(factor) + "x"
-    # visualize_large_3d(original_data[..., slice_num], interpol_data[..., slice_num], \
-    #     # flow_combined[:, :4, :, :, slice_num], diffs, factor, dataset, dir_model, title=title, show=False, save=True)
-    #     flow_combined[..., slice_num], diffs, factor, dataset, dir_model, title=title, show=False, save=True)
-    visualize_3d(original_data, interpol_data, flow_combined, dataset, dir_model, title=title, show=False, save=True)
+        print("original_data_gt:", original_data_gt.shape)
+        print("interpol_data:", interpol_data.shape)
+        print("flow_gt:", flow_gt.shape)
+        print("flow pred & mask:", flow.shape, mask.shape)
+
+        # interpol_data = interpol_data
+        print("original data is in range %f to %f" % (np.min(original_data_gt), np.max(original_data_gt)))
+        print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
+        # input("x")
+
+        # calc diff, metrics
+        diffs = calculate_diff(original_data_gt, interpol_data, dataset, factor, dir_model)
+        print("diffs:", diffs.shape)
+
+        flow_gt = flow_gt[:, :, :flow.shape[2], :flow.shape[3], :flow.shape[4]]
+        u_gt = flow_gt[:, 0, ...]
+        v_gt = flow_gt[:, 1, ...]
+        norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
+        # viz Ft->1 in the end, that is flow[2][:, 3:6] in 3D
+        u = flow[:, 2, ...]
+        v = flow[:, 3, ...]
+
+        norm = np.sqrt(u * u + v * v)
+        norm_gt = norm_gt[:, :norm.shape[1], :norm.shape[2], :norm.shape[3]]
+        # print(norm_gt.shape, norm.shape)
+        # check the range
+        # u_gt = (u_gt - np.min(u_gt)) / (np.max(u_gt) - np.min(u_gt))
+        # u = (u - np.min(u)) / (np.max(u) - np.min(u))
+        # v_gt = (v_gt - np.min(v_gt)) / (np.max(v_gt) - np.min(v_gt))
+        # v = (v - np.min(v)) / (np.max(v) - np.min(v))
+        # norm = (norm - np.min(norm)) / (np.max(norm) - np.min(norm))
+        # norm_gt = (norm_gt - np.min(norm_gt)) / (np.max(norm_gt) - np.min(norm_gt))
+        print("u_gt is in range %f to %f" % (np.min(u_gt), np.max(u_gt)))
+        print("u is in range %f to %f" % (np.min(u), np.max(u)))
+        print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
+        print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
+
+        print("norm:", norm_gt.shape)
+
+        diffs_flow = calculate_diff(norm_gt, norm, dataset, factor, dir_model)
+
+        # u_gt = (u_gt - np.min(u_gt)) / (np.max(u_gt) - np.min(u_gt))
+        # v_gt = (v_gt - np.min(v_gt)) / (np.max(v_gt) - np.min(v_gt))
+        u_gt = u_gt[:, :u.shape[1], :u.shape[2], :u.shape[3]]
+        v_gt = v_gt[:, :v.shape[1], :v.shape[2], :v.shape[3]]
+        u_diff = calculate_diff(u_gt, u, dataset, factor, dir_model)
+        v_diff = calculate_diff(v_gt, v, dataset, factor, dir_model)
+        # print(u_gt, u, u_diff)
+        # input("x")
+        # u_diff = (u_diff - np.min(u_diff)) / (np.max(u_diff) - np.min(u_diff))
+        # v_diff = (v_diff - np.min(v_diff)) / (np.max(v_diff) - np.min(v_diff))
+
+        print("Flow gt mean and std:", np.mean(flow_gt), np.std(flow_gt))
+        print("Flow pred mean and std:", np.mean(flow), np.std(flow))
+
+        title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
+        visualize_large_3d(original_data, interpol_data, diffs, 
+                flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
+                factor, dataset, dir_model, title=title, show=False, save=True)
+
+        # slice_num = 40
+        # # calc diff, metrics
+        # # diffs = calculate_diff(original_data[..., slice_num], interpol_data[..., slice_num], dataset, factor, dir_model)
+        # # print("diffs:", diffs.shape)
+
+        # title = "GT_Interpol_" + str(factor) + "x"
+        # # visualize_large_3d(original_data[..., slice_num], interpol_data[..., slice_num], \
+        # #     # flow_combined[:, :4, :, :, slice_num], diffs, factor, dataset, dir_model, title=title, show=False, save=True)
+        # #     flow_combined[..., slice_num], diffs, factor, dataset, dir_model, title=title, show=False, save=True)
+        # visualize_3d(original_data, interpol_data, flow_combined, dataset, dir_model, title=title, show=False, save=True)

@@ -45,26 +45,76 @@ grid_z = resolution # 128
 grit_t = 1000 # 3000
 grid = np.zeros((grit_t, grid_x, grid_y, grid_z), dtype=int)
 # grid = np.ones((grit_t, grid_x, grid_y, grid_z), dtype=int)
+velocities_x = np.zeros((grit_t, grid_x, grid_y, grid_z), dtype=np.float32)
+velocities_y = np.zeros((grit_t, grid_x, grid_y, grid_z), dtype=np.float32)
+velocities_z = np.zeros((grit_t, grid_x, grid_y, grid_z), dtype=np.float32)
 
-box_dim_x = 20
-box_dim_y = 30
+box_dim_x = 30
+box_dim_y = 40
 box_dim_z = 40
-box = np.ones((box_dim_x, box_dim_y, box_dim_z), dtype=int) * 255 # 255 for better gradients ?
+# box = np.ones((box_dim_x, box_dim_y, box_dim_z), dtype=int) * 255
+box = np.ones((box_dim_x, box_dim_y, box_dim_z), dtype=np.float32)
 # box = np.zeros((box_dim_x, box_dim_y, box_dim_z), dtype=int)
 
-vel_min = -8
-vel_max = 8
+# add high freq texture to the box
+# NxN areas with diff values
+box *= 255.
+step_size = 16
+for i in range(0, box_dim_x, step_size):
+    for j in range(0, box_dim_y, step_size):
+        rand_value = np.random.randint(50, 256) # 20 30
+        # print(rand_value)
+        box[i:i+step_size, j:j+step_size] = rand_value
+# box /= 255. # to 0...1
+# add boundary to check if that forces to learn sharp edges
+bound_value = 255
+bound_width = 4
+box[0:bound_width, :] = bound_value
+box[-bound_width:, :] = bound_value
+
+box[:, 0:bound_width] = bound_value
+box[:, -bound_width:] = bound_value
+box /= 255. # to 0...1
+# print(box)
+# input("x")
+
+vel_min = -5 # -8 -6
+vel_max = 5 # 8 5
 
 pos_x = random.randint(0, grid_x - box_dim_x)
 pos_y = random.randint(0, grid_y - box_dim_y)
 pos_z = random.randint(0, grid_z - box_dim_z)
 # grid[0, pos_x:pos_x+box_dim_x, pos_y:pos_y+box_dim_y] = box
 
+if pos_x < 0: 
+    pos_x = 0
+if pos_y < 0: 
+    pos_y = 0
+if pos_z < 0: 
+    pos_z = 0
+if pos_x > grid_x - box_dim_x:
+    pos_x = grid_x - box_dim_x
+if pos_y > grid_y - box_dim_y:
+    pos_y = grid_y - box_dim_y
+if pos_z > grid_z - box_dim_z:
+    pos_z = grid_z - box_dim_z
+# print("pos_x, pos_y:", pos_x, pos_y)
+
+begin_x = pos_x
+begin_y = pos_y
+begin_z = pos_z
+# print("begin_x, begin_y:", begin_x, begin_y)
+
+end_x = pos_x + box_dim_x
+end_y = pos_y + box_dim_y
+end_z = pos_z + box_dim_z
+# print("end_x, end_y:", end_x, end_y)
+
 vel_x = random.randint(vel_min, vel_max)
 vel_y = random.randint(vel_min, vel_max)
 vel_z = random.randint(vel_min, vel_max)
 
-max_seq = 10
+max_seq = 15
 seq = max_seq
 for i in range(grit_t):
     if seq == 0: # till new direction
@@ -104,6 +154,12 @@ for i in range(grit_t):
 
     grid[i, begin_x:end_x, begin_y:end_y, begin_z:end_z] = box
     # print(np.mean(grid[i]))
+
+    # save vel vectors
+    velocities_x[i, begin_x:end_x, begin_y:end_y, begin_z:end_z] = vel_x
+    velocities_y[i, begin_x:end_x, begin_y:end_y, begin_z:end_z] = vel_y
+    velocities_z[i, begin_x:end_x, begin_y:end_y, begin_z:end_z] = vel_z
+
     seq -= 1
     if pos_x == 0 or pos_y == 0 or pos_z == 0 or pos_x == grid_x - box_dim_x or pos_y == grid_y - box_dim_y or pos_z == grid_z - box_dim_z:
         seq = 0
@@ -130,7 +186,21 @@ visualize_series(data[500:,...,50], dir_res, title=dataset, show=True, save=True
 
 # input("csv created")
 
-pkl_filename = dataset + ".pkl" 
+# pkl_filename = dataset + ".pkl" 
+pkl_filename = "rectangle3d_big_f_bb" + "_flow" + ".pkl"
+
+print("data:", data.shape)
+data = data[:, np.newaxis, ...]
+velocities_x = velocities_x[:, np.newaxis, ...]
+velocities_y = velocities_y[:, np.newaxis, ...]
+velocities_z = velocities_z[:, np.newaxis, ...]
+data = np.hstack((data, velocities_x))
+data = np.hstack((data, velocities_y))
+data = np.hstack((data, velocities_z))
+print(data.shape)
+input("x")
+
+data = np.float32(data)
 
 pkl_file = open(pkl_filename, 'wb')
 pickle.dump(data, pkl_file, protocol=4)

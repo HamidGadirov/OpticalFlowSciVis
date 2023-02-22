@@ -86,9 +86,9 @@ class Model:
 
         if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
             or dataset == "rectangle2d" or dataset == "lbs2d":
-            # print(imgs.shape)
-            # print(gt.shape)
-            # input("x")
+            print(imgs.shape)
+            print(gt.shape)
+            input("x")
             gt_data = gt[:, 0, :1]
             gt_flow = gt[:, 0, 1:3]
             img0 = imgs[:, :1]
@@ -106,6 +106,10 @@ class Model:
             img1 = img1_data
             imgs = torch.cat((img0, img1), 1)
             gt = gt_data
+
+            print(imgs.shape)
+            print(gt.shape)
+            input("x")
             
             # test: replace density with flow magnitude
             # img0 = img0_data
@@ -135,7 +139,7 @@ class Model:
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
         flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         mask = mask[2] # only gt (pred) durig training
-         # correct shapes
+        # correct shapes
         max_shape_2 = min(img0.shape[2], mask.shape[2])
         max_shape_3 = min(img0.shape[3], mask.shape[3])
         gt = gt[:,:,:max_shape_2,:max_shape_3]
@@ -182,7 +186,7 @@ class Model:
             # loss_flow /= 2.
 
             # TODO: RIFE loss: same as l1 that I have? Yes.
-            # try gamma = 0.5
+            # try gamma = 0.5 : no improvement
             # i_weight = gamma**(n_predictions - i - 1)
             # i_loss = (flow_preds[i] - flow_gt).abs()
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
@@ -378,7 +382,7 @@ class Model:
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_distill = 0.1 # 0.01 0.1 # without is bad # 0.01 best
         lambda_reg = 0 # 1e-6 best on rectangle 1e-7
         lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import math
 from torch.optim import AdamW
 import torch.optim as optim
 import itertools
@@ -64,7 +65,7 @@ class Model:
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # [4, 2, 1]
+    def inference(self, img0, img1, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # [4, 2, 1]
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
@@ -78,15 +79,34 @@ class Model:
             # flow2, mask2, merged2, flow_teacher2, merged_teacher2, loss_distill2 = self.flownet(imgs.flip(2).flip(3), scale_list, timestep=timestep)
             # return (merged[2] + merged2[2].flip(2).flip(3)) / 2
 
-    def update(self, imgs, gt, learning_rate=0, mul=1, training=True, flow_gt=None):
+    def update(self, imgs, gt, dataset, learning_rate=0, mul=1, training=True, flow_gt=None):
 
         # torch.autograd.detect_anomaly(True) 
         # torch.autograd.anomaly_mode(True)
         
         for param_group in self.optimG.param_groups:
             param_group['lr'] = learning_rate
-        img0 = imgs[:, :1]
-        img1 = imgs[:, 1:2]
+
+        # print("imgs, gt:", imgs.shape, gt.shape) # imgs, gt: torch.Size([30, 2, 64, 64, 64]) torch.Size([30, 1, 64, 64, 64])
+
+        if dataset == "rectangle3d" or dataset == "jets3d":
+            gt_data = gt[:, 0, :1]
+            gt_flow = gt[:, 0, 1:4]
+            img0 = imgs[:, :1]
+            img1 = imgs[:, 1:2]
+            img0_data = img0[:, 0, :1]
+            img0_flow = img0[:, 0, 1:4]
+            img1_data = img1[:, 0, :1]
+            img1_flow = img1[:, 0, 1:4]
+
+            # using density:
+            img0 = img0_data
+            img1 = img1_data
+            imgs = torch.cat((img0, img1), 1)
+            gt = gt_data
+        else:
+            img0 = imgs[:, :1]
+            img1 = imgs[:, 1:2]
 
         # import gc
         # for obj in gc.get_objects():
@@ -101,8 +121,9 @@ class Model:
             self.train()
         else:
             self.eval()
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
-        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
+        # print("imgs, gt:", imgs.shape, gt.shape)
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
         # print(np.isfinite(flow.detach().cpu().numpy()).all())
         # print(np.isfinite(mask.detach().cpu().numpy()).all())
         # print(np.isfinite(merged.detach().cpu().numpy()).all())
@@ -110,7 +131,8 @@ class Model:
         # print(np.isfinite(merged_teacher.detach().cpu().numpy()).all())
         # print(np.isfinite(loss_distill.detach().cpu().numpy()).all())
         # input("x")
-         # correct shapes
+        mask = mask[2] # only gt (pred) durig training
+        # correct shapes
         max_shape_2 = min(img0.shape[2], mask.shape[2])
         max_shape_3 = min(img0.shape[3], mask.shape[3])
         max_shape_4 = min(img0.shape[4], mask.shape[4])
@@ -128,6 +150,21 @@ class Model:
         # print(np.mean(merged_teacher.detach().cpu().numpy()))
         # print(np.min(gt.detach().cpu().numpy()), np.max(gt.detach().cpu().numpy()))
         # input("l1_loss")
+
+        # RIFE loss: same as l1 that I had.
+        # i_weight = gamma**(n_predictions - i - 1)
+        # i_loss = (flow_preds[i] - flow_gt).abs()
+        # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
+        loss_flow = 0.
+        loss_flow += (flow[0][:, 3:6] - gt_flow).abs().mean() * 0.64
+        loss_flow += (flow[1][:, 3:6] - gt_flow).abs().mean() * 0.8
+        loss_flow += (flow[2][:, 3:6] - gt_flow).abs().mean() * 1.
+        # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
+        # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
+        # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
+        loss_flow += (flow_teacher[:, 3:6] - gt_flow).abs().mean() * 1.
+        # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
+        # loss_flow /= 2.
 
         loss_l1 = torch.nn.functional.l1_loss(merged[2], gt)
         # loss_tea = (self.lap(merged_teacher, gt)).mean()
@@ -231,18 +268,22 @@ class Model:
         # loss_photo /= 2
         # # print(loss_photo)
         # # input("x")
-
-        # Flow loss
+        loss_photo = torch.tensor(0.)
 
         lambda_l1 = 1
         lambda_tea = 1
-        lambda_distill = 0.1
+        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
         lambda_reg = 0 # 0.01
         lambda_photo = 0 # 1e-6
         lambda_smooth = 0 # 1e-8
+        lambda_flow = 0.5 # 0.01 0.2 1; 0.5 best on rectangle
 
-        loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill # + \
-                    # l1_reg * lambda_reg + loss_smooth * lambda_smooth + loss_photo * lambda_photo
+        # check if distill los is nan or overflow
+        if math.isnan(loss_distill) or loss_distill > 10.:
+            loss_distill = torch.tensor(0.)
+
+        loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
+                l1_reg * lambda_reg + loss_flow * lambda_flow # + loss_photo * lambda_photo + loss_smooth * lambda_smooth
 
         if training:
             self.optimG.zero_grad()
@@ -260,7 +301,6 @@ class Model:
         else: # evaluate
             flow_teacher = flow[2]
             merged_teacher = merged[2]
-            # loss_G = loss_l1 + loss_tea # + loss_distill * 0.01
 
         return merged[2], {
             'merged_tea': merged_teacher,
@@ -268,8 +308,11 @@ class Model:
             'mask_tea': mask,
             'flow': flow[2],
             'flow_tea': flow_teacher,
-            'loss_l1': loss_l1,
-            'loss_tea': loss_tea,
-            'loss_distill': loss_distill,
+            'loss_l1': loss_l1 * lambda_l1,
+            'loss_tea': loss_tea * lambda_tea,
+            'loss_distill': loss_distill * lambda_distill,
+            'l1_reg': l1_reg * lambda_reg,
+            'loss_photo': loss_photo * lambda_photo,
+            'loss_flow': loss_flow * lambda_flow,
             'loss_G': loss_G
             }
