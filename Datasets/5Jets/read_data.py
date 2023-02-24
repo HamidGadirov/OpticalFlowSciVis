@@ -17,6 +17,7 @@
 #print(data.vz) 
 
 import os
+import cv2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import time
 from progress.bar import Bar
@@ -45,60 +46,120 @@ def getListOfFiles(dirName):
                 
     return allFiles  
 
-dirNames = ['Velocity'] # 'Density', 
+# dirNames = ['Velocity'] # 'Density', 
+dirName = 'Density'
 
-for dirName in dirNames:
-    print(dirName)
-    # Get the list of all files in directory tree at given path
-    listOfFiles = getListOfFiles(dirName)
-    listOfFiles.sort()
-    print("listOfFiles is sorted!")
-    # for k in range(10):
-    #     print(listOfFiles[k])
-        # print(len(listOfFiles))
-    # input("files")
+# for dirName in dirNames:
+print(dirName)
+# Get the list of all files in directory tree at given path
+listOfFiles = getListOfFiles(dirName)
+listOfFiles.sort()
+print("listOfFiles is sorted!")
+# for k in range(10):
+#     print(listOfFiles[k])
+    # print(len(listOfFiles))
+# input("files")
 
-    data = []
-    count = 0
-    # dims = 128 * 128 * 128
+data = []
+count = 0
+# dims = 128 * 128 * 128
 
-    # Print the files
-    with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
-        for elem in listOfFiles:
-            if count % 10 == 0: # downloading every 10th time step
-                print(elem)
-                # if count > 1875 and count < 1905: # skip this, check where are they
-                #     count += 1
-                #     bar.next()
-                #     continue
-                # if (count==101): # 
-                #     break
+# Print the files
+with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
+    for elem in listOfFiles:
+        if count % 5 == 0: # downloading every 5th time step # 10th
+            print(elem)
+            # TODO: stop here; not necessarily 10th -> e.g. each or 5th; not downs; if I have to: temp.
+            # if count > 1875 and count < 1905: # skip this, check where are they
+            #     count += 1
+            #     bar.next()
+            #     continue
+            if count >= 1870: # skip last t.s. with broken seq.
+                break
 
-                tmp_data = np.fromfile(elem, dtype='uint8')
-                # print(tmp_data.shape) # 8388608 dens; 25165824 vel
-                # input("x")
-                # tmp_data.resize(128, 128, 128, 1) # density
-                tmp_data.resize(128, 128, 128, 3) # vel
-                # print(tmp_data.shape)
-                # input("x")
+            tmp_data = np.fromfile(elem, dtype='uint8')
+            # print(tmp_data.shape) # 8388608 dens; 25165824 vel
+            # input("x")
+            tmp_data.resize(128, 128, 128, 1) # density
+            # tmp_data.resize(128, 128, 128, 3) # vel
+            # print(tmp_data.shape)
+            # input("x")
 
-                data.append(tmp_data)
+            data.append(tmp_data)
 
-                # tmp_data = np.flip(tmp_data, 1)
-                # data = np.concatenate((data, tmp_data), axis=0)
-                    
-            count += 1
-            bar.next()
-
-    print(len(data))
-    print(np.array(data).shape)
-    input("data")
+            # tmp_data = np.flip(tmp_data, 1)
+            # data = np.concatenate((data, tmp_data), axis=0)
+                
+        count += 1
+        bar.next()
 
 print(len(data))
-input("data")
+print(np.array(data).shape)
+# input("data")
+
+# data = np.expand_dims(data, axis=1)
+# print(np.array(data).shape)
+# input("data")
+
+dirName = 'Velocity'
+
+# for dirName in dirNames:
+print(dirName)
+# Get the list of all files in directory tree at given path
+listOfFiles = getListOfFiles(dirName)
+listOfFiles.sort()
+print("listOfFiles is sorted!")
+# for k in range(10):
+#     print(listOfFiles[k])
+    # print(len(listOfFiles))
+# input("files")
+
+data_vel = []
+count = 0
+# dims = 128 * 128 * 128
+
+# Print the files
+with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
+    for elem in listOfFiles:
+        if count % 5 == 0: # downloading every 5th time step # 10th
+            print(elem)
+            # TODO: stop here; not necessarily 10th -> e.g. each or 5th; not downs; if I have to: temp.
+            # if count > 1875 and count < 1905: # skip this, check where are they
+            #     count += 1
+            #     bar.next()
+            #     continue
+            if count >= 1870: # skip last t.s. with broken seq.
+                break
+
+            tmp_data = np.fromfile(elem, dtype='uint8')
+            # print(tmp_data.shape) # 8388608 dens; 25165824 vel
+            # input("x")
+            # tmp_data.resize(128, 128, 128, 1) # density
+            tmp_data.resize(128, 128, 128, 3) # vel
+            # print(tmp_data.shape)
+            # input("x")
+
+            data_vel.append(tmp_data)
+
+            # tmp_data = np.flip(tmp_data, 1)
+            # data = np.concatenate((data, tmp_data), axis=0)
+                
+        count += 1
+        bar.next()
+
+print(len(data_vel))
+print(np.array(data_vel).shape)
+# input("data_vel")
+
+print("combining density and vel")
+data = np.concatenate((data, data_vel), axis=-1)
+print(len(data))
+print(np.array(data).shape)
+# input("data_dens_vel")
 
 # pkl_filename = "5jets3d" + "_dens" + ".pkl" 
-pkl_filename = "5jets3d" + "_flow" + ".pkl" 
+# pkl_filename = "5jets3d" + "_flow" + ".pkl" 
+# pkl_filename = "5jets3d" + "_flow" + "_aug" + ".pkl" 
 
 # print("data:", data.shape)
 # data = data[:, np.newaxis, ...]
@@ -111,17 +172,83 @@ pkl_filename = "5jets3d" + "_flow" + ".pkl"
 
 data = np.float32(data)
 
-pkl_file = open(pkl_filename, 'wb')
-pickle.dump(data, pkl_file, protocol=4)
+# Normalize/scale
+print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+# print("Data is in range %f to %f" % (np.min(data), np.max(data)))
+print(data.shape)
+# input("Data range")
+data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
+print("Density scaled to [0, 1] range!")
+data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], 0., 1., cv2.NORM_MINMAX)
+data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], 0., 1., cv2.NORM_MINMAX)
+data[:, 3] = cv2.normalize(data[:, 3], data[:, 3], 0., 1., cv2.NORM_MINMAX)
+print("Velocities scaled to [0, 1] range!")
+print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
+
+# input("32")
+data = np.float16(data)
+# input("16")
+data = np.expand_dims(data, axis=1)
+
+data_train = data[:300] #
+data_val = data[300:372] #
+data_test = data[300:372] #
+
+print("before augmented:", data_train.shape)
+data_train = np.append(data_train, data_train[:,:,:,::-1,:], axis=0)
+data_train = np.append(data_train, data_train[:,:,::-1,:,:], axis=0)
+print("augmented:", data_train.shape)
+# input("x")
+# data_train = np.float16(data_train)
+
+data_train_three = []
+data_val_three = []
+# data_train = np.array(data_train)
+for i in range(0, data_train.shape[0], 3): 
+    data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
+data_train = np.array(data_train_three)
+print("data_train in three:", data_train.shape)
+# input("x")
+# data_train = np.array(data_train)
+for i in range(0, data_val.shape[0], 3): 
+    data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
+data_val = np.array(data_val_three)
+print("data_val in three:", data_val.shape)
+# input("x")
+data_test_three = []
+# data_train = np.array(data_train)
+for i in range(0, data_test.shape[0], 3): 
+    data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
+data_test = np.array(data_test_three)
+print("data_test in three:", data_test.shape)
+
+pkl_train_filename = "5jets3d" + "_flow" + "_aug" + "_train" + ".pkl" 
+pkl_file = open(pkl_train_filename, 'wb')
+pickle.dump(data_train_three, pkl_file, protocol=4)
 pkl_file.close
 print("Pkl file created")
 
-pkl_file = open(pkl_filename, 'rb')
-data = []
-data = pickle.load(pkl_file)
+pkl_val_filename = "5jets3d" + "_flow" + "_aug" + "_val" + ".pkl" 
+pkl_file = open(pkl_val_filename, 'wb')
+pickle.dump(data_val_three, pkl_file, protocol=4)
 pkl_file.close
-print(data.shape)
-input("Data")
+print("Pkl file created")
+
+pkl_test_filename = "5jets3d" + "_flow" + "_aug" + "_test" + ".pkl" 
+pkl_file = open(pkl_test_filename, 'wb')
+pickle.dump(data_test_three, pkl_file, protocol=4)
+pkl_file.close
+print("Pkl file created")
+
+# pkl_file = open(pkl_train_filename, 'rb')
+# data = []
+# data = pickle.load(pkl_file)
+# pkl_file.close
+# print(data.shape)
+# input("Data")
 input("Data")
 
 

@@ -6,6 +6,7 @@ backwarp_tenGrid = {}
 
 # TODO: change for volumetric (5-D) input +
 
+# @torch.cuda.amp.autocast(True)
 def warp(tenInput, tenFlow): # img0, flow[:, :3]
     # print(tenInput.shape, tenFlow.shape)
     # input("x")
@@ -34,7 +35,12 @@ def warp(tenInput, tenFlow): # img0, flow[:, :3]
     # half precision
     # g.half()
     # tenInput = tenInput.to(torch.float32)
-    grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)
+    # print(tenInput.dtype)
+    # with torch.cuda.amp.autocast(True):
+    if tenInput.dtype==torch.float16:
+        grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g.half(), mode='bilinear', padding_mode='border', align_corners=True)
+    else:
+        grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)
     # grid_s = grid_s.to(torch.float16)
 
     # return torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)

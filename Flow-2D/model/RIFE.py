@@ -86,9 +86,9 @@ class Model:
 
         if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
             or dataset == "rectangle2d" or dataset == "lbs2d":
-            print(imgs.shape)
-            print(gt.shape)
-            input("x")
+            # print(imgs.shape)
+            # print(gt.shape)
+            # input("x")
             gt_data = gt[:, 0, :1]
             gt_flow = gt[:, 0, 1:3]
             img0 = imgs[:, :1]
@@ -106,10 +106,6 @@ class Model:
             img1 = img1_data
             imgs = torch.cat((img0, img1), 1)
             gt = gt_data
-
-            print(imgs.shape)
-            print(gt.shape)
-            input("x")
             
             # test: replace density with flow magnitude
             # img0 = img0_data
@@ -191,13 +187,13 @@ class Model:
             # i_loss = (flow_preds[i] - flow_gt).abs()
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
             loss_flow = 0.
-            loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
-            loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
-            loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 1.
+            loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() # * 0.64
+            loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() # * 0.8
+            loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() # * 1.
             # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
             # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
             # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
-            loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
+            loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() # * 1.
             # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             # loss_flow /= 2.
             
@@ -382,7 +378,7 @@ class Model:
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.1 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_distill = 0.02 # 0.01 0.1 # without is bad # 0.01 best
         lambda_reg = 0 # 1e-6 best on rectangle 1e-7
         lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
@@ -408,7 +404,6 @@ class Model:
             # print("loss_distill:", loss_distill * lambda_distill)
             # print("l1_reg:", l1_reg * lambda_reg)
             # print("loss_photo:", loss_photo * lambda_photo)
-
             # print("loss_smooth:", loss_smooth * lambda_smooth)
             # print("loss_flow:", loss_flow * lambda_flow)
             # input("x")

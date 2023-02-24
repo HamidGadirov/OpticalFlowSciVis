@@ -760,8 +760,14 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow5e-1_v1_128_rect_big_hftextv3_allBlocks_gamma_RIFE_eqRes.pkl" # very similar to the prev., without gamma a tiny bit better
 
     # TODO: check distill with latest models
-    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" # best?
+    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" # best? yes.
+    # TODO: check stability
+    # 2 things helped: instead of pyramid using same scales for all IFBlocks
+    # adding distill loss with small coeff
     # model_name = "flownet_l1_dist1e-1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" # distill jumps: worse interpol and flow -
+    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # no jumps, very similar to the best
+    model_name = "flownet_l1_dist1e-1_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # jumps in distill
+    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes_1.pkl" # stability check:
  
     # model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # - best interpol unsupervised
     # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # - best supervised flow

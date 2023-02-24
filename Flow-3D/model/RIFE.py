@@ -123,6 +123,7 @@ class Model:
             self.eval()
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # print("imgs, gt:", imgs.shape, gt.shape)
+        # with torch.cuda.amp.autocast(True):
         flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
         # print(np.isfinite(flow.detach().cpu().numpy()).all())
         # print(np.isfinite(mask.detach().cpu().numpy()).all())
@@ -288,13 +289,13 @@ class Model:
         if training:
             self.optimG.zero_grad()
             
-             # ? another loss component - flow ?
             # print("loss_l1:", loss_l1 * lambda_l1)
             # print("loss_tea:", loss_tea * lambda_tea)
             # print("loss_distill:", loss_distill * lambda_distill)
             # print("l1_reg:", l1_reg * lambda_reg)
             # print("loss_photo:", loss_photo * lambda_photo)
             # print("loss_smooth:", loss_smooth * lambda_smooth)
+            # print("loss_flow:", loss_flow * lambda_flow)
             # input("x")
             loss_G.backward()
             self.optimG.step()

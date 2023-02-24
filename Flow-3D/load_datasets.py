@@ -31,6 +31,8 @@ def load_data(dataset, mode):
     combined_data_val = []
     if dataset == 'rectangle3d':
         datasets = ["rectangle3d"]
+    if dataset == 'jets3d':
+        datasets = ["jets3d"]
     if dataset == 'droplet3d':
         datasets = ["droplet3d"]
     elif dataset == 'tangaroa3d':
@@ -44,6 +46,12 @@ def load_data(dataset, mode):
         if dataset == 'rectangle3d':
             filename += "rectangle3d.pkl"
             flow_fln = "../Datasets/rectangle3d_big_f_bb_flow.pkl"
+        if dataset == 'jets3d':
+            filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow.pkl"
+            flow_fln = "../../../DataSSD/Datasets/5Jets/5jets3d_flow.pkl"
+            pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_train.pkl"
+            pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_val.pkl"
+            pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_test.pkl"
         if dataset == "droplet3d":
             filename_train = filename + "droplet3d_64_train.pkl"
             filename_val = filename + "droplet3d_64_val.pkl"
@@ -75,28 +83,27 @@ def load_data(dataset, mode):
             # data_train_down = np.array(data_train_down)
             # print(data_train_down.shape)
             # input("x")
+        # else:
+        #     data = []
+        #     pkl_file = open(filename, 'rb')
+        #     data = pickle.load(pkl_file)
+        #     print(data.shape)
+        #     print("Data is in range %f to %f" % (np.min(data[0]), np.max(data[0])))
 
-        else:
-            data = []
-            pkl_file = open(filename, 'rb')
-            data = pickle.load(pkl_file)
-            print(data.shape)
-            print("Data is in range %f to %f" % (np.min(data[0]), np.max(data[0])))
+        #     if not np.isfinite(data).all():
+        #         data = np.nan_to_num(data)
+        #         print(np.isfinite(data).all())
+        #         print("Data is in range %f to %f" % (np.min(data[10]), np.max(data[10])))
+        #         # input("x")
 
-            if not np.isfinite(data).all():
-                data = np.nan_to_num(data)
-                print(np.isfinite(data).all())
-                print("Data is in range %f to %f" % (np.min(data[10]), np.max(data[10])))
-                # input("x")
+        #     # for i in range(data.shape[0]):
+        #     #     data[i] = (data[i] - np.min(data[i])) / (np.max(data[i]) - np.min(data[i]))
+        #         # data[i] =  (data[i] - np.mean(data[i])) / np.std(data[i])
 
-            # for i in range(data.shape[0]):
-            #     data[i] = (data[i] - np.min(data[i])) / (np.max(data[i]) - np.min(data[i]))
-                # data[i] =  (data[i] - np.mean(data[i])) / np.std(data[i])
+        #     data = np.float32(data)
 
-            data = np.float32(data)
-
-            if data.ndim == 4: # expand dims for later concatenating
-                data = np.expand_dims(data, axis=1)
+        #     if data.ndim == 4: # expand dims for later concatenating
+        #         data = np.expand_dims(data, axis=1)
 
         # load data
         data = []
@@ -117,13 +124,41 @@ def load_data(dataset, mode):
             print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
             print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
             # input("Data range")
+        if dataset == "jets3d":
+            # just load data, all steps were done in data creation (read_data.py) to save time
+            # with open(flow_fln, 'rb') as flow_file:
+            #     data = pickle.load(flow_file)
+            with open(pkl_train_filename, 'rb') as flow_file:
+                data_train = pickle.load(flow_file)
+            with open(pkl_val_filename, 'rb') as flow_file:
+                data_val = pickle.load(flow_file)
+            with open(pkl_test_filename, 'rb') as flow_file:
+                data_test = pickle.load(flow_file)
+            
+            # # data = np.float32(data)
+            # print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
+            # print(data.shape)
+            # # input("Data range")
+            # data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
+            # print("Density scaled to [0, 1] range!")
+            # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], 0., 1., cv2.NORM_MINMAX)
+            # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], 0., 1., cv2.NORM_MINMAX)
+            # data[:, 3] = cv2.normalize(data[:, 3], data[:, 3], 0., 1., cv2.NORM_MINMAX)
+            # print("Velocities scaled to [0, 1] range!")
+            # print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            # print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+            # print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+            # print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
+            # # input("Data range")
         
-        if data.ndim == 4 or dataset == "rectangle3d" or dataset == "jets3d": # expand dims for later concatenating
+        if dataset == "rectangle3d": # or dataset == "jets3d": # expand dims for later concatenating
             data = np.expand_dims(data, axis=1)
         
-        data = np.float32(data)
+        # if dataset == "jets3d":
+        #     data = np.float16(data)
         # data = np.moveaxis(data, -1, 1)
-        print("data in grayscale:", data.shape)
+        # print("data in grayscale:", data.shape)
         # input("x")
 
         # add aug
@@ -166,6 +201,9 @@ def load_data(dataset, mode):
             if "rectangle3d" in filename:
                 data_train = data[:750] #
                 data_val = data[750:870] #
+            # if "jets3d" in filename:
+            #     data_train = data[:300] #
+            #     data_val = data[300:372] #
             if "tangaroa3d" in filename: # (201, 120, 180, 300)
                 data_train = data[:150] #
                 data_val = data[150:201] #
@@ -173,14 +211,13 @@ def load_data(dataset, mode):
                 data_train = data 
                 data_val = data
 
-            if dataset == "rectangle3d" or dataset == "droplet3d":
+            if dataset == "rectangle3d" or dataset == "droplet3d": # or dataset == "jets3d" 
                 print("before augmented:", data_train.shape)
-                data_train_flip = data_train[:,:,:,::-1,:]
-                data_train = np.append(data_train, data_train_flip, axis=0)
-                data_train_flip = data_train[:,:,::-1,:,:]
-                data_train = np.append(data_train, data_train_flip, axis=0)
+                data_train = np.append(data_train, data_train[:,:,:,::-1,:], axis=0)
+                data_train = np.append(data_train, data_train[:,:,::-1,:,:], axis=0)
 
-            print("augmented:", data_train.shape)
+                print("augmented:", data_train.shape)
+                data_train = np.float16(data_train)
             # input("augmented")
 
             # factor = 2
@@ -197,18 +234,18 @@ def load_data(dataset, mode):
             # print(data_train.shape)
 
             # prepare img0, gt, img1
-            data_train_tree = []
-            data_val_tree = []
-            if "tangaroa3d" in filename or "rectangle3d" in filename:
+            data_train_three = []
+            data_val_three = []
+            if "tangaroa3d" in filename or "rectangle3d" in filename: # or "jets3d" in filename:
                 # data_train = np.array(data_train)
                 for i in range(0, data_train.shape[0], 3): 
-                    data_train_tree.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
-                data_train = np.array(data_train_tree)
+                    data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
+                data_train = np.array(data_train_three)
                 print("data_train in three:", data_train.shape)
                 # data_train = np.array(data_train)
                 for i in range(0, data_val.shape[0], 3): 
-                    data_val_tree.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
-                data_val = np.array(data_val_tree)
+                    data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
+                data_val = np.array(data_val_three)
                 print("data_val in three:", data_val.shape)
                 # input("x")
 
@@ -242,14 +279,16 @@ def load_data(dataset, mode):
 
             if "rectangle3d" in filename:
                 data_test = data[870:990] #
+            # if "jets3d" in filename:
+            #     data_test = data[300:372] # same as val for now
 
-                # prepare img0, gt, img1
-                data_test_three = []
-                # data_train = np.array(data_train)
-                for i in range(0, data_test.shape[0], 3): 
-                    data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
-                data_test = np.array(data_test_three)
-                print("data_test in three:", data_test.shape)
+            #     # prepare img0, gt, img1
+            #     data_test_three = []
+            #     # data_train = np.array(data_train)
+            #     for i in range(0, data_test.shape[0], 3): 
+            #         data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
+            #     data_test = np.array(data_test_three)
+            #     print("data_test in three:", data_test.shape)
 
                 # visualize_3d(data_test, dataset, dir_res="Results", title="droplet3d.html")
                 # input("3d")

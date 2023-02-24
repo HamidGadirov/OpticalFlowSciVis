@@ -170,7 +170,9 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 # learning_rate = get_learning_rate(step)
                 learning_rate = get_learning_rate(step) * args.world_size / 4
                 # with torch.autograd.detect_anomaly():
-                pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
+                # model.half()
+                with torch.cuda.amp.autocast(True):
+                    pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
                 
                 # print(pred.shape, gt.shape, info['mask'].shape)
                 # pred = pred.permute(0, 1, 3, 4, 2) # (0, 1, 3, 4, 2)
@@ -494,9 +496,9 @@ if __name__ == "__main__":
     torch.backends.cudnn.benchmark = True
     model = Model(args.local_rank)
     if args.dataset == "rectangle3d":
-        args.batch_size = 20 # 30
+        args.batch_size = 40
     if args.dataset == "jets3d":
-        args.batch_size = 2 # ?
+        args.batch_size = 45
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -527,9 +529,11 @@ if __name__ == "__main__":
     model_name = "flownet_l1_64_rect3d.pkl"
 
     model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_RIFE_eqRes.pkl"
+    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_gamma_RIFE_eqRes.pkl"
 
     """ jets """
     # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes.pkl"
+    # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test.pkl" 
     
     """ tangaroa """
     # model_name = "flownet_lapl_tangaroa3d.pkl"

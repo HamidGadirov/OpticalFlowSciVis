@@ -132,6 +132,7 @@ class IFNet(nn.Module):
             self.contextnet = Contextnet()
             self.unet = Unet()
 
+    @torch.cuda.amp.autocast(True)
     def forward(self, x, scale=[1, 1, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
         img0 = x[:, :1] 
         img1 = x[:, 1:2]
