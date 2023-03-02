@@ -19,6 +19,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 
 # from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large
+from utils import plot_distribution
 
 # from skimage.transform import rescale, resize, downscale_local_mean
 
@@ -120,19 +121,30 @@ def load_data(dataset, exp, mode):
             # data = data.astype(int)
             # data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
             data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
-            data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], -1., 1., cv2.NORM_MINMAX)
-            data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], -1., 1., cv2.NORM_MINMAX)
+            # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], -1., 1., cv2.NORM_MINMAX)
+            # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], -1., 1., cv2.NORM_MINMAX)
             # data[:, 0] = (data[:, 0] - np.min(data[:, 0])) / (np.max(data[:, 0]) - np.min(data[:, 0]))
             # data[:, 1] = (data[:, 1] - np.min(data[:, 1])) / (np.max(data[:, 1]) - np.min(data[:, 1]))
             # data[:, 2] = (data[:, 2] - np.min(data[:, 2])) / (np.max(data[:, 2]) - np.min(data[:, 2]))
             # print(data)
             print("Density scaled to [0, 1] range!")
 
-            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
-            # data[:, 1] = data[:, 1] * 10.
-            # data[:, 2] = data[:, 2] * 10.
-            # print("Vel scaled to *10")
             # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            # factor = 2
+            # dir_res = "Results"
+            # dir_res = os.path.join(dir_res, dataset)
+            # dir_res = os.path.join(dir_res, str(factor) + "x")
+            # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr6e-4.pkl"
+            # dir_model = os.path.join(dir_res, model_name[:-4])
+            # plot_distribution(data[:, 1], dir_model, name="dict_flow_gt_before.png", save=True)
+            data[:, 1] = data[:, 1] * 10.
+            data[:, 2] = data[:, 2] * 10.
+            print("Vel scaled to *10")
+            # data[:, 1] = np.log(data[:, 1] + 0.3) # +1 to avoid nan
+            # data[:, 2] = np.log(data[:, 2] + 0.3) # +1 to avoid nan
+            # print("Vel log normalized")
+            # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            # plot_distribution(data[:, 1], dir_model, name="dict_flow_gt_after.png", save=True)
 
             # flow_x_mean = data[:, 1].mean()
             # flow_y_mean = data[:, 2].mean()
@@ -234,10 +246,16 @@ def load_data(dataset, exp, mode):
                 data_val = data[2370:2685] # div to 3, 5, 9 and 7
             if "lbs2d" in filename: # 6K in total, skip first 3K; 3K in total, each 10th
                 # data_train = data[:2205]
-                data_train = data[:1000]
-                data_train = np.append(data_train, data[-1205:], axis=0)
+                data_train = data[:500]
+                data_train = np.append(data_train, data[710:1500], axis=0)
+                data_train = np.append(data_train, data[1710:2500], axis=0)
+                data_train = np.append(data_train, data[-260:], axis=0) # 2340 in total, div to 9
+                # data_train = np.append(data_train, data[-1205:], axis=0)
                 # data_val = data[2370:2685]
-                data_val = data[1000:1315]
+                # data_val = data[1000:1315]
+                data_val = data[500:605]
+                data_val = np.append(data_val, data[1500:1605], axis=0)
+                data_val = np.append(data_val, data[2500:2605], axis=0) # 315 in total 
                 # data_train = data[:300]
                 # data_val = data[:300]
             if "droplet2d" in filename:
@@ -420,9 +438,20 @@ def load_data(dataset, exp, mode):
                 data_test = data[2685:3000] # div to 3, 5, 9 and 7
             if "lbs2d" in filename:
                 # data_test = data[2685:3000] # [5685:6000]
-                data_test = data[1315:1630] # [5685:6000]
+                # data_test = data[1315:1630]
+                # data_test = data[600:915] # flow not super accurate but much better than on unseen (before)
+                # data_test = data[2000:2315]
+                data_test = data[605:710]
+                data_test = np.append(data_test, data[1605:1710], axis=0)
+                data_test = np.append(data_test, data[2605:2710], axis=0) # 315 in total 
                 # data_test = data[:300]
-                # print("Data shape:", data.shape)
+                # print("data_test shape:", data_test.shape) # (315, 1, 3, 100, 400)
+                # print(data_test[0, :, 1, 50, 100], data_test[0, :, 1, 50, 200], data_test[0, :, 1, 50, 300])
+                # print(data_test[0, :, 2, 50, 100], data_test[0, :, 2, 50, 200], data_test[0, :, 2, 50, 300])
+                # print(data_test[100, :, 1, 50, 100], data_test[100, :, 1, 50, 200], data_test[100, :, 1, 50, 300])
+                # print(data_test[100, :, 2, 50, 100], data_test[100, :, 2, 50, 200], data_test[100, :, 2, 50, 300])
+                # print(data_test[200, :, 1, 50, 100], data_test[200, :, 1, 50, 200], data_test[200, :, 1, 50, 300])
+                # print(data_test[200, :, 2, 50, 100], data_test[200, :, 2, 50, 200], data_test[200, :, 2, 50, 300])
                 # input("Data range")
 
                 # print("Vel x mean std", np.mean(data_test[:, :, 1]), np.std(data_test[:, :, 1]))

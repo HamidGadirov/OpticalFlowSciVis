@@ -106,6 +106,10 @@ class Model:
             img1 = img1_data
             imgs = torch.cat((img0, img1), 1)
             gt = gt_data
+
+            # print(torch.mean(gt_flow[:,:,0]))
+            # print(torch.mean(gt_flow[:,:,1]))
+            # input("x")
             
             # test: replace density with flow magnitude
             # img0 = img0_data
@@ -182,18 +186,19 @@ class Model:
             # loss_flow /= 2.
 
             # TODO: RIFE loss: same as l1 that I have? Yes.
+            # sum instead of .mean() ???
             # try gamma = 0.5 : no improvement
             # i_weight = gamma**(n_predictions - i - 1)
             # i_loss = (flow_preds[i] - flow_gt).abs()
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
             loss_flow = 0.
-            loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() # * 0.64
-            loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() # * 0.8
-            loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() # * 1.
+            loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
+            loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
+            loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 1.
             # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
             # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
             # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
-            loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() # * 1.
+            loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
             # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             # loss_flow /= 2.
             
@@ -270,18 +275,19 @@ class Model:
         # Print model's state_dict
         # print("Model's state_dict:")
 
-        block2_params = 0.
-        for param_tensor in self.flownet.state_dict():
-            # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
-            if "block2" in param_tensor or "block_tea" in param_tensor:
-                p = self.flownet.state_dict()[param_tensor]
-                # print(p)
-                block2_params += torch.norm(p, 1)
-        # print(block2_params)
-        # input("x")
-        # l1_lambda = 1e-5 # 1e-4
-        l1_norm = block2_params
-        l1_reg = l1_norm # l1_lambda * l1_norm
+        # block2_params = 0.
+        # for param_tensor in self.flownet.state_dict():
+        #     # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
+        #     if "block2" in param_tensor or "block_tea" in param_tensor:
+        #         p = self.flownet.state_dict()[param_tensor]
+        #         # print(p)
+        #         block2_params += torch.norm(p, 1)
+        # # print(block2_params)
+        # # input("x")
+        # # l1_lambda = 1e-5 # 1e-4
+        # l1_norm = block2_params
+        # l1_reg = l1_norm # l1_lambda * l1_norm
+        l1_reg = torch.tensor(0.)
 
         def charbonnier(x, alpha=0.25, epsilon=1.e-9): # for photo or smooth loss
             return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
@@ -378,11 +384,11 @@ class Model:
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.02 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
         lambda_reg = 0 # 1e-6 best on rectangle 1e-7
         lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.5 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0.2 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter

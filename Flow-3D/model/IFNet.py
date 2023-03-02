@@ -16,14 +16,16 @@ def deconv(in_planes, out_planes, kernel_size=4, stride=2, padding=1):
     return nn.Sequential(
         torch.nn.ConvTranspose3d(in_channels=in_planes, out_channels=out_planes, 
                                 kernel_size=kernel_size, stride=stride, padding=padding),
-        nn.PReLU(out_planes)
+        nn.PReLU(out_planes),
+        # nn.InstanceNorm3d(out_planes) # added
     )
 
 def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
     return nn.Sequential(
         nn.Conv3d(in_planes, out_planes, kernel_size=kernel_size, stride=stride,
                   padding=padding, dilation=dilation, bias=True),
-        nn.PReLU(out_planes)
+        nn.PReLU(out_planes),
+        # nn.InstanceNorm3d(out_planes) # added
     )
 
 version = 1
@@ -69,13 +71,14 @@ class IFBlock(nn.Module):
             self.conv1 = nn.Sequential(
                 nn.ConvTranspose3d(c, c//2, 4, 2, 1),
                 nn.PReLU(c//2),
+                # nn.InstanceNorm3d(c//2), # added
                 nn.ConvTranspose3d(c//2, 6, 4, 2, 1), # flow (c//2, 4, 4, 2, 1)
             )
             self.conv2 = nn.Sequential(
                 nn.ConvTranspose3d(c, c//2, 4, 2, 1),
                 nn.PReLU(c//2),
+                # nn.InstanceNorm3d(c//2), # added
                 nn.ConvTranspose3d(c//2, 1, 4, 2, 1), # mask
-                # input(c//2)
             )
 
     def forward(self, x, flow, scale):

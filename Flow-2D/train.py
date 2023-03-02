@@ -31,7 +31,7 @@ from torch.utils.data.distributed import DistributedSampler
 
 from load_datasets import load_data
 from error import calculate_diff
-from utils import plot_loss, visualize_ind, visualize_series, visualize_series_flow, visualize_large
+from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_series, visualize_series_flow, visualize_large
 
 # early stopping is deactivated
 # TODO:
@@ -47,11 +47,26 @@ log_path = 'train_log'
 def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000.
-        return 3e-4 * mul
+        # return 1e-4 * mul
+        # return 3e-4 * mul
+        return 4e-4 * mul
+        # return 6e-4 * mul
+        # return 8e-4 * mul
+        # return 3e-3 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
-        return (3e-4 - 3e-6) * mul + 3e-6
+        # return (3e-4 - 3e-6) * mul + 3e-6
+        return (4e-4 - 4e-6) * mul + 4e-6
+        # return (6e-4 - 6e-6) * mul + 6e-6
+        # return (8e-4 - 8e-6) * mul + 8e-6
+        # return (3e-3 - 3e-5) * mul + 3e-5
     # return 1e-6 # worse
+    # return 2e-7 # ?
+    # mul = step / 2000.
+    # return 3e-4 * mul
+    # return 3e-5
+    # return 3e-6
+    # return 3e-3
 
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
@@ -166,6 +181,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 # input("x")
                 # learning_rate = get_learning_rate(step)
                 learning_rate = get_learning_rate(step) * args.world_size / 4
+                # save learning_rate to json and plot during inference
                 if exp == 1: # # img0, img1, gt
                     imgs = data_gpu[:, :2] # :6
                     gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
@@ -234,7 +250,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 global val_loss_best 
                 val_loss_best = info['loss_G']
                 print(val_loss_best)
-            evaluate(model, dataset, val_data, step, local_rank) #, writer_val)   
+            evaluate(model, dataset, val_data, step, local_rank, learning_rate) #, writer_val)   
             # model.save_model(model_name, log_path, local_rank) 
             dist.barrier()
     else:
@@ -261,8 +277,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         flow_combined = []
         mask_combined = []
         flow_gt_combined = []
-        data_test_combined = [] # vimeo
-
+        data_test_combined = []
         for i, data in enumerate(data_test):
             # print("test len:", len(data_gpu))
             # print("data:", data.shape)
@@ -401,13 +416,11 @@ def train(model, dataset, exp, model_name, mode, local_rank):
 
         loss_path = 'loss.json'
         loss_path = os.path.join(dir_model, loss_path)
-
         try:
             with open(loss_path, 'r') as loss_file:
                 loss_data = json.load(loss_file)
             val_loss = loss_data['val_loss']
             loss_file.close()   
-
             # from collections import Iterable
             # def flatten(lis):
             #     for item in lis:
@@ -418,21 +431,28 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             #             yield item
             # val_loss = list(flatten(val_loss))
             val_loss = np.array(val_loss)
-            # print(val_loss.shape)
-            # input("x")
         except:
             print("loss json doesn't exist")
-
         plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
 
-        data_test = np.array(data_test_combined)
-        print("data_test:", data_test.shape)
+        lr_file_name = 'learning_rate.txt'
+        lr_path = os.path.join(dir_model, lr_file_name)
+        try:
+            with open(lr_path, "r") as lr_file:
+                lr_data = lr_file.read()
+                lr_data_into_list = lr_data.replace('\n', ' ').split(' ')
+            learning_rate = [float(x) for x in lr_data_into_list[:-1]]
+            learning_rate = np.array(learning_rate)
+            plot_lr(learning_rate, dir_model, name="lr.png", save=True)
+        except:
+            print("learning rate file doesn't exist")
+
+        original_data = np.array(data_test_combined)
+        print("original_data:", original_data.shape)
         # if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" or dataset == "rectangle2d":
         #     original_data = data_test[:, :, 0] # gt
         # else:
         #     original_data = data_test
-        original_data = data_test
-        print(original_data.shape)
         print("Data is in range %f to %f" % (np.min(original_data), np.max(original_data)))
         # input("x")
         
@@ -442,7 +462,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             statistics = {'flow_x_mean': 0, 'flow_y_mean': 0, 'flow_x_std': 0, 'flow_y_std': 0}
         return original_data, interpol_data, flow_combined, flow_gt_combined, mask_combined, statistics
     
-def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
+def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, writer_val):
     print("Evaluate")
     # input(model_name)
     # writer = SummaryWriter('train') #
@@ -549,14 +569,30 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
         loss_data = loss_data_old
         # print("exists:", loss_data)
         loss_file.close()
-
     # print("loss_data:", loss_data)
     # input("x")
-
     with open(loss_path, 'w+') as loss_file:
         json.dump(loss_data, loss_file, indent=4)
         # print("dump loss to json")
     loss_file.close()
+
+    lr_file_name = 'learning_rate.txt'
+    lr_path = os.path.join(dir_model, lr_file_name)
+    lr_file = open(lr_path, 'a')
+    lr_file.write(str(learning_rate) + "\n")
+    lr_file.close()
+
+    # lr_path = 'learning_rate.json'
+    # lr_path = os.path.join(dir_model, lr_path)
+    # if (os.path.exists(lr_path)):
+    #     lr_file = open(lr_path, 'r')
+    #     lr_data_old = json.load(lr_file)
+    #     lr_data_old.extend(learning_rate)
+    #     learning_rate = lr_data_old
+    #     lr_file.close()
+    # with open(lr_path, 'w') as lr_file:
+    #     json.dump([learning_rate], lr_file, indent=4)
+    # lr_file.close()
 
     eval_time_interval = time.time() - time_stamp
 
@@ -569,7 +605,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank): #, writer_val):
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=1000, type=int) # 300 500 1000
+    parser.add_argument('--epoch', default=100, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -595,7 +631,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle2d":
         args.batch_size = 200
     if args.dataset == "lbs2d":
-        args.batch_size = 90 # 120
+        args.batch_size = 55 # 120
     if args.dataset == "FluidSimML2d":
         args.batch_size = 64
     if args.dataset == "pipedcylinder2d" or args.dataset == "cylinder2d":
@@ -725,7 +761,7 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_gamma.pkl" # not better than without gamma
     model_name = "flownet_l1_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_gamma_RIFE.pkl" # is it same?? yes.
     model_name = "flownet_l1_flow2e-1_v2_128_rect_big_hftextv3_allBlocks_gamma_RIFE_forw.pkl" # only one direction: a bit worse than before
-    model_name = "flownet_l1_flow2e-1_v1_128_rect_big_hftextv3_allBlocks_gamma_RIFE.pkl"
+    model_name = "flownet_l1_flow2e-1_v1_128_rect_big_hftextv3_allBlocks_gamma_RIFE.pkl" 
 
     # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_allBlocks.pkl" # interpol considerably better, flow also good; this was only 1 dir RIFE loss
     # # model_name = "flownet_l1_flow5e-1_v2_128_rect_big_fbb_allBlocks.pkl" # interpol not accurate
@@ -807,6 +843,25 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel100_gamma_RIFE.pkl" loss increased -
     # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE.pkl" # 
     # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAll_gamma_RIFE.pkl" # loss stab very quickly, flow not accurate.
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel10_gamma_RIFE_eqRes_BN.pkl" # flow not accurate
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel10_gamma_RIFE_eqRes_BN_lr.pkl" # flow not accurate
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_VelLogNorm_gamma_RIFE_eqRes_BN_lr.pkl" # mo
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_VelLogNorm1_gamma_RIFE_eqRes_BN_lr.pkl" # no
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_VelLogNorm2_gamma_RIFE_eqRes_BN_lr.pkl" # BN worsens interpoltation a bit 
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel300_gamma_RIFE_eqRes_lr.pkl" # no
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_sum_eqRes_lr.pkl" # no
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-3.pkl" # diverge
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr6e-4.pkl" # diverge slowly after 100ep
+    # perhaps start with 3e-4 and change lr after 100 ep? remove loss decay?
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr4e-4.pkl" # start with lr 4e-4, increase to 6e-6 after 100ep: 
+    # loss increased a bit in the end, but result best overall +
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-4manual.pkl" # no
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-4mul.pkl" # 3e-4 100ep: decrese, then stop, then increase a bit; 
+    # # then 3e-5 100ep: loss increased a bit again then stoped; 3e-5 100ep: nothing new; 3e-3 100ep: decrese but then increase again...
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr5e-4_v1.pkl" 
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr4e-4_v2.pkl" # flow not bad but can be better; loss inc a bit after 100ep
+    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr4e-4_change.pkl" # start with lr 4e-4, 
+    # increase to 6e-4 after 100ep: loss decreasing very slightly, but didn't increase!; 8e-4: fluctuate, then same; 4e-4
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -973,11 +1028,14 @@ if __name__ == "__main__":
         print("flow pred & mask:", flow.shape, mask.shape)
 
         if "lbs2d" in dataset: # denormalize
-            print("flow_original mean std", np.mean(flow_original), np.std(flow_original))
-            # flow_original = flow_original / 10.
-            # flow = flow / 10.
-            # print("Vel rescaled to /10")
-            print("flow_original mean std", np.mean(flow_original), np.std(flow_original))
+            print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
+            flow_gt = flow_gt / 10.
+            flow = flow / 10.
+            print("Vel rescaled to /10")
+            # flow_gt = np.exp(flow_gt) - 0.3
+            # flow = np.exp(flow) - 0.3
+            # print("Vel log denormalized")
+            print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
         #     flow_x_mean = statistics['flow_x_mean']
         #     flow_y_mean = statistics['flow_y_mean']
         #     flow_x_std = statistics['flow_x_std']
@@ -992,8 +1050,8 @@ if __name__ == "__main__":
         #     print("Denormalized from mean 0 and std 1!")
         #     print("Vel x mean std", flow_original[:, 1].mean(), flow_original[:, 1].std())
 
-            print("flow_original:", flow_original[10, 0] )
-            print("flow:", flow[10, 2:3] )
+            print("flow_gt:", flow_gt[10, 0])
+            print("flow:", flow[10, 2:3])
             # flow[0][:, 2:3]), gt_flow[:, 0])
             # # loss_flow = torch.nn.functional.l1_loss(flow_original[10, :], flow[10, :] )
             # l1_loss = abs(flow_original[10, :] - flow[10, 2:4] )
@@ -1078,6 +1136,11 @@ if __name__ == "__main__":
 
         print("Flow gt mean and std:", np.mean(flow_gt), np.std(flow_gt))
         print("Flow pred mean and std:", np.mean(flow), np.std(flow))
+
+        plot_distribution(original_data, dir_model, name="dist_density_gt.png", save=True)
+        plot_distribution(interpol_data, dir_model, name="dist_density_interpol.png", save=True)
+        plot_distribution(flow_gt, dir_model, name="dict_flow_gt.png", save=True)
+        plot_distribution(flow, dir_model, name="dist_flow_pred.png", save=True)
 
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         if "2d" in dataset:

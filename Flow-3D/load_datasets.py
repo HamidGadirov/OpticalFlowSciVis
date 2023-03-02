@@ -279,16 +279,16 @@ def load_data(dataset, mode):
 
             if "rectangle3d" in filename:
                 data_test = data[870:990] #
+                # prepare img0, gt, img1
+                data_test_three = []
+                # data_train = np.array(data_train)
+                for i in range(0, data_test.shape[0], 3): 
+                    data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
+                data_test = np.array(data_test_three)
+                print("data_test in three:", data_test.shape)
+
             # if "jets3d" in filename:
             #     data_test = data[300:372] # same as val for now
-
-            #     # prepare img0, gt, img1
-            #     data_test_three = []
-            #     # data_train = np.array(data_train)
-            #     for i in range(0, data_test.shape[0], 3): 
-            #         data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
-            #     data_test = np.array(data_test_three)
-            #     print("data_test in three:", data_test.shape)
 
                 # visualize_3d(data_test, dataset, dir_res="Results", title="droplet3d.html")
                 # input("3d")

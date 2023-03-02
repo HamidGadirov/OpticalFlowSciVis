@@ -17,6 +17,7 @@ def deconv(in_planes, out_planes, kernel_size=4, stride=2, padding=1):
     return nn.Sequential(
         torch.nn.ConvTranspose2d(in_channels=in_planes, out_channels=out_planes, kernel_size=4, stride=2, padding=1),
         nn.PReLU(out_planes)
+        # nn.BatchNorm2d(out_planes), # added
     )
 
 def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
@@ -24,6 +25,7 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
         nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride,
                   padding=padding, dilation=dilation, bias=True),
         nn.PReLU(out_planes)
+        # nn.BatchNorm2d(out_planes), # added
     )
 
 version = 1
@@ -71,13 +73,14 @@ class IFBlock(nn.Module):
             self.conv1 = nn.Sequential(
                 nn.ConvTranspose2d(c, c//2, 4, 2, 1),
                 nn.PReLU(c//2),
+                # nn.BatchNorm2d(c//2), # added
                 nn.ConvTranspose2d(c//2, 4, 4, 2, 1), # flow
             )
             self.conv2 = nn.Sequential(
                 nn.ConvTranspose2d(c, c//2, 4, 2, 1),
                 nn.PReLU(c//2),
+                # nn.BatchNorm2d(c//2), # added
                 nn.ConvTranspose2d(c//2, 1, 4, 2, 1), # mask
-                # input(c//2)
             )
             # supervised flow
             # self.conv3 = nn.Sequential(

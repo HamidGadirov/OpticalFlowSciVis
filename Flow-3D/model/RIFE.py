@@ -73,7 +73,8 @@ class Model:
         flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
         print("back to RIFE from IFNet")
         if TTA == False:
-            return merged[2], flow, mask # get the flow too
+            # return merged[2], flow, mask # get the flow too
+            return merged, flow, mask # get all 3 frames
         else:
             print("not implemented")
             # flow2, mask2, merged2, flow_teacher2, merged_teacher2, loss_distill2 = self.flownet(imgs.flip(2).flip(3), scale_list, timestep=timestep)
@@ -177,10 +178,24 @@ class Model:
         # print("Parameters in IFNet:", num_params) # 9641368
         # input("p")
 
-        # adding L1 reg:
-        l1_lambda = 1e-5 # 1e-4
-        l1_norm = sum(torch.norm(p, 1) for p in self.flownet.parameters())
-        l1_reg = l1_lambda * l1_norm
+        # # adding L1 reg:
+        # l1_lambda = 1e-6 # 1e-5 1e-4
+        # l1_norm = sum(torch.norm(p, 1) for p in self.flownet.parameters())
+        # l1_reg = l1_lambda * l1_norm
+
+        block2_params = 0.
+        for param_tensor in self.flownet.state_dict():
+            # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
+            if "block2" in param_tensor or "block_tea" in param_tensor:
+                p = self.flownet.state_dict()[param_tensor]
+                # print(p)
+                block2_params += torch.norm(p, 1)
+        # print(block2_params)
+        # input("x")
+        # l1_lambda = 1e-5 # 1e-4
+        l1_norm = block2_params
+        l1_reg = l1_norm # l1_lambda * l1_norm
+        # l1_reg = torch.tensor(0.)
 
         # def charbonnier(x, alpha=0.25, epsilon=1.e-9):
         #     return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
@@ -271,13 +286,13 @@ class Model:
         # # input("x")
         loss_photo = torch.tensor(0.)
 
-        lambda_l1 = 1
-        lambda_tea = 1
+        lambda_l1 = 0.1
+        lambda_tea = 0.1
         lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 0 # 0.01
+        lambda_reg = 1e-6 # 1e-6
         lambda_photo = 0 # 1e-6
         lambda_smooth = 0 # 1e-8
-        lambda_flow = 0.5 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0.01 # 0.01 0.2 1; 0.5 best on rectangle
 
         # check if distill los is nan or overflow
         if math.isnan(loss_distill) or loss_distill > 10.:
@@ -296,6 +311,14 @@ class Model:
             # print("loss_photo:", loss_photo * lambda_photo)
             # print("loss_smooth:", loss_smooth * lambda_smooth)
             # print("loss_flow:", loss_flow * lambda_flow)
+            # epoch:0/1000 2/8 time:0.00+1.34 loss_G:1.4203e+00
+            # loss_l1: tensor(0.2562, device='cuda:0', grad_fn=<MulBackward0>)
+            # loss_tea: tensor(0.2556, device='cuda:0', grad_fn=<MulBackward0>)
+            # loss_flow: tensor(0.9121, device='cuda:0', dtype=torch.float16, grad_fn=<MulBackward0>)
+            # epoch:0/1000 3/8 time:0.00+1.34 loss_G:1.4238e+00
+            # loss_l1: tensor(37.7109, device='cuda:0', grad_fn=<MulBackward0>)
+            # loss_tea: tensor(37.8157, device='cuda:0', grad_fn=<MulBackward0>)
+            # loss_flow: tensor(102.9375, device='cuda:0', dtype=torch.float16, grad_fn=<MulBackward0>)
             # input("x")
             loss_G.backward()
             self.optimG.step()

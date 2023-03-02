@@ -33,6 +33,16 @@ def plotly_fig2array(fig):
     img = Image.open(buf)
     return np.asarray(img)
 
+def plot_distribution(data, dir_res, name="dist.png", save=False):
+    fig = plt.figure(figsize=(8, 4))
+    plt.hist(data.reshape(-1), bins=50)
+    plt.gca().set(title='Frequency Histogram', ylabel='Frequency')
+    if save:
+        if not os.path.isdir(dir_res):
+            os.makedirs(dir_res)
+        res_path = os.path.join(dir_res, name)
+        fig.savefig(res_path)
+
 def plot_loss(loss, dir_res, name="loss.png", save=False):
     fig = plt.figure(figsize=(8, 4))
     # labels = ('total', 'lapl', 'tea', 'distill', 'reg', 'photo', 'flow')
@@ -48,6 +58,18 @@ def plot_loss(loss, dir_res, name="loss.png", save=False):
     # plt.legend(['total', 'lapl', 'tea', 'dist', 'reg', 'photo', 'flow'], loc='upper right')
     plt.legend(['Total', 'L1', 'Teacher', 'Distill', 'Reg', 'Photo', 'Flow'], loc='upper right') # Laplacian vs L1(MAE)
     # plt.legend()
+    if save:
+        res_path = os.path.join(dir_res, name)
+        fig.savefig(res_path)
+
+def plot_lr(lr, dir_res, name="lr.png", save=False):
+    fig = plt.figure(figsize=(8, 4))
+    print(lr.shape)
+    plt.plot(lr)
+    # input("x")
+    plt.title('learning rate plot')
+    plt.xlabel('epoch')
+    plt.ylabel('learning rate')
     if save:
         res_path = os.path.join(dir_res, name)
         fig.savefig(res_path)
@@ -198,13 +220,13 @@ def visualize_large(original_data, interpol_data, diffs,
     # flow_u = flow[:, 0, ...] # sup
     # flow_v = flow[:, 1, ...] # sup
 
-    print("original_data is in range %f to %f" % (np.min(original_data), np.max(original_data))) # -2 to 4 -8 to 8
+    print("original_data is in range %f to %f" % (np.min(original_data), np.max(original_data)))
     print("interpol_data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
 
     print("original_data mean & std:", original_data.mean(), original_data.std())
     print("interpol_data mean & std:", interpol_data.mean(), interpol_data.std())
 
-    print("flow_u_gt is in range %f to %f" % (np.min(flow_u_gt), np.max(flow_u_gt))) # -2 to 4 -8 to 8
+    print("flow_u_gt is in range %f to %f" % (np.min(flow_u_gt), np.max(flow_u_gt)))
     print("flow_v_gt is in range %f to %f" % (np.min(flow_v_gt), np.max(flow_v_gt)))
 
     print("flow_u is in range %f to %f" % (np.min(flow_u), np.max(flow_u))) 
@@ -279,7 +301,7 @@ def visualize_large(original_data, interpol_data, diffs,
         if int((i-1)/columns) == 3 and round(index - 1) % 3 == 0: # mask
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
             img = mask[round((index - 1) / 3)] # [index-columns*2*2,...]
-            plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+            plt.imshow(img, vmin=mask.min(), vmax=mask.max())
         # if int((i-1)/columns) == 6: # flow diff
         #     img = diffs_flow[round(index)] # [index-columns*2*2,...]
         #     plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
@@ -586,9 +608,10 @@ def visualize_large_3d(original_data, interpol_data, diffs, \
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
 
-def visualize_3d(original_vols, interpol_vols, flow, \
-        dataset, dir_res="Results", title="Volumes", show=True, save=False):
 
+def visualize_large_3d(original_vols, interpol_vols, diffs, 
+                flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
+                factor, dataset, dir_model="Results", title="Volumes", show=True, save=False):
     # flow_u = np.ones((1, 64, 64, 64))
     # flow_v = np.ones((1, 64, 64, 64))
     # flow_w = np.ones((1, 64, 64, 64))
@@ -610,7 +633,7 @@ def visualize_3d(original_vols, interpol_vols, flow, \
     # title = "droplet3d_flow3d.png"
     # fig.savefig(os.path.join(dir_res, title), dpi = 100)
     # input("x")
-
+    
     X, Y, Z = np.mgrid[0:original_vols.shape[1], 0:original_vols.shape[2], 0:original_vols.shape[3]]
     values = original_vols[0]
     vol = go.Figure(data=go.Volume(
