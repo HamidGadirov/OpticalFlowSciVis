@@ -129,14 +129,14 @@ def load_data(dataset, exp, mode):
             # print(data)
             print("Density scaled to [0, 1] range!")
 
-            # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
-            # factor = 2
-            # dir_res = "Results"
-            # dir_res = os.path.join(dir_res, dataset)
-            # dir_res = os.path.join(dir_res, str(factor) + "x")
-            # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr6e-4.pkl"
-            # dir_model = os.path.join(dir_res, model_name[:-4])
-            # plot_distribution(data[:, 1], dir_model, name="dict_flow_gt_before.png", save=True)
+            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            factor = 2
+            dir_res = "Results"
+            dir_res = os.path.join(dir_res, dataset)
+            dir_res = os.path.join(dir_res, str(factor) + "x")
+            model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleDens_gamma_RIFE_eqRes_lr4e-4.pkl"
+            dir_model = os.path.join(dir_res, model_name[:-4])
+            # plot_distribution(data[:, 1:], dir_model, name="dict_flow_gt_before.png", save=True)
             data[:, 1] = data[:, 1] * 10.
             data[:, 2] = data[:, 2] * 10.
             print("Vel scaled to *10")
@@ -144,7 +144,7 @@ def load_data(dataset, exp, mode):
             # data[:, 2] = np.log(data[:, 2] + 0.3) # +1 to avoid nan
             # print("Vel log normalized")
             # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
-            # plot_distribution(data[:, 1], dir_model, name="dict_flow_gt_after.png", save=True)
+            plot_distribution(data[:, 1:], dir_model, name="dict_flow_gt_after.png", save=True)
 
             # flow_x_mean = data[:, 1].mean()
             # flow_y_mean = data[:, 2].mean()
@@ -441,10 +441,11 @@ def load_data(dataset, exp, mode):
                 # data_test = data[1315:1630]
                 # data_test = data[600:915] # flow not super accurate but much better than on unseen (before)
                 # data_test = data[2000:2315]
-                data_test = data[605:710]
-                data_test = np.append(data_test, data[1605:1710], axis=0)
-                data_test = np.append(data_test, data[2605:2710], axis=0) # 315 in total 
-                # data_test = data[:300]
+                # data_test = data[605:710]
+                # data_test = np.append(data_test, data[1605:1710], axis=0)
+                # data_test = np.append(data_test, data[2605:2710], axis=0) # 315 in total 
+                data_test = data[2605:2695] # viz last subset
+                # data_test = data[1000:1315]
                 # print("data_test shape:", data_test.shape) # (315, 1, 3, 100, 400)
                 # print(data_test[0, :, 1, 50, 100], data_test[0, :, 1, 50, 200], data_test[0, :, 1, 50, 300])
                 # print(data_test[0, :, 2, 50, 100], data_test[0, :, 2, 50, 200], data_test[0, :, 2, 50, 300])
@@ -453,12 +454,6 @@ def load_data(dataset, exp, mode):
                 # print(data_test[200, :, 1, 50, 100], data_test[200, :, 1, 50, 200], data_test[200, :, 1, 50, 300])
                 # print(data_test[200, :, 2, 50, 100], data_test[200, :, 2, 50, 200], data_test[200, :, 2, 50, 300])
                 # input("Data range")
-
-                # print("Vel x mean std", np.mean(data_test[:, :, 1]), np.std(data_test[:, :, 1]))
-                # # data_test[:, 1] = data_test[:, 1] * 10.
-                # # data_test[:, 2] = data_test[:, 2] * 10.
-                # # print("Vel scaled to *10")
-                # print("Vel x mean std", np.mean(data_test[:, :, 1]), np.std(data_test[:, :, 1]))
 
                 # print("##########")
                 flow_x = data_test[:, :, 1]

@@ -47,26 +47,30 @@ log_path = 'train_log'
 def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000.
-        # return 1e-4 * mul
+        return 1e-4 * mul
         # return 3e-4 * mul
-        return 4e-4 * mul
+        # return 4e-4 * mul
         # return 6e-4 * mul
         # return 8e-4 * mul
         # return 3e-3 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
+        return (1e-4 - 1e-5) * mul + 1e-5
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (4e-4 - 4e-6) * mul + 4e-6
+        # return (4e-4 - 4e-6) * mul + 4e-6
         # return (6e-4 - 6e-6) * mul + 6e-6
         # return (8e-4 - 8e-6) * mul + 8e-6
         # return (3e-3 - 3e-5) * mul + 3e-5
     # return 1e-6 # worse
-    # return 2e-7 # ?
+    # return 2e-7 # no
+    # return 2e-6 # no
     # mul = step / 2000.
     # return 3e-4 * mul
     # return 3e-5
     # return 3e-6
     # return 3e-3
+    # mul = np.cos((step) / (args.epoch * args.step_per_epoch) * math.pi) * 0.5 + 0.5
+    # return (1e-4 - 1e-5) * mul + 1e-5
 
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
@@ -78,9 +82,27 @@ def flow2rgb(flow_map_np):
     rgb_map[:, :, 2] += normalized_flow_map[:, :, 1]
     return rgb_map.clip(0, 1)
 
-early_stop_patience = 1001
-early_stop_k = 0
-val_loss_best = 0.
+# early_stop_patience = 1001
+# early_stop_k = 0
+# val_loss_best = 0.
+
+class EarlyStopper:
+    def __init__(self, patience=1, min_delta=0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_loss = np.inf
+
+    def early_stop(self, validation_loss):
+        if validation_loss < self.min_validation_loss:
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+            return -1
+        elif validation_loss > (self.min_validation_loss + self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return 1
+        return 0
 
 def train(model, dataset, exp, model_name, mode, local_rank):
     # if local_rank == 0:
@@ -154,6 +176,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     if mode == "train":
         print('training...')
         time_stamp = time.time()
+        early_stopper = EarlyStopper(patience=50, min_delta=0.1)
         for epoch in range(args.epoch):
             # sampler.set_epoch(epoch)
             for i, data in enumerate(train_data):
@@ -190,6 +213,11 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                     # print(gt.shape)
                     # input("x")
                     pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
+
+                    # from torchviz import make_dot
+                    # make_dot(pred, params=dict(list(model.named_parameters()))).render("flownet2d_torchviz", format="png")
+                    # input("torchviz")
+
                 elif exp == 2: # img0, img1, gt0, gt1, gt2
                     imgs = data_gpu[:, :2]
                     gt = data_gpu[:, 2:5] # gt0, gt1, gt2
@@ -250,7 +278,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 global val_loss_best 
                 val_loss_best = info['loss_G']
                 print(val_loss_best)
-            evaluate(model, dataset, val_data, step, local_rank, learning_rate) #, writer_val)   
+            evaluate(model, dataset, val_data, step, local_rank, learning_rate, early_stopper) #, writer_val)   
             # model.save_model(model_name, log_path, local_rank) 
             dist.barrier()
     else:
@@ -462,7 +490,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             statistics = {'flow_x_mean': 0, 'flow_y_mean': 0, 'flow_x_std': 0, 'flow_y_std': 0}
         return original_data, interpol_data, flow_combined, flow_gt_combined, mask_combined, statistics
     
-def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, writer_val):
+def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early_stopper): #, writer_val):
     print("Evaluate")
     # input(model_name)
     # writer = SummaryWriter('train') #
@@ -501,6 +529,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, w
         loss_all = (info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
             info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy(), 
             info['loss_flow'].cpu().numpy())
+        print("loss_G:", info['loss_G'])
         # loss_G_list.append(loss_all)
         # loss_G_list.append(info['loss_G'].cpu().numpy())
         # for j in range(gt.shape[0]):
@@ -541,7 +570,11 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, w
     #     # input(model_name)
     #     model.save_model(model_name, log_path, local_rank) 
 
-    model.save_model(model_name, log_path, local_rank) 
+    validation_loss = info['loss_G'].cpu().numpy()
+    if early_stopper.early_stop(validation_loss) == 1:             
+        sys.exit(0)
+    elif early_stopper.early_stop(validation_loss) == -1: 
+        model.save_model(model_name, log_path, local_rank) 
 
     val_loss = []
     # val_loss.append(float(np.array(loss_G_list).mean()))
@@ -605,7 +638,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, w
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=100, type=int) # 300 500 1000
+    parser.add_argument('--epoch', default=500, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -629,13 +662,14 @@ if __name__ == "__main__":
     if args.dataset == "droplet2d" or args.dataset == "rectangle2d":
         args.batch_size = 128
     if args.dataset == "rectangle2d":
-        args.batch_size = 200
+        args.batch_size = 128 # 200
     if args.dataset == "lbs2d":
-        args.batch_size = 55 # 120
+        args.batch_size = 45 # 55 120
     if args.dataset == "FluidSimML2d":
         args.batch_size = 64
     if args.dataset == "pipedcylinder2d" or args.dataset == "cylinder2d":
         args.batch_size = 64
+
 
     """ rectangle2d """
     # model_name = "flownet_lapl_aug_rect.pkl" # bad
@@ -803,7 +837,8 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_dist1e-1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" # distill jumps: worse interpol and flow -
     model_name = "flownet_l1_dist2e-2_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # no jumps, very similar to the best
     model_name = "flownet_l1_dist1e-1_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # jumps in distill
-    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes_1.pkl" # stability check:
+    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" #
+    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes_500ep.pkl" #
  
     # model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # - best interpol unsupervised
     # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # - best supervised flow
@@ -843,25 +878,37 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel100_gamma_RIFE.pkl" loss increased -
     # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE.pkl" # 
     # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAll_gamma_RIFE.pkl" # loss stab very quickly, flow not accurate.
-    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel10_gamma_RIFE_eqRes_BN.pkl" # flow not accurate
-    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel10_gamma_RIFE_eqRes_BN_lr.pkl" # flow not accurate
-    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_VelLogNorm_gamma_RIFE_eqRes_BN_lr.pkl" # mo
-    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_VelLogNorm1_gamma_RIFE_eqRes_BN_lr.pkl" # no
-    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_VelLogNorm2_gamma_RIFE_eqRes_BN_lr.pkl" # BN worsens interpoltation a bit 
-    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel300_gamma_RIFE_eqRes_lr.pkl" # no
-    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_sum_eqRes_lr.pkl" # no
-    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-3.pkl" # diverge
-    model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr6e-4.pkl" # diverge slowly after 100ep
-    # perhaps start with 3e-4 and change lr after 100 ep? remove loss decay?
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel10_gamma_RIFE_eqRes_BN.pkl" # flow not accurate
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleVel10_gamma_RIFE_eqRes_BN_lr.pkl" # flow not accurate
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_VelLogNorm_gamma_RIFE_eqRes_BN_lr.pkl" # mo
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_VelLogNorm1_gamma_RIFE_eqRes_BN_lr.pkl" # no
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_VelLogNorm2_gamma_RIFE_eqRes_BN_lr.pkl" # BN worsens interpoltation a bit 
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel300_gamma_RIFE_eqRes_lr.pkl" # no
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_sum_eqRes_lr.pkl" # no
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-3.pkl" # diverge
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr6e-4.pkl" # diverge slowly after 100ep
+    # # perhaps start with 3e-4 and change lr after 100 ep? remove loss decay?
     model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr4e-4.pkl" # start with lr 4e-4, increase to 6e-6 after 100ep: 
     # loss increased a bit in the end, but result best overall +
-    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-4manual.pkl" # no
-    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-4mul.pkl" # 3e-4 100ep: decrese, then stop, then increase a bit; 
-    # # then 3e-5 100ep: loss increased a bit again then stoped; 3e-5 100ep: nothing new; 3e-3 100ep: decrese but then increase again...
-    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr5e-4_v1.pkl" 
-    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr4e-4_v2.pkl" # flow not bad but can be better; loss inc a bit after 100ep
+    # # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-4manual.pkl" # no
+    # # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-4mul.pkl" # 3e-4 100ep: decrese, then stop, then increase a bit; 
+    # # # then 3e-5 100ep: loss increased a bit again then stoped; 3e-5 100ep: nothing new; 3e-3 100ep: decrese but then increase again...
+    # # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr5e-4_v1.pkl" 
+    # # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr4e-4_v2.pkl" # flow not bad but can be better; loss inc a bit after 100ep
     model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr4e-4_change.pkl" # start with lr 4e-4, 
-    # increase to 6e-4 after 100ep: loss decreasing very slightly, but didn't increase!; 8e-4: fluctuate, then same; 4e-4
+    # increase to 6e-4 after 100ep: loss decreasing very slightly, but didn't increase!; 8e-4: fluctuate, then same; 4e-4: val loss not improving
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr2e-7_const.pkl" # no
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr2e-6_const.pkl" # flow loss didn't diverge but flos bad -
+    # # increase model capacity: 256 144 96
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr4e-4.pkl" # bad
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleDens_gamma_RIFE_eqRes_lr4e-4.pkl" # 256 192 128;
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleDens_gamma_RIFE_eqRes_lr4e-4_6e-4.pkl"
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr6e-4.pkl" # good loss plot +
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr1e-4_1e-5.pkl" # lr was actually 2e-5: +
+    # loss and result good when lr is low in the beginning, then cosine annealing form larger value
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr1e-3_1e-4.pkl" # lr too high, exploded, very bad results -
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr1e-4_1e-5_v1.pkl" # no
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr1e-4_1e-5_v2.pkl"
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1028,7 +1075,7 @@ if __name__ == "__main__":
         print("flow pred & mask:", flow.shape, mask.shape)
 
         if "lbs2d" in dataset: # denormalize
-            print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
+            # print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
             flow_gt = flow_gt / 10.
             flow = flow / 10.
             print("Vel rescaled to /10")
@@ -1141,6 +1188,13 @@ if __name__ == "__main__":
         plot_distribution(interpol_data, dir_model, name="dist_density_interpol.png", save=True)
         plot_distribution(flow_gt, dir_model, name="dict_flow_gt.png", save=True)
         plot_distribution(flow, dir_model, name="dist_flow_pred.png", save=True)
+
+        # TODO: add epe metric:
+        # epe = torch.sum((flow_preds[-1] - flow_gt)**2, dim=1).sqrt()
+        # epe = epe.view(-1)[valid.view(-1)]
+        # metrics_epe = epe.mean().item()
+        # def EPE(input_flow, target_flow): # flownet
+        #     return torch.norm(target_flow-input_flow,p=2,dim=1).mean()
 
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         if "2d" in dataset:

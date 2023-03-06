@@ -62,7 +62,7 @@ def plot_loss(loss, dir_res, name="loss.png", save=False):
         res_path = os.path.join(dir_res, name)
         fig.savefig(res_path)
 
-def plot_lr(lr, dir_res, name="lr.png", save=False):
+def plot_lr(lr, dir_res, name="learning_rate.png", save=False):
     fig = plt.figure(figsize=(8, 4))
     print(lr.shape)
     plt.plot(lr)
@@ -192,10 +192,12 @@ def visualize_large(original_data, interpol_data, diffs,
         flow, flow_gt, diffs_flow, flow_u_diff, flow_v_diff, mask,
         factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
     # print(original_data.shape, interpol_data.shape, diffs.shape, flow.shape, flow_gt.shape, diffs_flow.shape, u_diff.shape, v_diff.shape)
-    fig = plt.figure(figsize=(30, 10))
+    fig = plt.figure(figsize=(40, 10))
     columns = 20
     if "droplet2d" in dataset or "FluidSimML2d" in dataset or "rectangle2d" in dataset:
         columns = 24
+    elif dataset == "lbs2d":
+        columns = 30
     elif "pipedcylinder2d" in dataset or "cylinder2d" in dataset:
         columns = 20
     elif dataset == "vimeo2d":
@@ -327,11 +329,11 @@ def visualize_large(original_data, interpol_data, diffs,
                 img = np.zeros((original_data.shape[1], original_data.shape[2]))
                 plt.axis('off')
                 # ax = plt.gca()
-                print("u_gt is in range %f to %f" % (np.min(u_gt), np.max(u_gt)))
-                print("v_gt is in range %f to %f" % (np.min(v_gt), np.max(v_gt)))
+                # print("u_gt is in range %f to %f" % (np.min(u_gt), np.max(u_gt)))
+                # print("v_gt is in range %f to %f" % (np.min(v_gt), np.max(v_gt)))
                 # print("u_gt at 300, 25:", u_gt[25, 300])
                 # print("u_gt at 300, 75:", u_gt[75, 300])
-                print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
+                # print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
                 #  pyimof.display.quiver(u, v, c, ax=ax, clim=(-5, 5)) --- use clim
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
                 pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
@@ -367,11 +369,11 @@ def visualize_large(original_data, interpol_data, diffs,
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
-            print("u is in range %f to %f" % (np.min(u), np.max(u)))
-            print("v is in range %f to %f" % (np.min(v), np.max(v)))
+            # print("u is in range %f to %f" % (np.min(u), np.max(u)))
+            # print("v is in range %f to %f" % (np.min(v), np.max(v)))
             # print("u at 300, 25:", u[25, 300])
             # print("u at 300, 75:", u[75, 300])
-            print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
+            # print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
             pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, u, c=u, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
@@ -402,9 +404,9 @@ def visualize_large(original_data, interpol_data, diffs,
             v_diff = flow_v_diff[round((index - 1) / 3)]
             norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff) # / norm_coeff
             # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
-            print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
-            print("v_diff is in range %f to %f" % (np.min(v_diff), np.max(v_diff)))
-            print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
+            # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
+            # print("v_diff is in range %f to %f" % (np.min(v_diff), np.max(v_diff)))
+            # print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
@@ -633,7 +635,7 @@ def visualize_large_3d(original_vols, interpol_vols, diffs,
     # title = "droplet3d_flow3d.png"
     # fig.savefig(os.path.join(dir_res, title), dpi = 100)
     # input("x")
-    
+
     X, Y, Z = np.mgrid[0:original_vols.shape[1], 0:original_vols.shape[2], 0:original_vols.shape[3]]
     values = original_vols[0]
     vol = go.Figure(data=go.Volume(
@@ -645,10 +647,10 @@ def visualize_large_3d(original_vols, interpol_vols, diffs,
         surface_count=15,
         ))
     # fig.show()
-    title ="tangaroa3d.html" # "droplet3d.html"
-    image_path = os.path.join(dir_res, title)
-    vol.write_html(image_path) 
-    input("x")
+    # title = "tangaroa3d.html" # "droplet3d.html"
+    # image_path = os.path.join(dir_res, title)
+    # vol.write_html(image_path) 
+    # input("x")
 
     fig = plt.figure(figsize=(30, 10))
     columns = 10
@@ -694,16 +696,29 @@ def visualize_large_3d(original_vols, interpol_vols, diffs,
             img = plotly_fig2array(vol)
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
             print("1")
-        # if int((i-1)/columns) == 2: # flow
-        #     ax = plt.figure().add_subplot(projection='3d')
-        #     # Make the grid
-        #     x, y, z = np.meshgrid(np.arange(0, 64, 1), np.arange(0, 64, 1), np.arange(0, 64, 1))
-        #     # Make the direction data for the arrows
-        #     u = flow_u
-        #     v = flow_v
-        #     w = flow_w
-        #     ax.quiver(x, y, z, u, v, w, length=0.1, normalize=True)
-        #     print("2")
+        if int((i-1)/columns) == 2: # mask
+            values = mask[round(index)]
+            vol = go.Figure(data=go.Volume(
+                x=X.flatten(),
+                y=Y.flatten(),
+                z=Z.flatten(),
+                value=values.flatten(),
+                opacity=0.1,
+                surface_count=15,
+                ))
+            img = plotly_fig2array(vol)
+            plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+            print("2")
+        if int((i-1)/columns) == 3: # flow
+            ax = plt.figure().add_subplot(projection='3d')
+            # Make the grid
+            x, y, z = np.meshgrid(np.arange(0, 64, 1), np.arange(0, 64, 1), np.arange(0, 64, 1))
+            # Make the direction data for the arrows
+            u = flow_u
+            v = flow_v
+            w = flow_w
+            ax.quiver(x, y, z, u, v, w, length=0.1, normalize=True)
+            print("3")
 
         plt.axis('off')
         index += step

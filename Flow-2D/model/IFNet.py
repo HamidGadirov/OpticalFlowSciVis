@@ -137,9 +137,9 @@ class IFBlock(nn.Module):
 class IFNet(nn.Module):
     def __init__(self):
         super(IFNet, self).__init__()
-        self.block0 = IFBlock(2, c=128) # 6 c=240 128
-        self.block1 = IFBlock(5+4, c=96) # 13 c=150 96
-        self.block2 = IFBlock(5+4, c=64) # 13 c=90 96 64
+        self.block0 = IFBlock(2, c=256) # 6 c=240 128 256
+        self.block1 = IFBlock(5+4, c=192) # 13 c=150 96 192
+        self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
 
         if five_blocks:
             self.block0 = IFBlock(2, c=128)
@@ -148,7 +148,7 @@ class IFNet(nn.Module):
             self.block3 = IFBlock(5+4, c=64)
             self.block4 = IFBlock(5+4, c=64)
 
-        self.block_tea = IFBlock(6+4, c=64) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64
+        self.block_tea = IFBlock(6+4, c=128) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64 128
         # modified
         if refine:
             self.contextnet = Contextnet()

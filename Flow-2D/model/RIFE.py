@@ -16,8 +16,9 @@ from model.refine import *
 
 device = torch.device("cuda")
     
-class Model:
+class Model(nn.Module):
     def __init__(self, local_rank=-1, arbitrary=False):
+        super(Model, self).__init__()
         if arbitrary == True:
             self.flownet = IFNet_m()
         else:
