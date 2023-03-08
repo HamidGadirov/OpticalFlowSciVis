@@ -193,9 +193,16 @@ class Model(nn.Module):
             # i_loss = (flow_preds[i] - flow_gt).abs()
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
             loss_flow = 0.
-            loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
-            loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
-            loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 1.
+            # five blocks
+            loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.4096
+            loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.512
+            loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 0.64
+            loss_flow += (flow[3][:, 2:4] - gt_flow).abs().mean() * 0.8
+            loss_flow += (flow[4][:, 2:4] - gt_flow).abs().mean() * 1.
+
+            # loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
+            # loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
+            # loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 1.
             # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
             # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
             # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
@@ -250,6 +257,7 @@ class Model(nn.Module):
         # loss_l1 = (self.lap(merged[2], gt)).mean() # laplacian
         # print("L1 loss")
         # print(merged[2].shape, gt.shape)
+        # loss_l1 = torch.nn.functional.l1_loss(merged[4], gt)
         loss_l1 = torch.nn.functional.l1_loss(merged[2], gt)
         # loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
         # print(merged_teacher.shape, gt.shape)
@@ -361,26 +369,27 @@ class Model(nn.Module):
 
             return warped_frame
 
-        # Photometric loss
-        # computed as the difference between the first image and the backward/inverse warped second image
-        # in this case: can combine img1, img2 (pred); img2 (pred), img3
-        # loss, bce_loss, smooth_loss = criterion(pred_flows, wraped_imgs, imgs[:, :3, :, :])
-        def photometric_loss(wraped, frame1):
-            h, w = wraped.shape[2:]
-            frame1 = F.interpolate(frame1, (h, w), mode='bilinear', align_corners=False)
-            p_loss = charbonnier(wraped - frame1)
-            p_loss = torch.sum(p_loss, dim=1) / 3 # ?
-            return torch.sum(p_loss) / frame1.size(0)
+        # # Photometric loss
+        # # computed as the difference between the first image and the backward/inverse warped second image
+        # # in this case: can combine img1, img2 (pred); img2 (pred), img3
+        # # loss, bce_loss, smooth_loss = criterion(pred_flows, wraped_imgs, imgs[:, :3, :, :])
+        # def photometric_loss(wraped, frame1):
+        #     h, w = wraped.shape[2:]
+        #     frame1 = F.interpolate(frame1, (h, w), mode='bilinear', align_corners=False)
+        #     p_loss = charbonnier(wraped - frame1)
+        #     p_loss = torch.sum(p_loss, dim=1) / 3 # ?
+        #     return torch.sum(p_loss) / frame1.size(0)
         
-        frame1 = img0
-        warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
-        loss_photo = photometric_loss(warped_frame2, frame1)
-        frame3 = img1
-        warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
-        loss_photo += photometric_loss(warped_frame2, frame3)
-        loss_photo /= 2
-        # print(loss_photo)
-        # input("x")
+        # frame1 = img0
+        # warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
+        # loss_photo = photometric_loss(warped_frame2, frame1)
+        # frame3 = img1
+        # warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
+        # loss_photo += photometric_loss(warped_frame2, frame3)
+        # loss_photo /= 2
+        # # print(loss_photo)
+        # # input("x")
+        loss_photo = torch.tensor(0.)
         """ end Photometric consistency """
 
         lambda_l1 = 1 # 1

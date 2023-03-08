@@ -40,9 +40,10 @@ from utils import plot_loss, visualize_ind, visualize_series, visualize_series_f
 # implement smooth loss +
 # implement photometric loss +
 # implement laplacian pyramid loss +
-# merge with 2D model -
-# fix bug with 3rd dim -
-# fix bugs that I found in 2D model: flow, data -
+# merge with 2D model (parts) -
+# fix bug with 3rd dim + ?
+# fix bugs that I found in 2D model: flow, data + ?
+# mixed precision model (3D) +
 
 device = torch.device("cuda")
 

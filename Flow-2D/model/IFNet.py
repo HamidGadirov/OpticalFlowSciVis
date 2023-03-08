@@ -21,6 +21,7 @@ def deconv(in_planes, out_planes, kernel_size=4, stride=2, padding=1):
     )
 
 def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
+# def conv(in_planes, out_planes, kernel_size=5, stride=1, padding=2, dilation=1):
     return nn.Sequential(
         nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride,
                   padding=padding, dilation=dilation, bias=True),
@@ -29,7 +30,7 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
     )
 
 version = 1
-five_blocks = False
+five_blocks = True
 blocks_range = 3 if not five_blocks else 5
 refine = False # True
 
@@ -40,6 +41,8 @@ class IFBlock(nn.Module):
         self.conv0 = nn.Sequential(
             conv(in_planes, c//2, 3, 2, 1),
             conv(c//2, c, 3, 2, 1),
+            # conv(in_planes, c//2, 5, 2, 2),
+            # conv(c//2, c, 5, 2, 2),
             )
         if version == 1:
             self.convblock = nn.Sequential(
@@ -52,7 +55,15 @@ class IFBlock(nn.Module):
                 conv(c, c),
                 conv(c, c),
             )
-            self.lastconv = nn.ConvTranspose2d(c, 5, 4, 2, 1)
+            # self.lastconv = nn.ConvTranspose2d(c, 5, 4, 2, 1)
+            # # add deconv instead of interpolate
+            # self.lastconv = nn.ConvTranspose2d(c, 5, 4, 2, 1)
+            self.deconvblock = nn.Sequential(
+                deconv(c, c//2, 4, 2, 1),
+                deconv(c//2, 5, 4, 2, 1),
+                # deconv(c, c//2, 5, 2, 2),
+                # deconv(c//2, 5, 5, 2, 2),
+            )
         if version == 2:
             self.convblock0 = nn.Sequential(
                 conv(c, c),
@@ -100,16 +111,22 @@ class IFBlock(nn.Module):
             # print("flow != None ", flow.shape)
             flow = F.interpolate(flow, scale_factor = 1. / scale, mode="bilinear", align_corners=False) * 1. / scale
             x = torch.cat((x, flow), 1)
-        # print("IFBlock forward, ", x.shape)
+        # print("IFBlock forward, ", x.shape) # torch.Size([25, 2, 100, 400])
         x = self.conv0(x)
-        # print("conv0:", x.shape)
+        # print("conv0:", x.shape) # torch.Size([25, 192, 25, 100]) lbs
         if version == 1:
+            # print("convblock:", self.convblock(x).shape)
             x = self.convblock(x) + x # according to ECCV version, for shortcut
-            # print("convblock:", x.shape)
+            # print("convblock + x:", x.shape)
             # input("x")
-            tmp = self.lastconv(x) # ConvTranspose2d
-            tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="bilinear", align_corners=False)
-            flow = tmp[:, :4] * scale * 2
+            # tmp = self.lastconv(x) # ConvTranspose2d
+            # print("lastconv:", tmp.shape)
+            tmp = self.deconvblock(x)
+            # print("deconvblock:", tmp.shape)
+            # tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="bilinear", align_corners=False) # this is replaced by deconv
+            # print("interpolate:", tmp.shape)
+            # input("x")
+            flow = tmp[:, :4] * scale # * 2 # ???
             mask = tmp[:, 4:5]
         if version == 2:
             x = self.convblock0(x) + x
@@ -142,11 +159,11 @@ class IFNet(nn.Module):
         self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
 
         if five_blocks:
-            self.block0 = IFBlock(2, c=128)
-            self.block1 = IFBlock(5+4, c=96)
-            self.block2 = IFBlock(5+4, c=96)
-            self.block3 = IFBlock(5+4, c=64)
-            self.block4 = IFBlock(5+4, c=64)
+            self.block0 = IFBlock(2, c=256) # 128
+            self.block1 = IFBlock(5+4, c=192) # 96
+            self.block2 = IFBlock(5+4, c=192) # 96
+            self.block3 = IFBlock(5+4, c=128) # 64
+            self.block4 = IFBlock(5+4, c=128) # 64
 
         self.block_tea = IFBlock(6+4, c=128) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64 128
         # modified
@@ -173,7 +190,8 @@ class IFNet(nn.Module):
         stu = [self.block0, self.block1, self.block2]
         if five_blocks:
             stu = [self.block0, self.block1, self.block2, self.block3, self.block4]
-            scale = [4, 2, 2, 1, 1]
+            # scale = [4, 2, 2, 1, 1]
+            scale = [1, 1, 1, 1, 1]
         for i in range(blocks_range):
             if flow != None:
                 # correct shapes

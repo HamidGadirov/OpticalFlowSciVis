@@ -74,6 +74,9 @@ def calculate_ssim(img1, img2):
             return ssim(np.squeeze(img1), np.squeeze(img2))
     else:
         raise ValueError('Wrong input image dimensions.')
+    
+def EPE(flow_gt, flow_pred):
+    return torch.norm(flow_pred - flow_gt, p=2, dim=1).mean()
 
 def calculate_metrics(original_data, interpol_data, factor):
 

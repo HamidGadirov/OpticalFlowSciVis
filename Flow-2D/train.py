@@ -30,14 +30,12 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 
 from load_datasets import load_data
-from error import calculate_diff
+from error import calculate_diff, EPE
 from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_series, visualize_series_flow, visualize_large
 
-# early stopping is deactivated
 # TODO:
-# merge with 3d model -
-# convert model to float 16 +
-# try mixed precision model -
+# merge with 3d model (parts) -
+# mixed precision model (3D) +
 
 device = torch.device("cuda")
 
@@ -52,15 +50,15 @@ def get_learning_rate(step):
         # return 4e-4 * mul
         # return 6e-4 * mul
         # return 8e-4 * mul
-        # return 3e-3 * mul
+        # return 1e-3 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
-        return (1e-4 - 1e-5) * mul + 1e-5
+        return (1e-4 - 1e-6) * mul + 1e-6
         # return (3e-4 - 3e-6) * mul + 3e-6
         # return (4e-4 - 4e-6) * mul + 4e-6
         # return (6e-4 - 6e-6) * mul + 6e-6
         # return (8e-4 - 8e-6) * mul + 8e-6
-        # return (3e-3 - 3e-5) * mul + 3e-5
+        # return (1e-3 - 1e-5) * mul + 1e-5
     # return 1e-6 # worse
     # return 2e-7 # no
     # return 2e-6 # no
@@ -97,7 +95,7 @@ class EarlyStopper:
         if validation_loss < self.min_validation_loss:
             self.min_validation_loss = validation_loss
             self.counter = 0
-            return -1
+            return 2
         elif validation_loss > (self.min_validation_loss + self.min_delta):
             self.counter += 1
             if self.counter >= self.patience:
@@ -176,7 +174,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     if mode == "train":
         print('training...')
         time_stamp = time.time()
-        early_stopper = EarlyStopper(patience=50, min_delta=0.1)
+        early_stopper = EarlyStopper(patience=30, min_delta=0.05)
         for epoch in range(args.epoch):
             # sampler.set_epoch(epoch)
             for i, data in enumerate(train_data):
@@ -362,9 +360,10 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 # middle, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
                 # merged, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
                 merged, flow, mask = model.inference(I0, I1, np.squeeze(data_gpu[:, 2:3, 1:3]), scale_list) # get the flow too
-                merged_0 = np.asarray(merged[0].detach().cpu().numpy())
-                merged_1 = np.asarray(merged[1].detach().cpu().numpy())
-                merged_2 = np.asarray(merged[2].detach().cpu().numpy())
+                # merged_0 = np.asarray(merged[0].detach().cpu().numpy())
+                # merged_1 = np.asarray(merged[1].detach().cpu().numpy())
+                # merged_2 = np.asarray(merged[2].detach().cpu().numpy())
+                merged_2 = np.asarray(merged[-1].detach().cpu().numpy())
                 # print(middle.shape)
                 # input("x")
                 # interpol_data.extend(middle.transpose((0,2,3,1))) # append
@@ -374,9 +373,10 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                     interpol_data.append(merged_2[b].transpose((1,2,0)))
                 # print(middle.shape)
                 # input("x")
-                flow_0 = np.asarray(flow[0].detach().cpu().numpy())
-                flow_1 = np.asarray(flow[1].detach().cpu().numpy())
-                flow_2 = np.asarray(flow[2].detach().cpu().numpy())
+                # flow_0 = np.asarray(flow[0].detach().cpu().numpy())
+                # flow_1 = np.asarray(flow[1].detach().cpu().numpy())
+                # flow_2 = np.asarray(flow[2].detach().cpu().numpy())
+                flow_2 = np.asarray(flow[-1].detach().cpu().numpy())
                 for b in range(data_gpu.shape[0]):
                     # flow_combined.append(flow_0[b])
                     # flow_combined.append(flow_1[b])
@@ -390,7 +390,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 # print(flow.shape)
                 # mask_0 = np.asarray(mask[0].detach().cpu().numpy())
                 # mask_1 = np.asarray(mask[1].detach().cpu().numpy())
-                mask_2 = np.asarray(mask[2].detach().cpu().numpy())
+                # mask_2 = np.asarray(mask[2].detach().cpu().numpy())
+                mask_2 = np.asarray(mask[-1].detach().cpu().numpy())
                 for b in range(data_gpu.shape[0]):
                     # mask_combined.extend(mask_0[b])
                     # mask_combined.extend(mask_1[b])
@@ -495,12 +496,9 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     # input(model_name)
     # writer = SummaryWriter('train') #
     # writer_val = SummaryWriter('validate') #
-    # loss_l1_list = []
-    # loss_distill_list = []
-    # loss_tea_list = []
-    loss_G_list = []
-    psnr_list = []
-    psnr_list_teacher = []
+    # psnr_list = []
+    # psnr_list_teacher = []
+    loss_all_list = [0. for i in range(7)] # all loss components
     time_stamp = time.time()
     for i, data in enumerate(val_data):
         # data = torch.zeros([16, 9, 150, 450], dtype=torch.float)
@@ -526,12 +524,11 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
         # for key, value in info.items():
         #     print (key, value)
         # input("x")
-        loss_all = (info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
+        loss_all = [info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
             info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy(), 
-            info['loss_flow'].cpu().numpy())
+            info['loss_flow'].cpu().numpy()]
         print("loss_G:", info['loss_G'])
-        # loss_G_list.append(loss_all)
-        # loss_G_list.append(info['loss_G'].cpu().numpy())
+        loss_all_list = [a + b for a, b in zip(loss_all_list, loss_all)]
         # for j in range(gt.shape[0]):
         #     max_shape_2 = min(gt.shape[2], pred.shape[2])
         #     max_shape_3 = min(gt.shape[3], pred.shape[3])
@@ -570,15 +567,17 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     #     # input(model_name)
     #     model.save_model(model_name, log_path, local_rank) 
 
-    validation_loss = info['loss_G'].cpu().numpy()
-    if early_stopper.early_stop(validation_loss) == 1:             
-        sys.exit(0)
-    elif early_stopper.early_stop(validation_loss) == -1: 
+    loss_all = [x / float(i + 1) for x in loss_all_list] # avg over batches
+    # input(loss_all)
+    validation_loss = loss_all[0] # info['loss_G'].cpu().numpy()
+    if early_stopper.early_stop(validation_loss) == 2: 
         model.save_model(model_name, log_path, local_rank) 
+        # input("saved")
+    elif early_stopper.early_stop(validation_loss) == 1:             
+        sys.exit(0)
 
     val_loss = []
-    # val_loss.append(float(np.array(loss_G_list).mean()))
-    loss_all = np.array(loss_all).tolist()
+    # loss_all = np.array(loss_all).tolist()
     val_loss.append(loss_all)
     # print("loss_all", loss_all)
     loss_path = 'loss.json'
@@ -638,7 +637,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=500, type=int) # 300 500 1000
+    parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -664,12 +663,11 @@ if __name__ == "__main__":
     if args.dataset == "rectangle2d":
         args.batch_size = 128 # 200
     if args.dataset == "lbs2d":
-        args.batch_size = 45 # 55 120
+        args.batch_size = 20 # 55 120
     if args.dataset == "FluidSimML2d":
         args.batch_size = 64
     if args.dataset == "pipedcylinder2d" or args.dataset == "cylinder2d":
         args.batch_size = 64
-
 
     """ rectangle2d """
     # model_name = "flownet_lapl_aug_rect.pkl" # bad
@@ -908,7 +906,18 @@ if __name__ == "__main__":
     # loss and result good when lr is low in the beginning, then cosine annealing form larger value
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr1e-3_1e-4.pkl" # lr too high, exploded, very bad results -
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr1e-4_1e-5_v1.pkl" # no
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr1e-4_1e-5_v2.pkl"
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr1e-4_1e-5_v2.pkl" # loss started higher, stuck at higher than 0.1
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr1e-4_1e-5_v3.pkl" # same as before
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr6e-4_v1.pkl" # 6e-4...6e-6: not bad but before was better
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_lr6e-4.pkl" # 6e-4...6e-6: not bad, is it best? good loss +
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_deconv_lr6e-4.pkl" # good, can be better? +
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_deconv_lr1e-4.pkl" # 1e-4...1e-6: bad loss, bad flow -
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_deconv_lr1e-3.pkl" # no, exploded -
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_deconv_lr8e-4.pkl" # no, exploded -
+    # TODO: try k_s 5x5
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_ks5_lr6e-4.pkl" # no, exploded -
+    # reduce lr?+ add grad clipping?
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_ks5_lr1e-4.pkl" # # good, but not better than before 
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1190,11 +1199,11 @@ if __name__ == "__main__":
         plot_distribution(flow, dir_model, name="dist_flow_pred.png", save=True)
 
         # TODO: add epe metric:
-        # epe = torch.sum((flow_preds[-1] - flow_gt)**2, dim=1).sqrt()
-        # epe = epe.view(-1)[valid.view(-1)]
-        # metrics_epe = epe.mean().item()
-        # def EPE(input_flow, target_flow): # flownet
-        #     return torch.norm(target_flow-input_flow,p=2,dim=1).mean()
+        # epe_score = EPE(flow_gt, flow)
+        # epe_file_name = 'EPE.txt'
+        # epe_path = os.path.join(dir_model, epe_file_name)
+        # with open(epe_path, 'a') as epe_file:
+        #     epe_file.write(str(epe_score) + "\n")
 
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         if "2d" in dataset:
