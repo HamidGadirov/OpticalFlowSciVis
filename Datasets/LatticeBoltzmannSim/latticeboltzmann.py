@@ -35,10 +35,13 @@ def main():
 	# Simulation parameters
 	Nx                     = 400    # resolution x-dir
 	Ny                     = 100    # resolution y-dir
-	rho0                   = 100    # average density
-	tau                    = 0.6    # collision timescale
+	rho0                   = 100    # average density # 50 100 150
+	tau                    = 0.64    # collision timescale 0.6; 0.62; 0.64
 	# Nt                     = 33000   # number of timesteps # 4000; skip first 3000
-	Nt                     = 18000   # skip first 3000, save rest: each 5th
+	# Nt                     = 18000   # skip first 3000, save rest: each 5th
+	# Nt                     = 58000   # skip first 3000, save rest: each 5th - I need 11K
+	Nt                     = 12000
+	# 3 sim, 12K each; skip first 3K, use each 3rd = 9K
 	plotRealTime = True # switch on for plotting as the simulation goes along
 	
 	# Lattice speeds / weights
@@ -61,7 +64,9 @@ def main():
 	# Cylinder boundary
 	X, Y = np.meshgrid(range(Nx), range(Ny))
 	cylinder = (X - Nx/4)**2 + (Y - Ny/2)**2 < (Ny/4)**2
-	# cylinder = (X - Nx/5)**2 + (Y - Ny/2.5)**2 < (Ny/4)**2
+	# cylinder = (X - Nx/4.5)**2 + (Y - Ny/2.25)**2 < (Ny/4.5)**2
+	# cylinder = (X - Nx/5)**2 + (Y - Ny/2.5)**2 < (Ny/5)**2 # not smaller than this
+	# cylinder = (X - Nx/6)**2 + (Y - Ny/3)**2 < (Ny/8)**2 # too small -
 	
 	# Prep figure
 	fig = plt.figure(figsize=(4,2), dpi=80)
@@ -97,7 +102,7 @@ def main():
 		# print("rho at 30 100", rho[30][100])
 		# print("rho at 50 200", rho[50][200])
 		# print("rho at 70 300", rho[70][300])
-		
+
 		
 		# Apply Collision
 		Feq = np.zeros(F.shape)
@@ -111,7 +116,7 @@ def main():
 
 		
 		# plot in real time - color 1/2 particles blue, other half red
-		if (plotRealTime and (it % 5) == 0) or (it == Nt-1): # 10
+		if (plotRealTime and (it % 3) == 0) or (it == Nt-1): # 10 5
 			if it < 3000: # skip beginning
 				# pass # for video
 				continue # for data
@@ -224,8 +229,14 @@ def main():
 			str_it = str(it) if len(str(it)) == 4 else (4 - len(str(it))) * "0" + str(it) 
 			title = "Vorticity, density, velocity " + "t=" + str_it
 			print(title)
+			# dir_name = "video_3_dens100_c1_t062"
+			dir_name = "video_3_dens100_c1_t064"
+			if not os.path.isdir(dir_name):
+				os.makedirs(dir_name)
 			# fig.savefig(os.path.join("video", title))
-			fig.savefig(os.path.join("video_5", title))
+			# fig.savefig(os.path.join("video_5", title))
+			# fig.savefig(os.path.join("video_3_dens100_c1", title))
+			fig.savefig(os.path.join(dir_name, title))
 			"""
 
 			# # vel_x = np.ma.array(vel_x, mask=cylinder)
@@ -274,7 +285,7 @@ def main():
 	print(vel_y[300, 50, 100])
 	print(vel_x[300, 50, 175])
 	print("vel_x mean and std:", np.mean(vel_x[300]), np.std(vel_x[300])) # 0.07 0.08
-	input("x")
+	# input("x")
 
 	vorticity = np.array(vort)
 	density = np.array(density)
@@ -342,7 +353,12 @@ def main():
 	# plt.show()
 
 	# save data to pkl
-	pkl_filename = "lbs2d_skip5" + ".pkl" 
+	# pkl_filename = "lbs2d_skip5_11K" + ".pkl" 
+	# pkl_filename = "lbs2d_skip3_1" + ".pkl" 
+	# pkl_filename = "lbs2d_skip3_2" + ".pkl" 
+	# pkl_filename = "lbs2d_skip3_3" + ".pkl" 
+	# pkl_filename = "lbs2d_skip3_c1_t062" + ".pkl" 
+	pkl_filename = "lbs2d_skip3_c1_t064" + ".pkl" 
 
 	# data = np.zeros((Nt, Ny, Nx), dtype=np.float32)
 	data = density

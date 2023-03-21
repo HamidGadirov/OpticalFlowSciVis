@@ -9,6 +9,9 @@ import pickle
 # matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.colors import Normalize
+import matplotlib.cm as cm
+from matplotlib.ticker import FuncFormatter
 import pyimof
 import math
 import plotly.graph_objects as go
@@ -217,10 +220,8 @@ def visualize_large(original_data, interpol_data, diffs,
     data_to_vis = original_data
     flow_u_gt = flow_gt[:, 0, ...]
     flow_v_gt = flow_gt[:, 1, ...]
-    flow_u = flow[:, 2, ...] # flow[:, 0, ...] unsup
-    flow_v = flow[:, 3, ...] # flow[:, 1, ...] unsup
-    # flow_u = flow[:, 0, ...] # sup
-    # flow_v = flow[:, 1, ...] # sup
+    flow_u = flow[:, 0, ...]
+    flow_v = flow[:, 1, ...]
 
     print("original_data is in range %f to %f" % (np.min(original_data), np.max(original_data)))
     print("interpol_data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
@@ -254,7 +255,7 @@ def visualize_large(original_data, interpol_data, diffs,
         # clim=(0, max_flow_gt)
     elif "lbs2d" in dataset:
         quiver_steps = 4
-        max_flow_gt = None # 0.1
+        max_flow_gt = flow_gt.max() # None # 0.1
         max_flow_pred = 0.5
         scale = None
     # input("norm")
@@ -262,6 +263,10 @@ def visualize_large(original_data, interpol_data, diffs,
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
 
     index = 0
+    # fig, axes = plt.subplots(nrows=rows, ncols=columns)
+    # for ax in axes.flat:
+    #     im = ax.imshow
+
     for i in range(1, columns*rows+1):
         # index = (i-1)*2 # skip eaach second - do it defferently
         # if (index >= data_to_vis.shape[0]):
@@ -271,7 +276,7 @@ def visualize_large(original_data, interpol_data, diffs,
         if int((i-1)/columns) == 0: # gt
             img = original_data[round(index)]
             if dataset == "lbs2d":
-                plt.imshow(img, vmin=0.85, vmax=data_to_vis.max())
+                plt.imshow(img, vmin=0.85, vmax=data_to_vis.max(), cmap='turbo')
                 # plt.imshow(img, vmin=original_data.std()-original_data.mean(), vmax=data_to_vis.max())
             else:
                 plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
@@ -290,20 +295,22 @@ def visualize_large(original_data, interpol_data, diffs,
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
             img = interpol_data[round((index - 1) / 3)] # [index-columns*2,...] # (index - 1) % 3
             if dataset == "lbs2d":
-                plt.imshow(img, vmin=0.85, vmax=data_to_vis.max())
+                plt.imshow(img, vmin=0.85, vmax=data_to_vis.max(), cmap='turbo')
                 # plt.imshow(img, vmin=interpol_data.std()-interpol_data.mean(), vmax=data_to_vis.max())
             else:
                 plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
             # print("index:", index)
             # print("(index - 1) % 3:", (index - 1) / 3)
+
         if int((i-1)/columns) == 2 and round(index - 1) % 3 == 0: # diff
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
             img = diffs[round((index - 1) / 3)] # [index-columns*2*2,...]
-            plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+            plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
         if int((i-1)/columns) == 3 and round(index - 1) % 3 == 0: # mask
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
             img = mask[round((index - 1) / 3)] # [index-columns*2*2,...]
-            plt.imshow(img, vmin=mask.min(), vmax=mask.max())
+            plt.imshow(img, vmin=mask.min(), vmax=mask.max(), cmap='turbo')
+
         # if int((i-1)/columns) == 6: # flow diff
         #     img = diffs_flow[round(index)] # [index-columns*2*2,...]
         #     plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
@@ -336,7 +343,7 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
                 #  pyimof.display.quiver(u, v, c, ax=ax, clim=(-5, 5)) --- use clim
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
-                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
+                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, u_gt, c=u_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
                 # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
@@ -374,7 +381,7 @@ def visualize_large(original_data, interpol_data, diffs,
             # print("u at 300, 25:", u[25, 300])
             # print("u at 300, 75:", u[75, 300])
             # print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
-            pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
+            pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, u, c=u, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
             # pyimof.display.plot(u, v, ax=ax, colorwheel=True) # rgb with colormap. correct direction!
@@ -411,10 +418,11 @@ def visualize_large(original_data, interpol_data, diffs,
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
-            pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap='jet', scale = scale, bg_cmap='gray', step=quiver_steps)
+            pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap='turbo', scale = scale, bg_cmap='gray', step=quiver_steps)
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
             data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
             # print(data_range)
+
             if round(index) >= data_range:
                 break
 
@@ -446,6 +454,21 @@ def visualize_large(original_data, interpol_data, diffs,
         if round(index) == round(columns * skip):
             index = 0
 
+    # each image has a different vmin and vmax
+    # cmap=cm.get_cmap('viridis')
+    normalizer=Normalize(vmin=0.85, vmax=data_to_vis.max())
+    im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
+    cb_ax = fig.add_axes([0.91, 0.5, 0.005, 0.3])
+    # cb.ax.tick_params(labelsize=font_size)
+    fmt = lambda x, pos: '{:0.2f}'.format(x)
+    bar = np.linspace(0.85, data_to_vis.max(), 5, endpoint=True)
+    plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+    normalizer=Normalize(vmin=0., vmax=max_flow_gt)
+    im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
+    cb_ax = fig.add_axes([0.91, 0.2, 0.005, 0.25])
+    bar = np.linspace(0., max_flow_gt, 5, endpoint=True)
+    plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+
     fig = plt.gcf()
     suptitle = dataset + "_" + str(factor) + "x"
     plt.suptitle(suptitle) 
@@ -475,7 +498,7 @@ def visualize_large(original_data, interpol_data, diffs,
         y = 0.8
         step = (y - 0.15) / 6.
     elif "lbs2d" in dataset:
-        plt.subplots_adjust(wspace=0.01, hspace=-0.75)
+        plt.subplots_adjust(wspace=0.01, hspace=-0.75) # hspace=-0.9
         x = 0.075
         y = 0.7
         step = (y - 0.25) / 6.

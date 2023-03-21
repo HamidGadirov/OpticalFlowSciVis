@@ -30,7 +30,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 
 from load_datasets import load_data
-from error import calculate_diff, EPE
+from error import calculate_diff, calculate_epe
 from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_series, visualize_series_flow, visualize_large
 
 # TODO:
@@ -45,18 +45,18 @@ log_path = 'train_log'
 def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000.
-        return 1e-4 * mul
+        # return 1e-4 * mul
         # return 3e-4 * mul
         # return 4e-4 * mul
-        # return 6e-4 * mul
+        return 6e-4 * mul
         # return 8e-4 * mul
         # return 1e-3 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
-        return (1e-4 - 1e-6) * mul + 1e-6
+        # return (1e-4 - 1e-6) * mul + 1e-6
         # return (3e-4 - 3e-6) * mul + 3e-6
         # return (4e-4 - 4e-6) * mul + 4e-6
-        # return (6e-4 - 6e-6) * mul + 6e-6
+        return (6e-4 - 6e-6) * mul + 6e-6
         # return (8e-4 - 8e-6) * mul + 8e-6
         # return (1e-3 - 1e-5) * mul + 1e-5
     # return 1e-6 # worse
@@ -472,7 +472,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 lr_data_into_list = lr_data.replace('\n', ' ').split(' ')
             learning_rate = [float(x) for x in lr_data_into_list[:-1]]
             learning_rate = np.array(learning_rate)
-            plot_lr(learning_rate, dir_model, name="lr.png", save=True)
+            plot_lr(learning_rate, dir_model, name="learning_rate.png", save=True)
         except:
             print("learning rate file doesn't exist")
 
@@ -661,7 +661,7 @@ if __name__ == "__main__":
     if args.dataset == "droplet2d" or args.dataset == "rectangle2d":
         args.batch_size = 128
     if args.dataset == "rectangle2d":
-        args.batch_size = 128 # 200
+        args.batch_size = 100 # 200
     if args.dataset == "lbs2d":
         args.batch_size = 20 # 55 120
     if args.dataset == "FluidSimML2d":
@@ -837,6 +837,7 @@ if __name__ == "__main__":
     model_name = "flownet_l1_dist1e-1_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # jumps in distill
     model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" #
     model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes_500ep.pkl" #
+    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes_deconv_500ep.pkl" # ? not better than before
  
     # model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # - best interpol unsupervised
     # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # - best supervised flow
@@ -917,7 +918,21 @@ if __name__ == "__main__":
     # TODO: try k_s 5x5
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_ks5_lr6e-4.pkl" # no, exploded -
     # reduce lr?+ add grad clipping?
-    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_ks5_lr1e-4.pkl" # # good, but not better than before 
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_5Blocks_ks5_lr1e-4.pkl" # # good, but not better than before 
+    # increase amount of data
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_11K_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_11K_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v1.pkl"
+    # is the simulation flow values becoming smaller towards simulation?
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_11K_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # works, but...
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_11K_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr3e-4.pkl" # same as lr6e-4
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_11K_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr1e-3.pkl" # no, exploded -
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_11K_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr1e-4.pkl" #
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_11K_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr7e-4.pkl" # right side is bad
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleDens_gamma_RIFE_eqRes_5Blocks_deconv_lr6e-4.pkl" # 3 blocks: right part is less accurate
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel100_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # loss didn't decrease properly -
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # accuracy can be better
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr3e-4.pkl" # almost same
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" #
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1078,6 +1093,10 @@ if __name__ == "__main__":
         flow_gt = [flow for i, flow in enumerate(flow_original) if (i - 1) % 3 == 0]
         flow_gt = np.array(flow_gt)
 
+        print("flow_pred:", flow.shape)
+        # viz Ft->1 (forward), that is flow[2][:, 2:4]
+        flow = flow[:, 2:4, ...]
+
         print("original_data_gt:", original_data_gt.shape)
         print("interpol_data:", interpol_data.shape)
         print("flow_gt:", flow_gt.shape)
@@ -1137,11 +1156,8 @@ if __name__ == "__main__":
             u_gt = flow_gt[:, 0, ...]
             v_gt = flow_gt[:, 1, ...]
             norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
-            # viz Ft->1 in the end, that is flow[2][:, 2:4]
-            u = flow[:, 2, ...] # flow[:, 0, ...] unsup
-            v = flow[:, 3, ...] # flow[:, 1, ...] unsup
-            # u = flow[:, 0, ...] # sup
-            # v = flow[:, 1, ...] # sup
+            u = flow[:, 0, ...]
+            v = flow[:, 1, ...] 
 
             norm = np.sqrt(u * u + v * v)
             norm_gt = norm_gt[:, :norm.shape[1], :norm.shape[2]]
@@ -1195,15 +1211,17 @@ if __name__ == "__main__":
 
         plot_distribution(original_data, dir_model, name="dist_density_gt.png", save=True)
         plot_distribution(interpol_data, dir_model, name="dist_density_interpol.png", save=True)
-        plot_distribution(flow_gt, dir_model, name="dict_flow_gt.png", save=True)
-        plot_distribution(flow, dir_model, name="dist_flow_pred.png", save=True)
+        plot_distribution(flow_gt[:, 0], dir_model, name="dict_flow_gt_x.png", save=True)
+        plot_distribution(flow_gt[:, 1], dir_model, name="dict_flow_gt_y.png", save=True)
+        plot_distribution(flow[:, 0], dir_model, name="dist_flow_pred_x.png", save=True)
+        plot_distribution(flow[:, 1], dir_model, name="dist_flow_pred_y.png", save=True)
 
-        # TODO: add epe metric:
-        # epe_score = EPE(flow_gt, flow)
-        # epe_file_name = 'EPE.txt'
-        # epe_path = os.path.join(dir_model, epe_file_name)
-        # with open(epe_path, 'a') as epe_file:
-        #     epe_file.write(str(epe_score) + "\n")
+        # EPE metric:
+        epe_score = calculate_epe(flow_gt, flow)
+        epe_file_name = 'EPE.txt'
+        epe_path = os.path.join(dir_model, epe_file_name)
+        with open(epe_path, 'w') as epe_file:
+            epe_file.write(str(epe_score) + "\n")
 
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         if "2d" in dataset:

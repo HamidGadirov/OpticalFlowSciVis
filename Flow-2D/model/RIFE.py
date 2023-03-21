@@ -194,15 +194,15 @@ class Model(nn.Module):
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
             loss_flow = 0.
             # five blocks
-            loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.4096
-            loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.512
-            loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 0.64
-            loss_flow += (flow[3][:, 2:4] - gt_flow).abs().mean() * 0.8
-            loss_flow += (flow[4][:, 2:4] - gt_flow).abs().mean() * 1.
+            # loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.4096
+            # loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.512
+            # loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 0.64
+            # loss_flow += (flow[3][:, 2:4] - gt_flow).abs().mean() * 0.8
+            # loss_flow += (flow[4][:, 2:4] - gt_flow).abs().mean() * 1.
 
-            # loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
-            # loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
-            # loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 1.
+            loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
+            loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
+            loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 1.
             # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
             # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
             # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.

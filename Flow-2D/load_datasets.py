@@ -68,7 +68,11 @@ def load_data(dataset, exp, mode):
         if dataset == 'lbs2d':
             # filename += "LatticeBoltzmannSim/lbs2d.pkl"
             # filename += "LatticeBoltzmannSim/lbs2d_skip.pkl"
-            filename += "LatticeBoltzmannSim/lbs2d_skip5.pkl"
+            # filename += "LatticeBoltzmannSim/lbs2d_skip5.pkl"
+            # filename += "LatticeBoltzmannSim/lbs2d_skip5_11K.pkl"
+            # filename += "LatticeBoltzmannSim/lbs2d_skip3_combi.pkl"
+            filename += "LatticeBoltzmannSim/lbs2d_skip3_combi_cyl_tau.pkl"
+            
         if dataset == "droplet2d":
             filename += "drop2D/droplet2d.pkl" if mode == "train" else "drop2D/droplet2d_test.pkl"
         elif dataset == "pipedcylinder2d":
@@ -129,22 +133,22 @@ def load_data(dataset, exp, mode):
             # print(data)
             print("Density scaled to [0, 1] range!")
 
-            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
-            factor = 2
-            dir_res = "Results"
-            dir_res = os.path.join(dir_res, dataset)
-            dir_res = os.path.join(dir_res, str(factor) + "x")
-            model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleDens_gamma_RIFE_eqRes_lr4e-4.pkl"
-            dir_model = os.path.join(dir_res, model_name[:-4])
-            # plot_distribution(data[:, 1:], dir_model, name="dict_flow_gt_before.png", save=True)
+            # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            # factor = 2
+            # dir_res = "Results"
+            # dir_res = os.path.join(dir_res, dataset)
+            # dir_res = os.path.join(dir_res, str(factor) + "x")
+            # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleDens_gamma_RIFE_eqRes_lr4e-4.pkl"
+            # dir_model = os.path.join(dir_res, model_name[:-4])
+            # # plot_distribution(data[:, 1:], dir_model, name="dict_flow_gt_before.png", save=True)
             data[:, 1] = data[:, 1] * 10.
             data[:, 2] = data[:, 2] * 10.
             print("Vel scaled to *10")
-            # data[:, 1] = np.log(data[:, 1] + 0.3) # +1 to avoid nan
-            # data[:, 2] = np.log(data[:, 2] + 0.3) # +1 to avoid nan
-            # print("Vel log normalized")
-            # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
-            plot_distribution(data[:, 1:], dir_model, name="dict_flow_gt_after.png", save=True)
+            # # data[:, 1] = np.log(data[:, 1] + 0.3) # +1 to avoid nan
+            # # data[:, 2] = np.log(data[:, 2] + 0.3) # +1 to avoid nan
+            # # print("Vel log normalized")
+            # # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            # plot_distribution(data[:, 1:], dir_model, name="dict_flow_gt_after.png", save=True)
 
             # flow_x_mean = data[:, 1].mean()
             # flow_y_mean = data[:, 2].mean()
@@ -165,13 +169,13 @@ def load_data(dataset, exp, mode):
             # print("data[:, 1]):", data[:, 1])
             # input("norm")
 
-            print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
-            print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
-            print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
-            print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
-            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
-            print("Data shape:", data.shape)
+            # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
+            # print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            # print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+            # print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+            # print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
+            # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            # print("Data shape:", data.shape)
             # input("Data range")
         else:
             with open(filename, 'rb') as pkl_file:
@@ -246,16 +250,38 @@ def load_data(dataset, exp, mode):
                 data_val = data[2370:2685] # div to 3, 5, 9 and 7
             if "lbs2d" in filename: # 6K in total, skip first 3K; 3K in total, each 10th
                 # data_train = data[:2205]
-                data_train = data[:500]
-                data_train = np.append(data_train, data[710:1500], axis=0)
-                data_train = np.append(data_train, data[1710:2500], axis=0)
-                data_train = np.append(data_train, data[-260:], axis=0) # 2340 in total, div to 9
+                # data_train = data[:500]
+                # data_train = np.append(data_train, data[710:1500], axis=0)
+                # data_train = np.append(data_train, data[1710:2500], axis=0)
+                # data_train = np.append(data_train, data[-260:], axis=0) # 2340 in total, div to 9
+
+                data_train = data[:1500]
+                data_train = np.append(data_train, data[1710:4500], axis=0)
+                data_train = np.append(data_train, data[4710:7500], axis=0)
+                data_train = np.append(data_train, data[7710:10500], axis=0)
+                data_train = np.append(data_train, data[10710:13500], axis=0)
+                data_train = np.append(data_train, data[13710:-5], axis=0) # 13950 in total
+
+                # data_train = data[:3000]
+                # data_train = np.append(data_train, data[3300:5000], axis=0)
+                # data_train = np.append(data_train, data[5210:7000], axis=0) # 8490
+                # data_train = np.append(data_train, data[7210:10800], axis=0) # 10080 in total, div to 9
                 # data_train = np.append(data_train, data[-1205:], axis=0)
                 # data_val = data[2370:2685]
                 # data_val = data[1000:1315]
-                data_val = data[500:605]
-                data_val = np.append(data_val, data[1500:1605], axis=0)
-                data_val = np.append(data_val, data[2500:2605], axis=0) # 315 in total 
+                # data_val = data[500:605]
+                # data_val = np.append(data_val, data[1500:1605], axis=0)
+                # data_val = np.append(data_val, data[2500:2605], axis=0) # 315 in total 
+
+                data_val = data[1500:1605]
+                data_val = np.append(data_val, data[4500:4605], axis=0)
+                data_val = np.append(data_val, data[7500:7605], axis=0)
+                data_val = np.append(data_val, data[10500:10605], axis=0)
+                data_val = np.append(data_val, data[13500:13605], axis=0)
+
+                # data_val = data[3000:3210]
+                # data_val = np.append(data_val, data[5000:5210], axis=0)
+                # data_val = np.append(data_val, data[7000:7210], axis=0) # 630 in total 
                 # data_train = data[:300]
                 # data_val = data[:300]
             if "droplet2d" in filename:
@@ -302,7 +328,7 @@ def load_data(dataset, exp, mode):
 
             # TODO: add other augment: diff steps for picking data ? 
             if "pipedcylinder2d" in filename or "cylinder2d" in filename or "FluidSimML" in filename or \
-                "rectangle2d" in filename or "lbs2d" in filename:
+                "rectangle2d" in filename: #  or "lbs2d" in filename: no aug for lbs2d_skip5_11K
                 print("Augmenting the data...")
                 data_train_flip = data_train[..., ::-1] # [:,:,:,::-1] wrong!
                 data_train = np.append(data_train, data_train_flip, axis=0)
@@ -444,7 +470,12 @@ def load_data(dataset, exp, mode):
                 # data_test = data[605:710]
                 # data_test = np.append(data_test, data[1605:1710], axis=0)
                 # data_test = np.append(data_test, data[2605:2710], axis=0) # 315 in total 
-                data_test = data[2605:2695] # viz last subset
+                # data_test = data[2605:2695] # viz last subset
+                data_test = data[1605:1710]
+                # data_test = data[4605:4710]
+                # data_test = data[7605:7710]
+                # data_test = data[3210:3300] # viz small subset
+                # data_test = data[9210:9300] # viz small subset # values becomeing even smaller...
                 # data_test = data[1000:1315]
                 # print("data_test shape:", data_test.shape) # (315, 1, 3, 100, 400)
                 # print(data_test[0, :, 1, 50, 100], data_test[0, :, 1, 50, 200], data_test[0, :, 1, 50, 300])
