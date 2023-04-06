@@ -71,8 +71,12 @@ def load_data(dataset, exp, mode):
             # filename += "LatticeBoltzmannSim/lbs2d_skip5.pkl"
             # filename += "LatticeBoltzmannSim/lbs2d_skip5_11K.pkl"
             # filename += "LatticeBoltzmannSim/lbs2d_skip3_combi.pkl"
-            filename += "LatticeBoltzmannSim/lbs2d_skip3_combi_cyl_tau.pkl"
-            
+            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_combi_cyl_tau.pkl" 
+            filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ens7.pkl"
+            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21.pkl"
+            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble16m_f32.pkl"
+            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_Cy1r1t1.pkl"
+        
         if dataset == "droplet2d":
             filename += "drop2D/droplet2d.pkl" if mode == "train" else "drop2D/droplet2d_test.pkl"
         elif dataset == "pipedcylinder2d":
@@ -111,20 +115,30 @@ def load_data(dataset, exp, mode):
             with open(filename, 'rb') as pkl_file:
                 data = pickle.load(pkl_file)
             print(data.shape)
-            data = np.float32(data)
-            print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
-            print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
-            print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
-            print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
-            print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
+            # data = data[18000:21000]
+            # data = np.float32(data)
+            # data = np.float16(data)
+            # print("Converted to float16")
+            # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
+            # print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            # print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+            # print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+            # print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
+            # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
             # data = (data - np.min(data)) / (np.max(data) - np.min(data))
-            data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std()
+            # print(np.min(data[:, 0]), np.max(data[:, 0]), data[:, 0].mean(), data[:, 0].std())
+            dens_min = np.min(data[:, 0])
+            dens_max = np.max(data[:, 0])
+            dens_mean = 0. # data[:, 0].mean()
+            dens_std = 0. # data[:, 0].std()
+            # input("x")
+            # data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std() # is it important?
 
             # data = data * 255.0
             # data = data.astype(int)
             # data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
-            data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
+            # data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
+            data[:, 0] = data[:, 0] / np.max(data[:, 0]) # to [0, 1]
             # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], -1., 1., cv2.NORM_MINMAX)
             # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], -1., 1., cv2.NORM_MINMAX)
             # data[:, 0] = (data[:, 0] - np.min(data[:, 0])) / (np.max(data[:, 0]) - np.min(data[:, 0]))
@@ -181,7 +195,7 @@ def load_data(dataset, exp, mode):
             with open(filename, 'rb') as pkl_file:
                 data = pickle.load(pkl_file)
             print(data.shape)
-            data = np.float32(data)
+            # data = np.float32(data)
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             data = (data - np.min(data)) / (np.max(data) - np.min(data))
             print("Normalized to mean 0 and std 1!")
@@ -238,7 +252,7 @@ def load_data(dataset, exp, mode):
         # data = np.moveaxis(data, -1, 1)
         # print("data in RGB:", data.shape)
 
-        data = np.float32(data)
+        # data = np.float32(data)
         data = np.moveaxis(data, -1, 1)
         print("data in grayscale:", data.shape)
         # input("x")
@@ -248,44 +262,54 @@ def load_data(dataset, exp, mode):
             if "rectangle2d" in filename:
                 data_train = data[:2205] # div to 3, 5, 9 and 7
                 data_val = data[2370:2685] # div to 3, 5, 9 and 7
-            if "lbs2d" in filename: # 6K in total, skip first 3K; 3K in total, each 10th
-                # data_train = data[:2205]
-                # data_train = data[:500]
-                # data_train = np.append(data_train, data[710:1500], axis=0)
-                # data_train = np.append(data_train, data[1710:2500], axis=0)
-                # data_train = np.append(data_train, data[-260:], axis=0) # 2340 in total, div to 9
+            if "lbs2d" in filename:
 
-                data_train = data[:1500]
-                data_train = np.append(data_train, data[1710:4500], axis=0)
-                data_train = np.append(data_train, data[4710:7500], axis=0)
-                data_train = np.append(data_train, data[7710:10500], axis=0)
-                data_train = np.append(data_train, data[10710:13500], axis=0)
-                data_train = np.append(data_train, data[13710:-5], axis=0) # 13950 in total
+                # data_train = data
+                # data_train = data[:1500]
+                # data_train = np.append(data_train, data[1710:4500], axis=0)
+                # data_train = np.append(data_train, data[4710:7500], axis=0)
+                # # data_train = np.append(data_train, data[7710:], axis=0)
+                # data_train = np.append(data_train, data[7710:10500], axis=0)
+                # data_train = np.append(data_train, data[10710:13500], axis=0)
+                # data_train = np.append(data_train, data[13710:], axis=0) # 13950 in total
+
+                # data_train = data[:18000]
+                # data_train = np.append(data_train, data[21000:30000], axis=0)
+                # data_train = np.append(data_train, data[33000:48000], axis=0)
+         
+                data_train = data[3000:18000]
+                # data_train = np.append(data_train, data[21000:30000], axis=0)
+                # data_train = np.append(data_train, data[33000:48000], axis=0)
 
                 # data_train = data[:3000]
                 # data_train = np.append(data_train, data[3300:5000], axis=0)
                 # data_train = np.append(data_train, data[5210:7000], axis=0) # 8490
                 # data_train = np.append(data_train, data[7210:10800], axis=0) # 10080 in total, div to 9
                 # data_train = np.append(data_train, data[-1205:], axis=0)
-                # data_val = data[2370:2685]
-                # data_val = data[1000:1315]
-                # data_val = data[500:605]
+
                 # data_val = np.append(data_val, data[1500:1605], axis=0)
                 # data_val = np.append(data_val, data[2500:2605], axis=0) # 315 in total 
 
-                data_val = data[1500:1605]
-                data_val = np.append(data_val, data[4500:4605], axis=0)
-                data_val = np.append(data_val, data[7500:7605], axis=0)
-                data_val = np.append(data_val, data[10500:10605], axis=0)
-                data_val = np.append(data_val, data[13500:13605], axis=0)
+                # data_val = data[1500:1605]
+                # data_val = np.append(data_val, data[4500:4605], axis=0)
+                # data_val = np.append(data_val, data[7500:7605], axis=0)
+                # data_val = np.append(data_val, data[10500:10605], axis=0)
+                # data_val = np.append(data_val, data[13500:13605], axis=0)
+
+                # data_val = data[30000:33000]
+                data_val = data[18000:21000]
 
                 # data_val = data[3000:3210]
                 # data_val = np.append(data_val, data[5000:5210], axis=0)
                 # data_val = np.append(data_val, data[7000:7210], axis=0) # 630 in total 
                 # data_train = data[:300]
                 # data_val = data[:300]
+
+                del data
+                # input("data del")
             if "droplet2d" in filename:
-                data_train = data[:51300] # 46800 15120
+                # data = np.float16(data)
+                data_train = data[2700:51300] # 46800 15120
                 data_val = data[51300:54000] # 18000 54000
             if "pipedcylinder2d" in filename or "cylinder2d" in filename: # 1501 in total
                 data_train = data[:540] # 1080 div to 27 and 5
@@ -306,8 +330,9 @@ def load_data(dataset, exp, mode):
                 data_train = data[100:820] 
                 data_val = data[820:964]
 
-            if dataset != "rectangle2d" or dataset != "lbs2d":
-                # prepare data for training - use only each third frame while shifting the sampling
+            if dataset != "rectangle2d":
+                # prepare data for training - use only each third frame while shifting the sampling; this is important!!
+                print("use 3rd while shifting the sampling")
                 data_train_ = []
                 data_val_ = []
                 for shift in range(3):
@@ -324,7 +349,7 @@ def load_data(dataset, exp, mode):
                 # input("x")
 
             print(data_train.shape) # (2205, 1, 3, 128, 128)
-            print("before aug, data_train is in range %f to %f" % (np.min(data_train[:, :, 0]), np.max(data_train[:, :, 0])))
+            # print("before aug, data_train 0 is in range %f to %f" % (np.min(data_train[:, :, 0]), np.max(data_train[:, :, 0])))
 
             # TODO: add other augment: diff steps for picking data ? 
             if "pipedcylinder2d" in filename or "cylinder2d" in filename or "FluidSimML" in filename or \
@@ -335,9 +360,9 @@ def load_data(dataset, exp, mode):
                 data_train_flip = data_train[..., ::-1, :]  # [:,:,::-1,:] wrong!
                 data_train = np.append(data_train, data_train_flip, axis=0)
 
-            print(data_train.shape)
-            print("after aug, data_train is in range %f to %f" % (np.min(data_train[:, :, 0]), np.max(data_train[:, :, 0])))
-            # input("x")
+                print(data_train.shape)
+                print("after aug, data_train is in range %f to %f" % (np.min(data_train[:, :, 0]), np.max(data_train[:, :, 0])))
+                # input("x")
 
             # data_train = torch.from_numpy(data_train.copy()).permute(2, 0, 1)
             # data_val = torch.from_numpy(data_val.copy()).permute(2, 0, 1)
@@ -390,12 +415,20 @@ def load_data(dataset, exp, mode):
                     # input("3579")
                 else:
                     # prepare img0, gt, img1 (2x interpolation)
-                    for i in range(0, data_train.shape[0], 3): 
-                        data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
+                    print("prepare img0, gt, img1 (2x interpolation)")
+                    # TODO: shift by 2 each iter
+                    for i in range(0, data_train.shape[0], 2): 
+                        try:
+                            data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
+                        except:
+                            print("done")
                     data_train = np.array(data_train_three)
                     print("data_train in three:", data_train.shape)
-                    for i in range(0, data_val.shape[0], 3): 
-                        data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
+                    for i in range(0, data_val.shape[0], 2): 
+                        try:
+                            data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
+                        except:
+                            print("done")
                     data_val = np.array(data_val_three)
                     print("data_val in three:", data_val.shape)
 
@@ -447,6 +480,10 @@ def load_data(dataset, exp, mode):
                 print("data_val in three:", data_val.shape)
                 # input("x")
 
+            # data_train = np.float32(data_train)
+            # data_val = np.float32(data_val)
+            # print("Converted back to float32")
+
             combined_data_train = torch.utils.data.ConcatDataset([combined_data_train, data_train])
             combined_data_val = torch.utils.data.ConcatDataset([combined_data_val, data_val])
         
@@ -471,7 +508,16 @@ def load_data(dataset, exp, mode):
                 # data_test = np.append(data_test, data[1605:1710], axis=0)
                 # data_test = np.append(data_test, data[2605:2710], axis=0) # 315 in total 
                 # data_test = data[2605:2695] # viz last subset
-                data_test = data[1605:1710]
+                # data_test = data[1605:1710]
+                data_test = data[1605:1905]
+                # data_test = data[4605:4710]
+                # data_test = data[1000:1300]
+
+                # data_test = data[30100:30400] # data[30000:33000] # data[18000:21000]
+                # data_test = data[40100:40400]
+                # data_test = np.float32(data_test)
+                # print("Converted back to float32")
+
                 # data_test = data[4605:4710]
                 # data_test = data[7605:7710]
                 # data_test = data[3210:3300] # viz small subset
@@ -565,8 +611,12 @@ def load_data(dataset, exp, mode):
                     print("data_test in three:", data_test.shape)
                     # input("x")
                 else:
-                    for i in range(0, data_test.shape[0], 3): 
-                        data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
+                    # TODO: shift by 2 +
+                    for i in range(0, data_test.shape[0], 2): 
+                        try:
+                            data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
+                        except:
+                            print("done")
                     data_test = np.array(data_test_three)
                     print("data_test in three:", data_test.shape)
                     # input("x")
@@ -588,6 +638,7 @@ def load_data(dataset, exp, mode):
                 print("data_test in three:", data_test.shape)
 
         if dataset == "lbs2d":
-            return data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std
+            # return data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std
+            return data_test, dens_min, dens_max, dens_mean, dens_std
         else:
             return data_test

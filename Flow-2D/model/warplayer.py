@@ -23,4 +23,12 @@ def warp(tenInput, tenFlow):
     # input("xx")
 
     g = (backwarp_tenGrid[k] + tenFlow).permute(0, 2, 3, 1)
-    return torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)
+
+    if tenInput.dtype==torch.float16:
+        grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g.half(), mode='bilinear', padding_mode='border', align_corners=True)
+    else:
+        grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)
+    # grid_s = grid_s.to(torch.float16)
+
+    # return torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)
+    return grid_s

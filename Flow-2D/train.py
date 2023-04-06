@@ -31,7 +31,8 @@ from torch.utils.data.distributed import DistributedSampler
 
 from load_datasets import load_data
 from error import calculate_diff, calculate_epe
-from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_series, visualize_series_flow, visualize_large
+from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_series, visualize_series_flow, visualize_large, \
+    visualize_seq_dens, visualize_seq_flow
 
 # TODO:
 # merge with 3d model (parts) -
@@ -45,16 +46,23 @@ log_path = 'train_log'
 def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000.
+        # return 1e-6 * mul
+        # return 3e-6 * mul
+        # return 6e-6 * mul
         # return 1e-4 * mul
-        # return 3e-4 * mul
+        # return 3e-4 * mul # # orig
         # return 4e-4 * mul
         return 6e-4 * mul
         # return 8e-4 * mul
         # return 1e-3 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
+        # return (1e-6 - 1e-8) * mul + 1e-8
+        # return (3e-6 - 3e-8) * mul + 3e-8
+        # return (6e-6 - 6e-8) * mul + 6e-8
         # return (1e-4 - 1e-6) * mul + 1e-6
         # return (3e-4 - 3e-6) * mul + 3e-6
+        # return (3e-4 - 3e-5) * mul + 3e-5 # orig
         # return (4e-4 - 4e-6) * mul + 4e-6
         return (6e-4 - 6e-6) * mul + 6e-6
         # return (8e-4 - 8e-6) * mul + 8e-6
@@ -136,7 +144,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             data_test = DataLoader(dataset_test, batch_size=16, pin_memory=True, num_workers=8)
         else:
             if dataset == "lbs2d":
-                data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std = load_data(dataset, exp, mode)
+                # data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std = load_data(dataset, exp, mode)
+                data_test, dens_min, dens_max, dens_mean, dens_std = load_data(dataset, exp, mode)
             else:
                 data_test = load_data(dataset, exp, mode)
             shuffle = False
@@ -154,7 +163,6 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     # model_name += "_" + dataset
     # model_name += ".pkl"
 
-    # model.load_model(model_name, log_path)
     try:
         model.load_model(model_name, log_path)
         # print("Loaded RIFE model:", model_name)
@@ -174,7 +182,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     if mode == "train":
         print('training...')
         time_stamp = time.time()
-        early_stopper = EarlyStopper(patience=30, min_delta=0.05)
+        early_stopper = EarlyStopper(patience=30, min_delta=0.01)
         for epoch in range(args.epoch):
             # sampler.set_epoch(epoch)
             for i, data in enumerate(train_data):
@@ -210,6 +218,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                     # print(imgs.shape)
                     # print(gt.shape)
                     # input("x")
+                    # with torch.cuda.amp.autocast(True):
                     pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
 
                     # from torchviz import make_dot
@@ -290,8 +299,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # input("x")
         print("Saving at:", dir_model)
         # data = data_train
-        # scale_list = [4, 2, 1]
-        scale_list = [1, 1, 1]
+        scale_list = [4, 2, 1]
+        # scale_list = [1, 1, 1]
         # print(data.shape)
         # input("x")
         # for i in range(0, data.shape[0], 2):
@@ -486,7 +495,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # input("x")
         
         if dataset == "lbs2d":
-            statistics = {'flow_x_mean': flow_x_mean, 'flow_y_mean': flow_y_mean, 'flow_x_std': flow_x_std, 'flow_y_std': flow_y_std}
+            # statistics = {'flow_x_mean': flow_x_mean, 'flow_y_mean': flow_y_mean, 'flow_x_std': flow_x_std, 'flow_y_std': flow_y_std}
+            statistics = {'dens_min': dens_min, 'dens_max': dens_max, 'dens_mean': dens_mean, 'dens_std': dens_std}
         else:
             statistics = {'flow_x_mean': 0, 'flow_y_mean': 0, 'flow_x_std': 0, 'flow_y_std': 0}
         return original_data, interpol_data, flow_combined, flow_gt_combined, mask_combined, statistics
@@ -573,7 +583,8 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     if early_stopper.early_stop(validation_loss) == 2: 
         model.save_model(model_name, log_path, local_rank) 
         # input("saved")
-    elif early_stopper.early_stop(validation_loss) == 1:             
+    elif early_stopper.early_stop(validation_loss) == 1:   
+        print("Early stop.")          
         sys.exit(0)
 
     val_loss = []
@@ -663,7 +674,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle2d":
         args.batch_size = 100 # 200
     if args.dataset == "lbs2d":
-        args.batch_size = 20 # 55 120
+        args.batch_size = 40 # 20 55 120
     if args.dataset == "FluidSimML2d":
         args.batch_size = 64
     if args.dataset == "pipedcylinder2d" or args.dataset == "cylinder2d":
@@ -833,11 +844,11 @@ if __name__ == "__main__":
     # 2 things helped: instead of pyramid using same scales for all IFBlocks
     # adding distill loss with small coeff
     # model_name = "flownet_l1_dist1e-1_flow5e-1_v1_128_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" # distill jumps: worse interpol and flow -
-    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # no jumps, very similar to the best
-    model_name = "flownet_l1_dist1e-1_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # jumps in distill
-    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" #
-    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes_500ep.pkl" #
-    model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes_deconv_500ep.pkl" # ? not better than before
+    # model_name = "flownet_l1_dist2e-2_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # no jumps, very similar to the best
+    # model_name = "flownet_l1_dist1e-1_flow5e-1_v1_128_rect_big_fbb_allBlocks_RIFE_eqRes.pkl" # jumps in distill
+    # model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes.pkl" #
+    # model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes_500ep.pkl" #
+    # model_name = "flownet_l1_dist2e-2_flow5e-1_v1_256_rect_big_fbb_allBlocks_gamma_RIFE_eqRes_deconv_500ep.pkl" # ? not better than before
  
     # model_name = "flownet_lapl_dist2e-2_reg1e-7_photo1e-5_v2_128_rect_big_hftext.pkl" # - best interpol unsupervised
     # model_name = "flownet_lapl_flow5e-1_v2_128_rect_big_hftextv3_allBlocks_normv3.pkl" # - best supervised flow
@@ -887,6 +898,7 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-3.pkl" # diverge
     # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr6e-4.pkl" # diverge slowly after 100ep
     # # perhaps start with 3e-4 and change lr after 100 ep? remove loss decay?
+    # """
     model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr4e-4.pkl" # start with lr 4e-4, increase to 6e-6 after 100ep: 
     # loss increased a bit in the end, but result best overall +
     # # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip5_ScaleAllVel10_gamma_RIFE_eqRes_lr3e-4manual.pkl" # no
@@ -932,7 +944,39 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleAllVel100_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # loss didn't decrease properly -
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # accuracy can be better
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr3e-4.pkl" # almost same
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" #
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # good?
+    """
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_500ep.pkl" # good?
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble21_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # loss exploded -
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble21_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-5.pkl" # loss increasing -
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble21_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-6.pkl" # very slowly inc -
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble21_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr1e-6.pkl" # not decreasing -
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble21_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr3e-6.pkl" # no -
+    # # thi is not working, what is the problem ???
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_AMP_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # 16 amp is the problem!
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_AMP32_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # exploded at 25ep -
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_noAMP_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # SAME - autocast was still in IFNet
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_noAMP32_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # +
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble16_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_500ep_ensemble16.pkl" # no better ?
+    # model_name = "flownet_lapl_v1_240_lbs_skip3_combi_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_500ep.pkl" # flow worse than best, separate member?
+    # test set only parts of members?
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens5_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # not yet close to best...
+    # TODO: unsupervised for sim
+    model_name = "flownet_l1_dist_reg1e-6_photo1e-5_v1_256_lbs_skip3_ens5_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # reg too high
+    model_name = "flownet_l1_dist_photo1e-5_v1_256_lbs_skip3_ens5_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # no, bad flow and interpol
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens5_ScaleAllVel10_gamma_RIFE_lr6e-4.pkl" # no flow, distill and photo
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens5_ScaleAllVel10_gamma_RIFE_lr6e-4_v3.pkl" # not bad, but worse?
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # not so good ?
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens5_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # still not as best
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_lr6e-4.pkl" # # still not as best
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl"
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # train on all data:
+    """
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # yes!
+    # 3rdShift - that is important!
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_3rdShift_ScaleAllVel10_gamma_RIFE_lr6e-4.pkl"
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -972,6 +1016,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" # not so bad, reg might be higher
     # we don't have flow for supervision
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad, reg might be higher
+    # model_name = "flownet_lapl_v1_240_lbs_drop50K_float_lr3e-4_RIFE.pkl" # ???
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"
@@ -1086,8 +1131,10 @@ if __name__ == "__main__":
         original_data = data_test[:, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
         print("original_data:", original_data.shape)
 
+        # original_data_gt - only GT densities, original_data - all timesteps from orig. dens.
         original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]
         original_data_gt = np.array(original_data_gt)
+        original_data = np.array(original_data)
 
         print("flow_original:", flow_original.shape)
         flow_gt = [flow for i, flow in enumerate(flow_original) if (i - 1) % 3 == 0]
@@ -1097,6 +1144,7 @@ if __name__ == "__main__":
         # viz Ft->1 (forward), that is flow[2][:, 2:4]
         flow = flow[:, 2:4, ...]
 
+        print("original_data:", original_data.shape)
         print("original_data_gt:", original_data_gt.shape)
         print("interpol_data:", interpol_data.shape)
         print("flow_gt:", flow_gt.shape)
@@ -1110,7 +1158,14 @@ if __name__ == "__main__":
             # flow_gt = np.exp(flow_gt) - 0.3
             # flow = np.exp(flow) - 0.3
             # print("Vel log denormalized")
-            print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
+            # print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
+
+            # original_data = cv2.normalize(original_data, original_data, 0., statistics['dens_max'], cv2.NORM_MINMAX)
+            # interpol_data = cv2.normalize(interpol_data, interpol_data, 0., statistics['dens_max'], cv2.NORM_MINMAX)
+            original_data = original_data * statistics['dens_max'] 
+            original_data_gt = original_data_gt * statistics['dens_max'] 
+            interpol_data = interpol_data * statistics['dens_max'] 
+
         #     flow_x_mean = statistics['flow_x_mean']
         #     flow_y_mean = statistics['flow_y_mean']
         #     flow_x_std = statistics['flow_x_std']
@@ -1209,12 +1264,18 @@ if __name__ == "__main__":
         print("Flow gt mean and std:", np.mean(flow_gt), np.std(flow_gt))
         print("Flow pred mean and std:", np.mean(flow), np.std(flow))
 
-        plot_distribution(original_data, dir_model, name="dist_density_gt.png", save=True)
+        plot_distribution(original_data_gt, dir_model, name="dist_density_gt.png", save=True)
         plot_distribution(interpol_data, dir_model, name="dist_density_interpol.png", save=True)
         plot_distribution(flow_gt[:, 0], dir_model, name="dict_flow_gt_x.png", save=True)
         plot_distribution(flow_gt[:, 1], dir_model, name="dict_flow_gt_y.png", save=True)
         plot_distribution(flow[:, 0], dir_model, name="dist_flow_pred_x.png", save=True)
         plot_distribution(flow[:, 1], dir_model, name="dist_flow_pred_y.png", save=True)
+
+        # visualize_ind
+        # title = "Flow_gt"
+        # visualize_ind(flow_gt[0], dir_model, title=title, show=False, save=True)
+        # title = "Flow_pred"
+        # visualize_ind(flow[0], dir_model, title=title, show=False, save=True)
 
         # EPE metric:
         epe_score = calculate_epe(flow_gt, flow)
@@ -1224,9 +1285,15 @@ if __name__ == "__main__":
             epe_file.write(str(epe_score) + "\n")
 
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
-        if "2d" in dataset:
-            visualize_large(original_data, interpol_data, diffs,
-                flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
+        visualize_large(original_data, interpol_data, diffs,
+            flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
+            factor, dataset, dir_model, title=title, show=False, save=True)
+
+        title = "Density_gt_pred_diff"
+        visualize_seq_dens(original_data_gt, interpol_data, diffs,
+                factor, dataset, dir_model, title=title, show=False, save=True)
+        title = "Flow_gt_pred_diff"
+        visualize_seq_flow(flow_gt, flow, u_diff, v_diff,
                 factor, dataset, dir_model, title=title, show=False, save=True)
 
 # print("Dataset:", dataset)

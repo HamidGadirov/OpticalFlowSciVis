@@ -64,13 +64,13 @@ class Model(nn.Module):
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, gt_flow, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # 4, 2, 1
+    def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
         imgs = torch.cat((img0, img1), 1)
-        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, gt_flow, scale_list, timestep=timestep)
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, gt_flow, scale_list, timestep=timestep)
         # flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
         print("back to RIFE from IFNet")
         if TTA == False:
@@ -138,7 +138,8 @@ class Model(nn.Module):
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         mask = mask[2] # only gt (pred) durig training
         # correct shapes
         max_shape_2 = min(img0.shape[2], mask.shape[2])
@@ -185,7 +186,7 @@ class Model(nn.Module):
             # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 0:1]), -gt_flow[:, 0])
             # # loss_flow += torch.nn.functional.l1_loss(torch.squeeze(flow_teacher[:, 1:2]), -gt_flow[:, 1])
             # loss_flow /= 2.
-
+            # """
             # TODO: RIFE loss: same as l1 that I have? Yes.
             # sum instead of .mean() ???
             # try gamma = 0.5 : no improvement
@@ -209,7 +210,8 @@ class Model(nn.Module):
             loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
             # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             # loss_flow /= 2.
-            
+            # """
+            # loss_flow = torch.tensor(0.)
             """
             # TODO: flow magn of diff vec loss: no improvements
             loss_flow = 0.
@@ -258,10 +260,10 @@ class Model(nn.Module):
         # print("L1 loss")
         # print(merged[2].shape, gt.shape)
         # loss_l1 = torch.nn.functional.l1_loss(merged[4], gt)
-        loss_l1 = torch.nn.functional.l1_loss(merged[2], gt)
+        loss_l1 = torch.nn.functional.l1_loss(merged[2], gt) # my
         # loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
         # print(merged_teacher.shape, gt.shape)
-        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt)
+        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # my
         # sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
 
         # adding L1 reg: ? only to the last block
@@ -368,27 +370,28 @@ class Model(nn.Module):
             warped_frame = F.grid_sample(frame, grid)
 
             return warped_frame
-
-        # # Photometric loss
-        # # computed as the difference between the first image and the backward/inverse warped second image
-        # # in this case: can combine img1, img2 (pred); img2 (pred), img3
-        # # loss, bce_loss, smooth_loss = criterion(pred_flows, wraped_imgs, imgs[:, :3, :, :])
-        # def photometric_loss(wraped, frame1):
-        #     h, w = wraped.shape[2:]
-        #     frame1 = F.interpolate(frame1, (h, w), mode='bilinear', align_corners=False)
-        #     p_loss = charbonnier(wraped - frame1)
-        #     p_loss = torch.sum(p_loss, dim=1) / 3 # ?
-        #     return torch.sum(p_loss) / frame1.size(0)
+        """
+        # Photometric loss
+        # computed as the difference between the first image and the backward/inverse warped second image
+        # in this case: can combine img1, img2 (pred); img2 (pred), img3
+        # loss, bce_loss, smooth_loss = criterion(pred_flows, wraped_imgs, imgs[:, :3, :, :])
+        def photometric_loss(wraped, frame1):
+            h, w = wraped.shape[2:]
+            frame1 = F.interpolate(frame1, (h, w), mode='bilinear', align_corners=False)
+            p_loss = charbonnier(wraped - frame1)
+            p_loss = torch.sum(p_loss, dim=1) / 3 # ?
+            return torch.sum(p_loss) / frame1.size(0)
         
-        # frame1 = img0
-        # warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
-        # loss_photo = photometric_loss(warped_frame2, frame1)
-        # frame3 = img1
-        # warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
-        # loss_photo += photometric_loss(warped_frame2, frame3)
-        # loss_photo /= 2
-        # # print(loss_photo)
-        # # input("x")
+        frame1 = img0
+        warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
+        loss_photo = photometric_loss(warped_frame2, frame1)
+        frame3 = img1
+        warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
+        loss_photo += photometric_loss(warped_frame2, frame3)
+        loss_photo /= 2
+        # print(loss_photo)
+        # input("x")
+        """
         loss_photo = torch.tensor(0.)
         """ end Photometric consistency """
 
@@ -398,7 +401,7 @@ class Model(nn.Module):
         lambda_reg = 0 # 1e-6 best on rectangle 1e-7
         lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.2 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0.2 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter

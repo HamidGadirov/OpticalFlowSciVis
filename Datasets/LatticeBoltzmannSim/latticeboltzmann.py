@@ -36,7 +36,7 @@ def main():
 	Nx                     = 400    # resolution x-dir
 	Ny                     = 100    # resolution y-dir
 	rho0                   = 100    # average density # 50 100 150
-	tau                    = 0.64    # collision timescale 0.6; 0.62; 0.64
+	tau                    = 0.6   # collision timescale 0.6; 0.62; 0.64
 	# Nt                     = 33000   # number of timesteps # 4000; skip first 3000
 	# Nt                     = 18000   # skip first 3000, save rest: each 5th
 	# Nt                     = 58000   # skip first 3000, save rest: each 5th - I need 11K
@@ -63,10 +63,16 @@ def main():
 	
 	# Cylinder boundary
 	X, Y = np.meshgrid(range(Nx), range(Ny))
-	cylinder = (X - Nx/4)**2 + (Y - Ny/2)**2 < (Ny/4)**2
+	# (x – h)**2 + (y – k)**2 = r**2
+	# cylinder = (X - Nx/4)**2 + (Y - Ny/2)**2 < (Ny/4)**2
 	# cylinder = (X - Nx/4.5)**2 + (Y - Ny/2.25)**2 < (Ny/4.5)**2
-	# cylinder = (X - Nx/5)**2 + (Y - Ny/2.5)**2 < (Ny/5)**2 # not smaller than this
+	cylinder = (X - Nx/5)**2 + (Y - Ny/2.5)**2 < (Ny/5)**2 # not smaller than this
 	# cylinder = (X - Nx/6)**2 + (Y - Ny/3)**2 < (Ny/8)**2 # too small -
+	# x fixed; 5 options for y: (Y - Ny/2, Y - Ny/1.75, Y - Ny/1.5, Y - Ny/2.25, Y - Ny/2.5) <- Ny/4.5 Ny/5
+	# 3 diff cylinder sizes: Ny/4 Ny/4.5 Ny/5
+	# 3 diff tau: 0.6 0.62 0.64 0.66
+
+	# lbs2d_skip3_Cy2r1t1 and lbs2d_skip3_Cy4r1t1 crash (?)
 	
 	# Prep figure
 	fig = plt.figure(figsize=(4,2), dpi=80)
@@ -180,8 +186,9 @@ def main():
 			vorticity[cylinder] = np.nan
 			vorticity = np.ma.array(vorticity, mask=cylinder)
 			"""
-			axs[0].imshow(vorticity, cmap='bwr')
+			im = axs[0].imshow(vorticity, cmap='turbo') # cmap='bwr'
 			axs[0].imshow(~cylinder, cmap='gray', alpha=0.3)
+			plt.colorbar(im)
 			"""
 			# plt.clim(-.1, .1)
 			# axs[0].clim(-.1, .1)
@@ -197,14 +204,16 @@ def main():
 			# plt.cla()
 			rho = np.ma.array(rho, mask=cylinder)
 			"""
-			axs[1].imshow(rho, cmap='bwr')
+			im = axs[1].imshow(rho, cmap='turbo')
 			axs[1].imshow(~cylinder, cmap='gray', alpha=0.3)
+			plt.colorbar(im)
 			"""
 
 			norm = np.ma.array(norm, mask=cylinder)
 			"""
-			axs[2].imshow(norm, cmap='bwr')
+			im = axs[2].imshow(norm, cmap='turbo')
 			axs[2].imshow(~cylinder, cmap='gray', alpha=0.3)
+			plt.colorbar(im)
 			"""
 			# plt.clim(-.1, .1)
 			# ax = plt.gca()
@@ -229,8 +238,11 @@ def main():
 			str_it = str(it) if len(str(it)) == 4 else (4 - len(str(it))) * "0" + str(it) 
 			title = "Vorticity, density, velocity " + "t=" + str_it
 			print(title)
+			# dir_name = "video_3_dens100_c1_t06"
+			# dir_name = "video_3_dens100_c2_t06"
+			# dir_name = "video_3_dens100_c3_t06"
 			# dir_name = "video_3_dens100_c1_t062"
-			dir_name = "video_3_dens100_c1_t064"
+			dir_name = "video_3_dens100_c4_t06"
 			if not os.path.isdir(dir_name):
 				os.makedirs(dir_name)
 			# fig.savefig(os.path.join("video", title))
@@ -357,8 +369,10 @@ def main():
 	# pkl_filename = "lbs2d_skip3_1" + ".pkl" 
 	# pkl_filename = "lbs2d_skip3_2" + ".pkl" 
 	# pkl_filename = "lbs2d_skip3_3" + ".pkl" 
-	# pkl_filename = "lbs2d_skip3_c1_t062" + ".pkl" 
-	pkl_filename = "lbs2d_skip3_c1_t064" + ".pkl" 
+	# pkl_filename = "lbs2d_skip3_c1_t06" + ".pkl" 
+	# pkl_filename = "lbs2d_skip3_c1_t064" + ".pkl" 
+
+	pkl_filename = "lbs2d_skip3_Cx3y3r3t1" + ".pkl" 
 
 	# data = np.zeros((Nt, Ny, Nx), dtype=np.float32)
 	data = density

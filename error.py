@@ -80,7 +80,7 @@ def calculate_epe(flow_gt, flow_pred):
     print("epe:", np.linalg.norm(flow_pred - flow_gt))
     print("epe mean 0:", np.linalg.norm(flow_pred - flow_gt, axis=0).mean())
     print("epe mean 1:", np.linalg.norm(flow_pred - flow_gt, axis=1).mean())
-    return np.linalg.norm(flow_pred - flow_gt).mean()
+    return np.linalg.norm(flow_pred - flow_gt, axis=0).mean()
 
 def calculate_metrics(original_data, interpol_data, factor):
 

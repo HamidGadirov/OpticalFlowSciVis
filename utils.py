@@ -191,6 +191,248 @@ def visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
 
+# def visualize_seq_dens(original_data, interpol_data, diffs,
+    # factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
+    # fig = plt.figure(figsize=(30, 10))
+    # columns = 10
+    # if "droplet2d" in dataset:
+    #     columns = 15
+    # elif dataset == "lbs2d":
+    #     columns = 10 
+    # rows = 3
+    # skip = 1
+    # data_to_vis = original_data
+    # index = 0
+
+    # if "lbs2d" in dataset:
+    #     vmin = 90
+
+    # for i in range(1, columns*rows+1):
+    #     ax = fig.add_subplot(rows, columns, i)
+    #     # print(int(i/columns))
+    #     if int((i-1)/columns) == 0: # gt
+    #         img = original_data[round(index)]
+    #         if dataset == "lbs2d":
+    #             plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
+    #         else:
+    #             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+    #         ax_title = "t=" + str(index + 3000)
+    #         if index % 3 == 1:
+    #             ax_title += "*"
+    #         ax.set_title(ax_title, fontsize=10)
+    #     if int((i-1)/columns) == 1 and round(index - 1) % 3 == 0: # interpol
+    #         img = interpol_data[round((index - 1) / 3)]
+    #         if dataset == "lbs2d":
+    #             plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
+    #         else:
+    #             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+    #     if int((i-1)/columns) == 2 and round(index - 1) % 3 == 0: # diff
+    #         img = diffs[round((index - 1) / 3)]
+    #         plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+
+    # plt.axis('off')
+    # index += skip
+   
+    # if round(index) == round(columns * skip):
+    #     index = 0
+
+    # normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
+    # im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
+    # if "lbs2d" in dataset:
+    #     cb_ax = fig.add_axes([0.83, 0.5, 0.005, 0.3])
+    # elif "rectangle2d" in dataset:
+    #     cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
+    # fmt = lambda x, pos: '{:0.2f}'.format(x)
+    # bar = np.linspace(vmin, data_to_vis.max(), 5, endpoint=True)
+    # plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+
+    # fig = plt.gcf()
+    # fig.set_size_inches(20, 3)
+    # # wspace is x; hspace is y 
+    # if "droplet2d" in dataset:
+    #     plt.subplots_adjust(wspace=-0.9, hspace=0.01)
+    #     x = 0.18
+    #     y = 0.8
+    #     step = (y - 0.15) / 6.
+    # elif "lbs2d" in dataset:
+    #     plt.subplots_adjust(wspace=-0.73, hspace=0.02)
+    #     x = 0.15
+    #     y = 0.8
+    #     step = (y - 0.15) / 6.
+
+    # fig.text(x, y, 'Dens GT', size=12)
+    # fig.text(x, y - step, 'Dens pred', size=12)
+    # fig.text(x, y - step*2, 'Dens diff', size=12)
+
+    # if show:
+    #     plt.show() 
+    # if save:
+    #     title += ".pdf"
+    #     if not os.path.isdir(dir_res):
+    #         os.makedirs(dir_res)
+    #     fig.savefig(os.path.join(dir_res, title), dpi = 300)
+
+def visualize_seq_dens(original_data, interpol_data, diffs,
+    factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
+    
+    columns = 10
+    if "droplet2d" in dataset:
+        columns = 15
+    elif dataset == "lbs2d":
+        columns = 10 
+    rows = 3
+    skip = 1
+    data_to_vis = original_data
+    index = 0
+    shift = 1
+
+    if "lbs2d" in dataset:
+        vmin = 95
+        print("vis range:", vmin, data_to_vis.max())
+
+    # wspace is x; hspace is y
+    fig, axs = plt.subplots(nrows=rows, ncols=columns, figsize=(30, 3), gridspec_kw={'hspace': -0.41, 'wspace': 0.01})
+
+    # TODO: fix timesteps, t
+
+    for i in range(columns):
+        # First row: original data
+        ax = axs[0][i]
+        img = original_data[round(index)]
+        if dataset == "lbs2d":
+            ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
+        else:
+            ax.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+        ax_title = "t=" + str(index + shift + 3000 + 1605)
+        ax.set_title(ax_title, fontsize=20)
+        ax.axis('off')
+
+        # Second row: interpolated data
+        ax = axs[1][i]
+        img = interpol_data[round(index)]
+        if dataset == "lbs2d":
+            ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
+        else:
+            ax.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+        ax.axis('off')
+
+        # Third row: difference data
+        ax = axs[2][i]
+        img = diffs[round(index)]
+        ax.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+        ax.axis('off')
+
+        index += skip
+        shift += 2 # we have only GT here
+        if round(index) == round(columns * skip):
+            index = 0
+
+    normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
+    im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
+    if "lbs2d" in dataset:
+        cb_ax = fig.add_axes([0.91, 0.18, 0.005, 0.62])
+    elif "rectangle2d" in dataset:
+        cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
+    cb_ax.tick_params(labelsize=20) 
+    fmt = lambda x, pos: '{:0.1f}'.format(x)
+    bar = np.linspace(vmin, data_to_vis.max(), 4, endpoint=True)
+    plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+
+    if show:
+        plt.show() 
+    if save:
+        title += ".pdf"
+        if not os.path.isdir(dir_res):
+            os.makedirs(dir_res)
+        fig.savefig(os.path.join(dir_res, title), dpi = 300)
+
+def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
+    factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
+        
+    columns = 10
+    if "droplet2d" in dataset:
+        columns = 15
+    elif dataset == "lbs2d":
+        columns = 10 
+    rows = 3
+    skip = 1
+    data_to_vis = flow_gt
+    index = 0
+    shift = 1
+
+    if "lbs2d" in dataset:
+        quiver_steps = 4
+        max_flow_gt = flow_gt.max()
+        max_flow_pred = 0.5
+        scale = None
+
+    flow_u_gt = flow_gt[:, 0, ...]
+    flow_v_gt = flow_gt[:, 1, ...]
+    flow_u = flow_pred[:, 0, ...]
+    flow_v = flow_pred[:, 1, ...]
+
+    # wspace is x; hspace is y
+    fig, axs = plt.subplots(nrows=rows, ncols=columns, figsize=(30, 3), gridspec_kw={'hspace': -0.41, 'wspace': 0.01})
+
+    # TODO: fix timesteps, t
+
+    for i in range(columns):
+        # First row: original flow
+        ax = axs[0][i]
+        u_gt = flow_u_gt[round(index)]
+        v_gt = flow_v_gt[round(index)]
+        norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
+        img = np.zeros((flow_u_gt.shape[1], flow_u_gt.shape[2]))
+        plt.axis('off')
+        pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
+        ax_title = "t=" + str(index + shift + 3000 + 1605)
+        ax.set_title(ax_title, fontsize=20)
+        ax.axis('off')
+
+        # Second row: predicted flow
+        ax = axs[1][i]
+        u = flow_u[round(index)]
+        v = flow_v[round(index)]
+        norm = np.sqrt(u * u + v * v)
+        img = np.zeros((flow_u.shape[1], flow_u.shape[2]))
+        plt.axis('off')
+        pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
+        ax.axis('off')
+
+        # Third row: difference flow
+        ax = axs[2][i]
+        u_diff = flow_u_diff[round(index)]
+        v_diff = flow_v_diff[round(index)]
+        norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff)
+        img = np.zeros((flow_u.shape[1], flow_u.shape[2]))
+        plt.axis('off')
+        pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap='turbo', scale = scale, bg_cmap='gray', step=quiver_steps)
+        ax.axis('off')
+
+        index += skip
+        shift += 2 # we have only GT here
+        if round(index) == round(columns * skip):
+            index = 0
+
+    normalizer=Normalize(vmin=0., vmax=max_flow_gt)
+    im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
+    if "lbs2d" in dataset:
+        cb_ax = fig.add_axes([0.91, 0.18, 0.005, 0.62])
+    elif "rectangle2d" in dataset:
+        cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
+    cb_ax.tick_params(labelsize=20) 
+    fmt = lambda x, pos: '{:0.2f}'.format(x)
+    bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
+    plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+
+    if show:
+        plt.show() 
+    if save:
+        title += ".pdf"
+        if not os.path.isdir(dir_res):
+            os.makedirs(dir_res)
+        fig.savefig(os.path.join(dir_res, title), dpi = 300)
+
 def visualize_large(original_data, interpol_data, diffs,
         flow, flow_gt, diffs_flow, flow_u_diff, flow_v_diff, mask,
         factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
@@ -200,7 +442,7 @@ def visualize_large(original_data, interpol_data, diffs,
     if "droplet2d" in dataset or "FluidSimML2d" in dataset or "rectangle2d" in dataset:
         columns = 24
     elif dataset == "lbs2d":
-        columns = 30
+        columns = 9 # 30
     elif "pipedcylinder2d" in dataset or "cylinder2d" in dataset:
         columns = 20
     elif dataset == "vimeo2d":
@@ -253,11 +495,14 @@ def visualize_large(original_data, interpol_data, diffs,
         # max_flow_diff = ?
         scale = 1.
         # clim=(0, max_flow_gt)
+        vmin=data_to_vis.min()
     elif "lbs2d" in dataset:
         quiver_steps = 4
         max_flow_gt = flow_gt.max() # None # 0.1
         max_flow_pred = 0.5
         scale = None
+        vmin = 95 # 100
+        print("vis range:", vmin, data_to_vis.max())
     # input("norm")
 
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
@@ -276,10 +521,10 @@ def visualize_large(original_data, interpol_data, diffs,
         if int((i-1)/columns) == 0: # gt
             img = original_data[round(index)]
             if dataset == "lbs2d":
-                plt.imshow(img, vmin=0.85, vmax=data_to_vis.max(), cmap='turbo')
+                plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
                 # plt.imshow(img, vmin=original_data.std()-original_data.mean(), vmax=data_to_vis.max())
             else:
-                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
             # print("original_data:", original_data[round(index)])
             # if index % 3 == 0:
             #     ax.set_title('t=0') # can we help model with info of seq?
@@ -287,34 +532,34 @@ def visualize_large(original_data, interpol_data, diffs,
             #     ax.set_title('t=1')
             # else:
             #     ax.set_title('t=2')
-            ax_title = "t=" + str(index)
+            ax_title = "t=" + str(index + 3000 + 1605)
             if index % 3 == 1:
                 ax_title += "*"
-            ax.set_title(ax_title, fontsize=8)
-        if int((i-1)/columns) == 1 and round(index - 1) % 3 == 0: # interpol
+            ax.set_title(ax_title, fontsize=10)
+        if int((i-1)/columns) == 1 and round(index - 1) % 2 == 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
-            img = interpol_data[round((index - 1) / 3)] # [index-columns*2,...] # (index - 1) % 3
+            img = interpol_data[round((index - 1) / 2)] # [index-columns*2,...] # (index - 1) % 3
             if dataset == "lbs2d":
-                plt.imshow(img, vmin=0.85, vmax=data_to_vis.max(), cmap='turbo')
+                plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
                 # plt.imshow(img, vmin=interpol_data.std()-interpol_data.mean(), vmax=data_to_vis.max())
             else:
-                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
+                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
             # print("index:", index)
             # print("(index - 1) % 3:", (index - 1) / 3)
 
-        if int((i-1)/columns) == 2 and round(index - 1) % 3 == 0: # diff
+        if int((i-1)/columns) == 2 and round(index - 1) % 2 == 0: # diff
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
-            img = diffs[round((index - 1) / 3)] # [index-columns*2*2,...]
+            img = diffs[round((index - 1) / 2)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
-        if int((i-1)/columns) == 3 and round(index - 1) % 3 == 0: # mask
+        if int((i-1)/columns) == 3 and round(index - 1) % 2 == 0: # mask
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
-            img = mask[round((index - 1) / 3)] # [index-columns*2*2,...]
+            img = mask[round((index - 1) / 2)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=mask.min(), vmax=mask.max(), cmap='turbo')
 
         # if int((i-1)/columns) == 6: # flow diff
         #     img = diffs_flow[round(index)] # [index-columns*2*2,...]
         #     plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
-        if int((i-1)/columns) == 4 and round(index - 1) % 3 == 0: # flow gt
+        if int((i-1)/columns) == 4 and round(index - 1) % 2 == 0: # flow gt
             if dataset == "vimeo2d" or dataset == "droplet2d": # show pred flow in hsv-rgb instead of gt
                 hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
                 hsv[:,:,1] = 255
@@ -328,8 +573,8 @@ def visualize_large(original_data, interpol_data, diffs,
                 # plt.imshow(bgr, vmin=data_to_vis.min(), vmax=data_to_vis.max())
                 plt.imshow(bgr)
             else:
-                u_gt = flow_u_gt[round((index - 1) / 3)]
-                v_gt = flow_v_gt[round((index - 1) / 3)]
+                u_gt = flow_u_gt[round((index - 1) / 2)]
+                v_gt = flow_v_gt[round((index - 1) / 2)]
                 norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt) # / norm_coeff
                 # print(norm_gt.mean())
                 # img = original_data[round(index)] # [index-columns*2*2*2]
@@ -367,9 +612,9 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print(data_range)
                 if round(index) >= data_range:
                     break
-        if int((i-1)/columns) == 5 and round(index - 1) % 3 == 0: # flow pred; only for interpolated!
-            u = flow_u[round((index - 1) / 3)]
-            v = flow_v[round((index - 1) / 3)]
+        if int((i-1)/columns) == 5 and round(index - 1) % 2 == 0: # flow pred; only for interpolated!
+            u = flow_u[round((index - 1) / 2)]
+            v = flow_v[round((index - 1) / 2)]
             norm = np.sqrt(u * u + v * v) # / norm_coeff
             # print(norm.mean())
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
@@ -406,9 +651,9 @@ def visualize_large(original_data, interpol_data, diffs,
             # print(data_range)
             if round(index) >= data_range:
                 break
-        if int((i-1)/columns) == 6 and round(index - 1) % 3 == 0: # flow diff vec
-            u_diff = flow_u_diff[round((index - 1) / 3)]
-            v_diff = flow_v_diff[round((index - 1) / 3)]
+        if int((i-1)/columns) == 6 and round(index - 1) % 2 == 0: # flow diff vec
+            u_diff = flow_u_diff[round((index - 1) / 2)]
+            v_diff = flow_v_diff[round((index - 1) / 2)]
             norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff) # / norm_coeff
             # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
             # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
@@ -426,17 +671,17 @@ def visualize_large(original_data, interpol_data, diffs,
             if round(index) >= data_range:
                 break
 
-        if dataset != "vimeo2d":
-            # if round(index) % factor == 0 and int((i-1)/columns) == 0:
-            if round(index - 1) % 3 == 0:
-                # add bb to the gt image
-                width = data_to_vis.shape[2]
-                height = data_to_vis.shape[1]
-                linewidth = 0.5
-                # if "cylinder2d" in dataset:
-                #     linewidth = 1
-                rect = patches.Rectangle((0, 0), width-linewidth, height-linewidth, linewidth=linewidth, edgecolor='r', facecolor='none')
-                ax.add_patch(rect)
+        # if dataset != "vimeo2d":
+        #     # if round(index) % factor == 0 and int((i-1)/columns) == 0:
+        #     if round(index - 1) % 3 == 0:
+        #         # add bb to the gt image
+        #         width = data_to_vis.shape[2]
+        #         height = data_to_vis.shape[1]
+        #         linewidth = 0.5
+        #         # if "cylinder2d" in dataset:
+        #         #     linewidth = 1
+        #         rect = patches.Rectangle((0, 0), width-linewidth, height-linewidth, linewidth=linewidth, edgecolor='r', facecolor='none')
+        #         ax.add_patch(rect)
 
         plt.axis('off')
         cmap='viridis'
@@ -456,22 +701,33 @@ def visualize_large(original_data, interpol_data, diffs,
 
     # each image has a different vmin and vmax
     # cmap=cm.get_cmap('viridis')
-    normalizer=Normalize(vmin=0.85, vmax=data_to_vis.max())
+    # colorbar for density
+    normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
     im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
-    cb_ax = fig.add_axes([0.91, 0.5, 0.005, 0.3])
+    if "lbs2d" in dataset:
+        # cb_ax = fig.add_axes([0.91, 0.5, 0.005, 0.3])
+        cb_ax = fig.add_axes([0.82, 0.5, 0.005, 0.35])
+    elif "rectangle2d" in dataset:
+        cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
     # cb.ax.tick_params(labelsize=font_size)
-    fmt = lambda x, pos: '{:0.2f}'.format(x)
-    bar = np.linspace(0.85, data_to_vis.max(), 5, endpoint=True)
+    fmt = lambda x, pos: '{:0.1f}'.format(x)
+    bar = np.linspace(vmin, data_to_vis.max(), 5, endpoint=True)
     plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+    # colorbar for flow
     normalizer=Normalize(vmin=0., vmax=max_flow_gt)
     im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
-    cb_ax = fig.add_axes([0.91, 0.2, 0.005, 0.25])
-    bar = np.linspace(0., max_flow_gt, 5, endpoint=True)
+    if "lbs2d" in dataset:
+        # cb_ax = fig.add_axes([0.91, 0.2, 0.005, 0.25])
+        cb_ax = fig.add_axes([0.82, 0.15, 0.005, 0.25])
+    elif "rectangle2d" in dataset:
+        cb_ax = fig.add_axes([0.75, 0.12, 0.005, 0.3])
+    bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
+    fmt = lambda x, pos: '{:0.2f}'.format(x)
     plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
 
     fig = plt.gcf()
     suptitle = dataset + "_" + str(factor) + "x"
-    plt.suptitle(suptitle) 
+    # plt.suptitle(suptitle) 
     # print(matplotlib.get_backend())
     fig.set_size_inches(20, 3)
     # wspace is x; hspace is y 
@@ -498,26 +754,30 @@ def visualize_large(original_data, interpol_data, diffs,
         y = 0.8
         step = (y - 0.15) / 6.
     elif "lbs2d" in dataset:
-        plt.subplots_adjust(wspace=0.01, hspace=-0.75) # hspace=-0.9
-        x = 0.075
-        y = 0.7
-        step = (y - 0.25) / 6.
+        # plt.subplots_adjust(wspace=0.01, hspace=-0.75) # hspace=-0.9
+        plt.subplots_adjust(wspace=-0.73, hspace=0.02)
+        # x = 0.075
+        # y = 0.7
+        # step = (y - 0.25) / 6.
+        x = 0.16
+        y = 0.8
+        step = (y - 0.15) / 6.
     elif "vimeo2d" in dataset:
         plt.subplots_adjust(wspace=0.01, hspace=0.01)
         x = 0.075
         y = 0.8
         step = (y - 0.15) / 6.
 
-    fig.text(x, y, 'GT', size=12)
-    fig.text(x, y - step, 'Interpol', size=12)
-    fig.text(x, y - step*2, 'Diff', size=12)
-    fig.text(x, y - step*3, 'Mask', size=12)
+    fig.text(x, y, 'Dens GT', size=13)
+    fig.text(x, y - step, 'Dens pred', size=13)
+    fig.text(x, y - step*2, 'Dens diff', size=13)
+    fig.text(x, y - step*3, 'Dens mask', size=13)
     if "droplet2d" in dataset or "vimeo2d" in dataset:
-        fig.text(x, y - step*4, 'Flow pred HSV', size=12)
+        fig.text(x, y - step*4, 'Flow pred HSV', size=13)
     else:
-        fig.text(x, y - step*4, 'Flow GT', size=12)
-    fig.text(x, y - step*5, 'Flow pred', size=12)
-    fig.text(x, y - step*6, 'Flow diff', size=12)
+        fig.text(x, y - step*4, 'Flow GT', size=13)
+    fig.text(x, y - step*5, 'Flow pred', size=13)
+    fig.text(x, y - step*6, 'Flow diff', size=13)
 
     if show:
         plt.show() 

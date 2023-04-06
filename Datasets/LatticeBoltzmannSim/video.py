@@ -23,7 +23,10 @@ def load_images_from_folder(folder):
 			# print("x")
 	return images
 
-images = load_images_from_folder("video")
+# images = load_images_from_folder("video")
+images = load_images_from_folder("video_3_dens100_c1_t06")
+# images = load_images_from_folder("video_3_dens100_c3_t06")
+# images = load_images_from_folder("video_3_dens100_c1_t064")
 print(len(images))
 images = np.array(images)
 print(images.shape)
@@ -32,8 +35,9 @@ print(images.shape)
 _, height, width, layers = images.shape
 size = (width,height)
 
-video_name = "LBS_Vorticity_Density_Velocity" + "_10fps.mp4"
-fps = 10
+# video_name = "LBS_Vorticity_Density_Velocity" + "_10fps.mp4"
+video_name = "LBS_Vorticity_Density_Velocity" + "_20fps_3_dens100_c1_t06.mp4"
+fps = 20
 # sizeY = 480
 # sizeX = 640
 out = cv2.VideoWriter(video_name, cv2.VideoWriter_fourcc(*'mp4v'), fps, size)

@@ -33,6 +33,7 @@ version = 1
 five_blocks = False
 blocks_range = 3 if not five_blocks else 5
 refine = False # True
+use_deconv = False # True
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -55,15 +56,16 @@ class IFBlock(nn.Module):
                 conv(c, c),
                 conv(c, c),
             )
-            # self.lastconv = nn.ConvTranspose2d(c, 5, 4, 2, 1)
-            # # add deconv instead of interpolate
-            # self.lastconv = nn.ConvTranspose2d(c, 5, 4, 2, 1)
-            self.deconvblock = nn.Sequential(
-                deconv(c, c//2, 4, 2, 1),
-                deconv(c//2, 5, 4, 2, 1),
-                # deconv(c, c//2, 5, 2, 2),
-                # deconv(c//2, 5, 5, 2, 2),
-            )
+            if use_deconv == False:
+                self.lastconv = nn.ConvTranspose2d(c, 5, 4, 2, 1)
+            else:
+                # add deconv instead of interpolate
+                self.deconvblock = nn.Sequential(
+                    deconv(c, c//2, 4, 2, 1),
+                    deconv(c//2, 5, 4, 2, 1),
+                    # deconv(c, c//2, 5, 2, 2),
+                    # deconv(c//2, 5, 5, 2, 2),
+                )
         if version == 2:
             self.convblock0 = nn.Sequential(
                 conv(c, c),
@@ -119,14 +121,16 @@ class IFBlock(nn.Module):
             x = self.convblock(x) + x # according to ECCV version, for shortcut
             # print("convblock + x:", x.shape)
             # input("x")
-            # tmp = self.lastconv(x) # ConvTranspose2d
-            # print("lastconv:", tmp.shape)
-            tmp = self.deconvblock(x)
-            # print("deconvblock:", tmp.shape)
-            # tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="bilinear", align_corners=False) # this is replaced by deconv
-            # print("interpolate:", tmp.shape)
-            # input("x")
-            flow = tmp[:, :4] * scale # * 2 # ???
+            if use_deconv == False:
+                tmp = self.lastconv(x) # ConvTranspose2d -> orig
+                # print("lastconv:", tmp.shape)
+                tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="bilinear", align_corners=False) # this is replaced by deconv
+                # print("interpolate:", tmp.shape)
+                # input("x")
+            else:
+                tmp = self.deconvblock(x) # added
+                # print("deconvblock:", tmp.shape)
+            flow = tmp[:, :4] # * scale * 2 # ??? -> orig
             mask = tmp[:, 4:5]
         if version == 2:
             x = self.convblock0(x) + x
@@ -159,11 +163,11 @@ class IFNet(nn.Module):
         self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
 
         if five_blocks:
-            self.block0 = IFBlock(2, c=256) # 128
-            self.block1 = IFBlock(5+4, c=192) # 96
-            self.block2 = IFBlock(5+4, c=192) # 96
-            self.block3 = IFBlock(5+4, c=128) # 64
-            self.block4 = IFBlock(5+4, c=128) # 64
+            self.block0 = IFBlock(2, c=256) # 128 256
+            self.block1 = IFBlock(5+4, c=192) # 96 192
+            self.block2 = IFBlock(5+4, c=192) # 96 192
+            self.block3 = IFBlock(5+4, c=128) # 64 128
+            self.block4 = IFBlock(5+4, c=128) # 64 128
 
         self.block_tea = IFBlock(6+4, c=128) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64 128
         # modified
@@ -171,7 +175,9 @@ class IFNet(nn.Module):
             self.contextnet = Contextnet()
             self.unet = Unet()
 
-    def forward(self, x, gt_flow, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
+    # @torch.cuda.amp.autocast(True)
+    # def forward(self, x, gt_flow, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
+    def forward(self, x, scale=[4, 2, 1], timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
         img0 = x[:, :1] # :3
         img1 = x[:, 1:2] # 3:6
         gt = x[:, 2:3] # 6:   In inference time, gt is None
