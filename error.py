@@ -77,10 +77,10 @@ def calculate_ssim(img1, img2):
     
 def calculate_epe(flow_gt, flow_pred):
     # return torch.norm(flow_pred - flow_gt, p=2, dim=1).mean()
-    print("epe:", np.linalg.norm(flow_pred - flow_gt))
-    print("epe mean 0:", np.linalg.norm(flow_pred - flow_gt, axis=0).mean())
-    print("epe mean 1:", np.linalg.norm(flow_pred - flow_gt, axis=1).mean())
-    return np.linalg.norm(flow_pred - flow_gt, axis=0).mean()
+    error = np.sqrt(np.sum((flow_pred - flow_gt) ** 2, axis=1))
+    mean_error = np.mean(error)
+    print('Mean endpoint error: {:.3f}'.format(mean_error))
+    return mean_error
 
 def calculate_metrics(original_data, interpol_data, factor):
 

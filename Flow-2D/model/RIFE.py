@@ -64,7 +64,7 @@ class Model(nn.Module):
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
+    def inference(self, img0, img1, gt_flow, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
@@ -138,7 +138,7 @@ class Model(nn.Module):
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         mask = mask[2] # only gt (pred) durig training
         # correct shapes

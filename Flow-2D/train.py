@@ -299,8 +299,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # input("x")
         print("Saving at:", dir_model)
         # data = data_train
-        scale_list = [4, 2, 1]
-        # scale_list = [1, 1, 1]
+        # scale_list = [4, 2, 1]
+        scale_list = [1, 1, 1]
         # print(data.shape)
         # input("x")
         # for i in range(0, data.shape[0], 2):
@@ -959,7 +959,7 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_noAMP32_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # +
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble16_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_500ep_ensemble16.pkl" # no better ?
-    # model_name = "flownet_lapl_v1_240_lbs_skip3_combi_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow
+    # model_name = "flownet_lapl_v1_240_lbs_skip3_combi_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.06
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_500ep.pkl" # flow worse than best, separate member?
     # test set only parts of members?
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens5_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # not yet close to best...
@@ -974,9 +974,15 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl"
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # train on all data:
     """
-    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # yes!
-    # 3rdShift - that is important!
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_3rdShift_ScaleAllVel10_gamma_RIFE_lr6e-4.pkl"
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # yes! best.
+    # 3rdShift - that is important! DensNorm - this too!
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_3rdShift_ScaleAllVel10_gamma_RIFE_lr6e-4.pkl" # flow error much higher
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rdShift_ScaleAllVel10_gamma_RIFE_lr6e-4.pkl" # flow error higher than best
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rdShift_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # flow error higher than best
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rd5thShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best?
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best
+    # flow improves with larger ensemble; TODO: run experiment with 30 members on Habrok
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1160,6 +1166,17 @@ if __name__ == "__main__":
             # print("Vel log denormalized")
             # print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
 
+            print("original data is in range %f to %f" % (np.min(original_data_gt), np.max(original_data_gt)))
+            print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
+
+            # data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std() # it is important!
+            # original_data = original_data * statistics['dens_std']
+            # original_data = original_data + statistics['dens_mean']
+            # original_data_gt = original_data_gt * statistics['dens_std']
+            # original_data_gt = original_data_gt + statistics['dens_mean']
+            # interpol_data = interpol_data * statistics['dens_std']
+            # interpol_data = interpol_data + statistics['dens_mean']
+
             # original_data = cv2.normalize(original_data, original_data, 0., statistics['dens_max'], cv2.NORM_MINMAX)
             # interpol_data = cv2.normalize(interpol_data, interpol_data, 0., statistics['dens_max'], cv2.NORM_MINMAX)
             original_data = original_data * statistics['dens_max'] 
@@ -1278,6 +1295,7 @@ if __name__ == "__main__":
         # visualize_ind(flow[0], dir_model, title=title, show=False, save=True)
 
         # EPE metric:
+        print(flow_gt.shape, flow.shape)
         epe_score = calculate_epe(flow_gt, flow)
         epe_file_name = 'EPE.txt'
         epe_path = os.path.join(dir_model, epe_file_name)

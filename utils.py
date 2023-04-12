@@ -287,7 +287,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
     shift = 1
 
     if "lbs2d" in dataset:
-        vmin = 95
+        vmin = 50 # 95
         print("vis range:", vmin, data_to_vis.max())
 
     # wspace is x; hspace is y
@@ -323,7 +323,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         ax.axis('off')
 
         index += skip
-        shift += 2 # we have only GT here
+        shift += 1 # we have only GT here
         if round(index) == round(columns * skip):
             index = 0
 
@@ -410,7 +410,7 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         ax.axis('off')
 
         index += skip
-        shift += 2 # we have only GT here
+        shift += 1 # we have only GT here
         if round(index) == round(columns * skip):
             index = 0
 
@@ -501,7 +501,7 @@ def visualize_large(original_data, interpol_data, diffs,
         max_flow_gt = flow_gt.max() # None # 0.1
         max_flow_pred = 0.5
         scale = None
-        vmin = 95 # 100
+        vmin = 50 # 95 # 100
         print("vis range:", vmin, data_to_vis.max())
     # input("norm")
 
@@ -533,7 +533,7 @@ def visualize_large(original_data, interpol_data, diffs,
             # else:
             #     ax.set_title('t=2')
             ax_title = "t=" + str(index + 3000 + 1605)
-            if index % 3 == 1:
+            if index % 2 == 1: # if index % 3 == 1:
                 ax_title += "*"
             ax.set_title(ax_title, fontsize=10)
         if int((i-1)/columns) == 1 and round(index - 1) % 2 == 0: # interpol

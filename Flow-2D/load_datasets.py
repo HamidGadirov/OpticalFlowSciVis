@@ -71,8 +71,10 @@ def load_data(dataset, exp, mode):
             # filename += "LatticeBoltzmannSim/lbs2d_skip5.pkl"
             # filename += "LatticeBoltzmannSim/lbs2d_skip5_11K.pkl"
             # filename += "LatticeBoltzmannSim/lbs2d_skip3_combi.pkl"
-            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_combi_cyl_tau.pkl" 
+            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_combi_cyl_tau.pkl"
             filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ens7.pkl"
+            filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble10.pkl"
+            # TODO: mwhy dense range affected flow???
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble16m_f32.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_Cy1r1t1.pkl"
@@ -115,6 +117,7 @@ def load_data(dataset, exp, mode):
             with open(filename, 'rb') as pkl_file:
                 data = pickle.load(pkl_file)
             print(data.shape)
+            # 3rdShift and DensNorm important for this dataset!
             # data = data[18000:21000]
             # data = np.float32(data)
             # data = np.float16(data)
@@ -132,7 +135,7 @@ def load_data(dataset, exp, mode):
             dens_mean = 0. # data[:, 0].mean()
             dens_std = 0. # data[:, 0].std()
             # input("x")
-            # data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std() # is it important?
+            data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std() # it is important!
 
             # data = data * 255.0
             # data = data.astype(int)
@@ -264,7 +267,7 @@ def load_data(dataset, exp, mode):
                 data_val = data[2370:2685] # div to 3, 5, 9 and 7
             if "lbs2d" in filename:
 
-                # data_train = data
+                # # data_train = data
                 # data_train = data[:1500]
                 # data_train = np.append(data_train, data[1710:4500], axis=0)
                 # data_train = np.append(data_train, data[4710:7500], axis=0)
@@ -273,11 +276,18 @@ def load_data(dataset, exp, mode):
                 # data_train = np.append(data_train, data[10710:13500], axis=0)
                 # data_train = np.append(data_train, data[13710:], axis=0) # 13950 in total
 
+                # """
+                # ens10
+                data_train = data[:3000]
+                data_train = np.append(data_train, data[6000:9000], axis=0)
+                data_train = np.append(data_train, data[12000:], axis=0)
+                # """
+
                 # data_train = data[:18000]
                 # data_train = np.append(data_train, data[21000:30000], axis=0)
                 # data_train = np.append(data_train, data[33000:48000], axis=0)
          
-                data_train = data[3000:18000]
+                # data_train = data[3000:18000] # ens7
                 # data_train = np.append(data_train, data[21000:30000], axis=0)
                 # data_train = np.append(data_train, data[33000:48000], axis=0)
 
@@ -297,7 +307,8 @@ def load_data(dataset, exp, mode):
                 # data_val = np.append(data_val, data[13500:13605], axis=0)
 
                 # data_val = data[30000:33000]
-                data_val = data[18000:21000]
+                # data_val = data[18000:21000] # ens7
+                data_val = data[3000:6000] # ens10
 
                 # data_val = data[3000:3210]
                 # data_val = np.append(data_val, data[5000:5210], axis=0)
@@ -346,6 +357,29 @@ def load_data(dataset, exp, mode):
                 data_val = np.asarray(data_val)
                 print(data_train.shape)
                 print(data_val.shape)
+                print(len(data_train_))
+                # input("x")
+
+                # print("use 5th while shifting the sampling")
+                # data_train_5 = []
+                # data_val_5 = []
+                # for shift in range(5):
+                #     for i in range(shift, data_train.shape[0], 5): # 10
+                #         data_train_5.append(data_train[i])
+                #     for i in range(shift, data_val.shape[0], 5): 
+                #         data_val_5.append(data_val[i])
+                # append 3rd and 5th
+                # data_train = data_train_
+                # print("3rd:", len(data_train))
+                # data_train.extend(data_train_5)
+                # print("5th:", len(data_train_5))
+                # print("3rd + 5th:", len(data_train))
+                # data_val = data_val_
+                # data_val.extend(data_val_5)
+                # data_train = np.asarray(data_train)
+                # data_val = np.asarray(data_val)
+                # print(data_train.shape)
+                # print(data_val.shape)
                 # input("x")
 
             print(data_train.shape) # (2205, 1, 3, 128, 128)
@@ -509,9 +543,13 @@ def load_data(dataset, exp, mode):
                 # data_test = np.append(data_test, data[2605:2710], axis=0) # 315 in total 
                 # data_test = data[2605:2695] # viz last subset
                 # data_test = data[1605:1710]
-                data_test = data[1605:1905]
+                # data_test = data[:3000] # ens7
+                data_test = data[9000:12000] # ens10
+                # data_test = data[1605:1905]
                 # data_test = data[4605:4710]
                 # data_test = data[1000:1300]
+                # data_test = data[10605:10710]
+                # data_test = data[10605:12000]
 
                 # data_test = data[30100:30400] # data[30000:33000] # data[18000:21000]
                 # data_test = data[40100:40400]

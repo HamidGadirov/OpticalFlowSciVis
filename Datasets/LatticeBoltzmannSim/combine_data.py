@@ -19,16 +19,17 @@ def load_files_from_folder(folder):
 	for filename in os.listdir(folder):
 		# print(filename)
 		if filename.endswith(".pkl"):
-			if filename == "lbs2d_skip3_Cy1r1t1.pkl":
-				# if filename != "lbs2d_skip3_ensemble20" + ".pkl" and filename != "lbs2d_skip3_ensemble21" + ".pkl":
-				filenames.append(filename)
+			# if filename == "lbs2d_skip3_Cy1r1t1.pkl":
+			# if filename != "lbs2d_skip3_ensemble20" + ".pkl" and filename != "lbs2d_skip3_ensemble21" + ".pkl":
+			filenames.append(filename)
 
 	# filenames.sort()
 	print("len", len(filenames))
 
 	return filenames
-"""
-filenames = load_files_from_folder(".")
+# """
+# filenames = load_files_from_folder(".")
+filenames = load_files_from_folder("ensemble10")
 
 data = []
 dir_model = "./Distributions"
@@ -42,9 +43,9 @@ for filename in filenames:
 		data.extend(data_x[:3000])
 		data_x = np.array(data_x)
 		print(pkl_filename)
-		# print("Density range %f to %f" % (np.min(data_x[:, 0]), np.max(data_x[:, 0])))
-		# print("Vel x range %f to %f" % (np.min(data_x[:, 1]), np.max(data_x[:, 1])))
-		# print("Vel y range %f to %f" % (np.min(data_x[:, 2]), np.max(data_x[:, 2])))
+		print("Density range %f to %f" % (np.min(data_x[:, 0]), np.max(data_x[:, 0])))
+		print("Vel x range %f to %f" % (np.min(data_x[:, 1]), np.max(data_x[:, 1])))
+		print("Vel y range %f to %f" % (np.min(data_x[:, 2]), np.max(data_x[:, 2])))
 		# plot_distribution(data_x[:, 1], dir_model, name=pkl_filename[:-4]+"_dist_flow_x.png", save=True)
 		# plot_distribution(data_x[:, 2], dir_model, name=pkl_filename[:-4]+"_dist_flow_y.png", save=True)
 		print(len(data))
@@ -56,40 +57,49 @@ data = np.array(data)
 print(data.shape)
 # input("x")
 
-pkl_filename = "lbs2d_skip3_ensemble16m_f32" + ".pkl" 
+# pkl_filename = "lbs2d_skip3_ensemble16m_f32" + ".pkl" 
+pkl_filename = "lbs2d_skip3_ensemble10" + ".pkl" 
 pkl_file = open(pkl_filename, 'wb')
 pickle.dump(data, pkl_file, protocol=4)
 pkl_file.close
 print("Pkl file created")
-"""
+input("x")
+# """
 
 data = []
 
+"""
 pkl_filename = "lbs2d_skip3_1" + ".pkl" 
 pkl_file = open(pkl_filename, 'rb')
 data_1 = pickle.load(pkl_file)
 pkl_file.close
 print(data_1.shape)
+print("Density range %f to %f" % (np.min(data_1[:, 0]), np.max(data_1[:, 0])))
 pkl_filename = "lbs2d_skip3_2" + ".pkl" 
 pkl_file = open(pkl_filename, 'rb')
 data_2 = pickle.load(pkl_file)
 pkl_file.close
 print(data_2.shape)
+print("Density range %f to %f" % (np.min(data_2[:, 0]), np.max(data_2[:, 0])))
 pkl_filename = "lbs2d_skip3_3" + ".pkl" 
 pkl_file = open(pkl_filename, 'rb')
 data_3 = pickle.load(pkl_file)
 pkl_file.close
 print(data_3.shape)
-pkl_filename = "lbs2d_skip3_Cy1r1t2" + ".pkl" 
+print("Density range %f to %f" % (np.min(data_3[:, 0]), np.max(data_3[:, 0])))
+pkl_filename = "lbs2d_skip3_Cy1r1t2" + ".pkl"
 pkl_file = open(pkl_filename, 'rb')
 data_4 = pickle.load(pkl_file)
+print("Density range %f to %f" % (np.min(data_4[:, 0]), np.max(data_4[:, 0])))
 pkl_file.close
 pkl_filename = "lbs2d_skip3_Cy1r1t3" + ".pkl" 
 pkl_file = open(pkl_filename, 'rb')
 data_5 = pickle.load(pkl_file)
+print("Density range %f to %f" % (np.min(data_5[:, 0]), np.max(data_5[:, 0])))
 pkl_file.close
-
 """
+
+# """
 pkl_filename = "lbs2d_skip3_Cy1r1t1" + ".pkl" 
 pkl_file = open(pkl_filename, 'rb')
 data_1 = pickle.load(pkl_file)
@@ -143,14 +153,16 @@ pkl_file = open(pkl_filename, 'rb')
 data_7 = pickle.load(pkl_file)
 pkl_file.close
 print(data_7.shape)
-"""
+# """
 
 data = np.concatenate((data_1[:3000], data_2[:3000]), axis=0)
 data = np.concatenate((data, data_3[:3000]), axis=0)
 data = np.concatenate((data, data_4[:3000]), axis=0)
 data = np.concatenate((data, data_5[:3000]), axis=0)
-# data = np.concatenate((data, data_6[:3000]), axis=0)
-# data = np.concatenate((data, data_7[:3000]), axis=0)
+data = np.concatenate((data, data_6[:3000]), axis=0)
+data = np.concatenate((data, data_7[:3000]), axis=0)
+print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+input("x")
 
 print(len(data))
 pkl_filename = "lbs2d_skip3_combi_cyl_tau" + ".pkl" 
