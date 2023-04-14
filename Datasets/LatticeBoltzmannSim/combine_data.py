@@ -55,7 +55,7 @@ data = np.array(data)
 # data = np.float16(data)
 # print("Converted to float16")
 print(data.shape)
-# input("x")
+input("x")
 
 # pkl_filename = "lbs2d_skip3_ensemble16m_f32" + ".pkl" 
 pkl_filename = "lbs2d_skip3_ensemble10" + ".pkl" 

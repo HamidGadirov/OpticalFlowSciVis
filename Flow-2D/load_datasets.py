@@ -72,7 +72,7 @@ def load_data(dataset, exp, mode):
             # filename += "LatticeBoltzmannSim/lbs2d_skip5_11K.pkl"
             # filename += "LatticeBoltzmannSim/lbs2d_skip3_combi.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_combi_cyl_tau.pkl"
-            filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ens7.pkl"
+            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ens7.pkl"
             filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble10.pkl"
             # TODO: mwhy dense range affected flow???
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21.pkl"
@@ -136,6 +136,7 @@ def load_data(dataset, exp, mode):
             dens_std = 0. # data[:, 0].std()
             # input("x")
             data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std() # it is important!
+            print("Density normalized to 0 mean and 1 variance!")
 
             # data = data * 255.0
             # data = data.astype(int)
@@ -279,13 +280,16 @@ def load_data(dataset, exp, mode):
                 # """
                 # ens10
                 data_train = data[:3000]
-                data_train = np.append(data_train, data[6000:9000], axis=0)
-                data_train = np.append(data_train, data[12000:], axis=0)
+                data_train = np.append(data_train, data[6000:15000], axis=0)
+                data_train = np.append(data_train, data[18000:], axis=0)
                 # """
 
-                # data_train = data[:18000]
-                # data_train = np.append(data_train, data[21000:30000], axis=0)
-                # data_train = np.append(data_train, data[33000:48000], axis=0)
+                """
+                # ens16
+                data_train = data[:18000]
+                data_train = np.append(data_train, data[21000:30000], axis=0)
+                data_train = np.append(data_train, data[33000:48000], axis=0)
+                """
          
                 # data_train = data[3000:18000] # ens7
                 # data_train = np.append(data_train, data[21000:30000], axis=0)
@@ -306,7 +310,7 @@ def load_data(dataset, exp, mode):
                 # data_val = np.append(data_val, data[10500:10605], axis=0)
                 # data_val = np.append(data_val, data[13500:13605], axis=0)
 
-                # data_val = data[30000:33000]
+                # data_val = data[30000:33000] # ens16
                 # data_val = data[18000:21000] # ens7
                 data_val = data[3000:6000] # ens10
 
@@ -359,6 +363,7 @@ def load_data(dataset, exp, mode):
                 print(data_val.shape)
                 print(len(data_train_))
                 # input("x")
+                del data_train_, data_val_
 
                 # print("use 5th while shifting the sampling")
                 # data_train_5 = []
@@ -450,19 +455,30 @@ def load_data(dataset, exp, mode):
                 else:
                     # prepare img0, gt, img1 (2x interpolation)
                     print("prepare img0, gt, img1 (2x interpolation)")
-                    # TODO: shift by 2 each iter
-                    for i in range(0, data_train.shape[0], 2): 
-                        try:
-                            data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
-                        except:
-                            print("done")
+                    # TODO: shift by 2 each iter +
+                    # for i in range(0, data_train.shape[0], 2): 
+                    #     try:
+                    #         data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
+                    #     except:
+                    #         print("data_train_three ready")
+                    # data_train = np.array(data_train_three)
+                    # print("data_train in three:", data_train.shape)
+                    # for i in range(0, data_val.shape[0], 2): 
+                    #     try:
+                    #         data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
+                    #     except:
+                    #         print("data_val_three ready")
+                    # data_val = np.array(data_val_three)
+                    # print("data_val in three:", data_val.shape)
+
+                    # TODO: on the fly with less memory
+                    for i in range(0, data_train.shape[0]-2, 2):
+                        data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0))
                     data_train = np.array(data_train_three)
                     print("data_train in three:", data_train.shape)
-                    for i in range(0, data_val.shape[0], 2): 
-                        try:
-                            data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
-                        except:
-                            print("done")
+
+                    for i in range(0, data_val.shape[0]-2, 2):
+                        data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0))
                     data_val = np.array(data_val_three)
                     print("data_val in three:", data_val.shape)
 
@@ -544,14 +560,16 @@ def load_data(dataset, exp, mode):
                 # data_test = data[2605:2695] # viz last subset
                 # data_test = data[1605:1710]
                 # data_test = data[:3000] # ens7
-                data_test = data[9000:12000] # ens10
+                # data_test = data[9000:12000] # ens10
                 # data_test = data[1605:1905]
                 # data_test = data[4605:4710]
                 # data_test = data[1000:1300]
                 # data_test = data[10605:10710]
-                # data_test = data[10605:12000]
+                data_test = data[15000:18000] # ens10
+                # data_test = data[16605:18000] # ens10
+                # data_test = data[18000:21000] # ens16
 
-                # data_test = data[30100:30400] # data[30000:33000] # data[18000:21000]
+                # data_test = data[30100:30400] # data[30000:33000] 
                 # data_test = data[40100:40400]
                 # data_test = np.float32(data_test)
                 # print("Converted back to float32")

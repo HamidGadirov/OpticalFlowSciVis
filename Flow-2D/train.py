@@ -31,7 +31,7 @@ from torch.utils.data.distributed import DistributedSampler
 
 from load_datasets import load_data
 from error import calculate_diff, calculate_epe
-from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_series, visualize_series_flow, visualize_large, \
+from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_ind_flow, visualize_series, visualize_series_flow, visualize_large, \
     visualize_seq_dens, visualize_seq_flow
 
 # TODO:
@@ -163,6 +163,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     # model_name += "_" + dataset
     # model_name += ".pkl"
 
+    # model.load_model(model_name, log_path)
     try:
         model.load_model(model_name, log_path)
         # print("Loaded RIFE model:", model_name)
@@ -982,6 +983,11 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rd5thShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best?
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best
+    # model_name = "flownet_lapl_v1_240_lbs_skip3_combi_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.06
+    # model_name = "flownet_lapl_v1_240_lbs_skip3_ens10_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.12
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_100ep.pkl" # not bad, but 300ep better
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens16_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # not nenough memory
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # all time best?
     # flow improves with larger ensemble; TODO: run experiment with 30 members on Habrok
 
     """ vimeo2d """
@@ -1197,8 +1203,8 @@ if __name__ == "__main__":
         #     print("Denormalized from mean 0 and std 1!")
         #     print("Vel x mean std", flow_original[:, 1].mean(), flow_original[:, 1].std())
 
-            print("flow_gt:", flow_gt[10, 0])
-            print("flow:", flow[10, 2:3])
+            # print("flow_gt:", flow_gt[10, 0])
+            # print("flow:", flow[10, 2:3])
             # flow[0][:, 2:3]), gt_flow[:, 0])
             # # loss_flow = torch.nn.functional.l1_loss(flow_original[10, :], flow[10, :] )
             # l1_loss = abs(flow_original[10, :] - flow[10, 2:4] )
@@ -1289,10 +1295,19 @@ if __name__ == "__main__":
         plot_distribution(flow[:, 1], dir_model, name="dist_flow_pred_y.png", save=True)
 
         # visualize_ind
-        # title = "Flow_gt"
-        # visualize_ind(flow_gt[0], dir_model, title=title, show=False, save=True)
-        # title = "Flow_pred"
-        # visualize_ind(flow[0], dir_model, title=title, show=False, save=True)
+        # max_flow_gt = flow_gt.max()
+        # title = "Flow_gt_ind_0"
+        # visualize_ind_flow(flow_gt[0], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_pred_ind_0"
+        # visualize_ind_flow(flow[0], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_gt_ind_300"
+        # visualize_ind_flow(flow_gt[300], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_pred_ind_300"
+        # visualize_ind_flow(flow[300], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_gt_ind_600"
+        # visualize_ind_flow(flow_gt[600], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_pred_ind_600"
+        # visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
 
         # EPE metric:
         print(flow_gt.shape, flow.shape)

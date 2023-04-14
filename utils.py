@@ -77,17 +77,44 @@ def plot_lr(lr, dir_res, name="learning_rate.png", save=False):
         res_path = os.path.join(dir_res, name)
         fig.savefig(res_path)
 
-def visualize_ind(image, dir_res="Results", name="result.png", save=False):
+def visualize_ind(image, dir_res="Results", title="img", show=True, save=False):
     fig = plt.figure()
-    # ax = fig.gca()
+    plt.axis('off')
+
     plt.imshow(image.astype('uint8'))
     # plt.show()
+    plt.suptitle(title)
+    if show:
+        plt.show() 
     if save:
+        title += ".png"
         if not os.path.isdir(dir_res):
             os.makedirs(dir_res)
-        dir_res = os.path.join(dir_res, name)
+        dir_res = os.path.join(dir_res, title)
         fig.savefig(dir_res)
         # input("saved")
+
+def visualize_ind_flow(image, max_flow_gt, dir_res="Results", title="flow", show=True, save=False):
+    fig, ax = plt.subplots()
+    plt.axis('off')
+    scale = None
+    quiver_steps = 4
+
+    u = image[0]
+    v = image[1]
+    norm = np.sqrt(u*u + v*v)
+    img = np.zeros((image.shape[1], image.shape[2]))
+    pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
+
+    # plt.suptitle(title)
+    if show:
+        plt.show() 
+    if save:
+        title += ".png"
+        if not os.path.isdir(dir_res):
+            os.makedirs(dir_res)
+        dir_res = os.path.join(dir_res, title)
+        fig.savefig(dir_res)
 
 def visualize_series(data_to_vis, factor, dataset, dir_res="Results", title="Data", show=True, save=False):
     fig = plt.figure()
@@ -287,7 +314,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
     shift = 1
 
     if "lbs2d" in dataset:
-        vmin = 50 # 95
+        vmin = 10 # 95
         print("vis range:", vmin, data_to_vis.max())
 
     # wspace is x; hspace is y
@@ -501,7 +528,7 @@ def visualize_large(original_data, interpol_data, diffs,
         max_flow_gt = flow_gt.max() # None # 0.1
         max_flow_pred = 0.5
         scale = None
-        vmin = 50 # 95 # 100
+        vmin = 10 # 95 # 100
         print("vis range:", vmin, data_to_vis.max())
     # input("norm")
 

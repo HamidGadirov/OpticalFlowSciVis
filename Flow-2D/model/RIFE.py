@@ -193,7 +193,7 @@ class Model(nn.Module):
             # i_weight = gamma**(n_predictions - i - 1)
             # i_loss = (flow_preds[i] - flow_gt).abs()
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
-            loss_flow = 0.
+            # loss_flow = 0.
             # five blocks
             # loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.4096
             # loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.512
@@ -201,6 +201,7 @@ class Model(nn.Module):
             # loss_flow += (flow[3][:, 2:4] - gt_flow).abs().mean() * 0.8
             # loss_flow += (flow[4][:, 2:4] - gt_flow).abs().mean() * 1.
 
+            """
             loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
             loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
             loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 1.
@@ -208,10 +209,11 @@ class Model(nn.Module):
             # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
             # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
             loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
+            """
             # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             # loss_flow /= 2.
             # """
-            # loss_flow = torch.tensor(0.)
+            loss_flow = torch.tensor(0.)
             """
             # TODO: flow magn of diff vec loss: no improvements
             loss_flow = 0.
@@ -256,14 +258,14 @@ class Model(nn.Module):
         # print("Laplace pyramid + L1 + AdamW (L2)")
         # print("Laplace pyramid + AdamW (L2)")
         # print(merged[2].shape, gt.shape)
-        # loss_l1 = (self.lap(merged[2], gt)).mean() # laplacian
+        loss_l1 = (self.lap(merged[2], gt)).mean() # laplacian
         # print("L1 loss")
         # print(merged[2].shape, gt.shape)
         # loss_l1 = torch.nn.functional.l1_loss(merged[4], gt)
-        loss_l1 = torch.nn.functional.l1_loss(merged[2], gt) # my
-        # loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
+        # loss_l1 = torch.nn.functional.l1_loss(merged[2], gt) # my
+        loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
         # print(merged_teacher.shape, gt.shape)
-        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # my
+        # loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # my
         # sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
 
         # adding L1 reg: ? only to the last block
@@ -397,11 +399,11 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
         lambda_reg = 0 # 1e-6 best on rectangle 1e-7
         lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.2 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter
