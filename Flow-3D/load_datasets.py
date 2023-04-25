@@ -1,4 +1,4 @@
-from turtle import shape
+# from turtle import shape
 from matplotlib.pyplot import axes, title
 # from dataset import *
 import os
@@ -18,7 +18,7 @@ import inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
-from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large, visualize_3d
+from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large, visualize_large_3d
 
 # TODO:
 # normalize +-
@@ -49,9 +49,9 @@ def load_data(dataset, mode):
         if dataset == 'jets3d':
             filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow.pkl"
             flow_fln = "../../../DataSSD/Datasets/5Jets/5jets3d_flow.pkl"
-            pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_train.pkl"
-            pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_val.pkl"
-            pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_test.pkl"
+            pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_train.pkl"
+            pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_val.pkl"
+            pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_test.pkl"
         if dataset == "droplet3d":
             filename_train = filename + "droplet3d_64_train.pkl"
             filename_val = filename + "droplet3d_64_val.pkl"
@@ -238,16 +238,18 @@ def load_data(dataset, mode):
             data_val_three = []
             if "tangaroa3d" in filename or "rectangle3d" in filename: # or "jets3d" in filename:
                 # data_train = np.array(data_train)
-                for i in range(0, data_train.shape[0], 3): 
-                    data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
-                data_train = np.array(data_train_three)
+
+                # on the fly with less memory
+                for i in range(0, data_train.shape[0]-2, 2):
+                    data_train[i] = np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)
+                data_train = data_train[:data_train.shape[0]:3]
                 print("data_train in three:", data_train.shape)
-                # data_train = np.array(data_train)
-                for i in range(0, data_val.shape[0], 3): 
-                    data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
-                data_val = np.array(data_val_three)
+
+                for i in range(0, data_val.shape[0]-2, 2):
+                    data_val[i] = np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)
+                data_val = data_val[:data_val.shape[0]:3]
                 print("data_val in three:", data_val.shape)
-                # input("x")
+                
 
             combined_data_train = torch.utils.data.ConcatDataset([combined_data_train, data_train])
             combined_data_val = torch.utils.data.ConcatDataset([combined_data_val, data_val])

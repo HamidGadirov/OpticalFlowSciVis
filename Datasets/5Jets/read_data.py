@@ -174,8 +174,11 @@ data = np.float32(data)
 
 # Normalize/scale
 print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-print(data.shape)
+# input(data.shape)
 # input("Data range")
 data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
 print("Density scaled to [0, 1] range!")
@@ -189,7 +192,7 @@ print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
 print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 
 # input("32")
-data = np.float16(data)
+# data = np.float16(data)
 # input("16")
 data = np.expand_dims(data, axis=1)
 
@@ -197,10 +200,10 @@ data_train = data[:300] #
 data_val = data[300:372] #
 data_test = data[300:372] #
 
-print("before augmented:", data_train.shape)
-data_train = np.append(data_train, data_train[:,:,:,::-1,:], axis=0)
-data_train = np.append(data_train, data_train[:,:,::-1,:,:], axis=0)
-print("augmented:", data_train.shape)
+# print("before augmented:", data_train.shape)
+# data_train = np.append(data_train, data_train[:,:,:,::-1,:], axis=0)
+# data_train = np.append(data_train, data_train[:,:,::-1,:,:], axis=0)
+# print("augmented:", data_train.shape)
 # input("x")
 # data_train = np.float16(data_train)
 
@@ -225,19 +228,19 @@ for i in range(0, data_test.shape[0], 3):
 data_test = np.array(data_test_three)
 print("data_test in three:", data_test.shape)
 
-pkl_train_filename = "5jets3d" + "_flow" + "_aug" + "_train" + ".pkl" 
+pkl_train_filename = "5jets3d" + "_fp32" + "_flow" + "_aug" + "_train" + ".pkl" 
 pkl_file = open(pkl_train_filename, 'wb')
 pickle.dump(data_train_three, pkl_file, protocol=4)
 pkl_file.close
 print("Pkl file created")
 
-pkl_val_filename = "5jets3d" + "_flow" + "_aug" + "_val" + ".pkl" 
+pkl_val_filename = "5jets3d" + "_fp32" + "_flow" + "_aug" + "_val" + ".pkl" 
 pkl_file = open(pkl_val_filename, 'wb')
 pickle.dump(data_val_three, pkl_file, protocol=4)
 pkl_file.close
 print("Pkl file created")
 
-pkl_test_filename = "5jets3d" + "_flow" + "_aug" + "_test" + ".pkl" 
+pkl_test_filename = "5jets3d" + "_fp32" + "_flow" + "_aug" + "_test" + ".pkl" 
 pkl_file = open(pkl_test_filename, 'wb')
 pickle.dump(data_test_three, pkl_file, protocol=4)
 pkl_file.close
@@ -249,7 +252,7 @@ print("Pkl file created")
 # pkl_file.close
 # print(data.shape)
 # input("Data")
-input("Data")
+input("Done.")
 
 
 data = np.fromfile('Velocity/ns_1000_v.dat', dtype=np.float32)

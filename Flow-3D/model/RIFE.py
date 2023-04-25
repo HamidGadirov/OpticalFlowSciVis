@@ -183,19 +183,19 @@ class Model:
         # l1_norm = sum(torch.norm(p, 1) for p in self.flownet.parameters())
         # l1_reg = l1_lambda * l1_norm
 
-        block2_params = 0.
-        for param_tensor in self.flownet.state_dict():
-            # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
-            if "block2" in param_tensor or "block_tea" in param_tensor:
-                p = self.flownet.state_dict()[param_tensor]
-                # print(p)
-                block2_params += torch.norm(p, 1)
-        # print(block2_params)
-        # input("x")
-        # l1_lambda = 1e-5 # 1e-4
-        l1_norm = block2_params
-        l1_reg = l1_norm # l1_lambda * l1_norm
-        # l1_reg = torch.tensor(0.)
+        # block2_params = 0.
+        # for param_tensor in self.flownet.state_dict():
+        #     # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
+        #     if "block2" in param_tensor or "block_tea" in param_tensor:
+        #         p = self.flownet.state_dict()[param_tensor]
+        #         # print(p)
+        #         block2_params += torch.norm(p, 1)
+        # # print(block2_params)
+        # # input("x")
+        # # l1_lambda = 1e-5 # 1e-4
+        # l1_norm = block2_params
+        # l1_reg = l1_norm # l1_lambda * l1_norm
+        l1_reg = torch.tensor(0.)
 
         # def charbonnier(x, alpha=0.25, epsilon=1.e-9):
         #     return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
@@ -286,13 +286,13 @@ class Model:
         # # input("x")
         loss_photo = torch.tensor(0.)
 
-        lambda_l1 = 0.1
-        lambda_tea = 0.1
+        lambda_l1 = 1
+        lambda_tea = 1
         lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 1e-6 # 1e-6
+        lambda_reg = 0 # 1e-6
         lambda_photo = 0 # 1e-6
         lambda_smooth = 0 # 1e-8
-        lambda_flow = 0.01 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0.5 # 0.01 0.2 1; 0.5 best on rectangle
 
         # check if distill los is nan or overflow
         if math.isnan(loss_distill) or loss_distill > 10.:

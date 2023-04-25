@@ -1,5 +1,5 @@
 from curses.textpad import rectangle
-from turtle import shape
+# from turtle import shape
 from matplotlib.pyplot import axes, title
 from dataset import *
 import os
@@ -73,10 +73,10 @@ def load_data(dataset, exp, mode):
             # filename += "LatticeBoltzmannSim/lbs2d_skip3_combi.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_combi_cyl_tau.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ens7.pkl"
-            filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble10.pkl"
-            # TODO: mwhy dense range affected flow???
-            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21.pkl"
+            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble10.pkl"
+            # filename = "../../../DataSSD/Datasets/LBS/Spare_members/lbs2d_skip3_ensemble21.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble16m_f32.pkl"
+            filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21m_f32.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_Cy1r1t1.pkl"
         
         if dataset == "droplet2d":
@@ -117,39 +117,47 @@ def load_data(dataset, exp, mode):
             with open(filename, 'rb') as pkl_file:
                 data = pickle.load(pkl_file)
             print(data.shape)
+            print("data type:", data.dtype)
+            # input("x")
             # 3rdShift and DensNorm important for this dataset!
             # data = data[18000:21000]
             # data = np.float32(data)
             # data = np.float16(data)
             # print("Converted to float16")
             # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            # print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
             # print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
             # print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
             # print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
             # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
             # data = (data - np.min(data)) / (np.max(data) - np.min(data))
             # print(np.min(data[:, 0]), np.max(data[:, 0]), data[:, 0].mean(), data[:, 0].std())
+            # dens_min = np.min(data[:, 0])
+            # dens_max = np.max(data[:, 0])
+            dens_mean = data[:, 0].mean()
+            dens_std = data[:, 0].std()
+            # input("x")
+            data[:, 0] = (data[:, 0] - dens_mean) / dens_std # it is important!
+            print("Density normalized to 0 mean and 1 variance!")
+            print(dens_mean, dens_std)
+            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+
             dens_min = np.min(data[:, 0])
             dens_max = np.max(data[:, 0])
-            dens_mean = 0. # data[:, 0].mean()
-            dens_std = 0. # data[:, 0].std()
-            # input("x")
-            data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std() # it is important!
-            print("Density normalized to 0 mean and 1 variance!")
 
             # data = data * 255.0
             # data = data.astype(int)
             # data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
-            # data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
-            data[:, 0] = data[:, 0] / np.max(data[:, 0]) # to [0, 1]
+            # data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX) # this affects flow ???
+            # data[:, 0] = data[:, 0] / np.max(data[:, 0]) # to [0, 1] which is not!
+            # data[:, 0] = (data[:, 0] - dens_min) / (dens_max - dens_min) # to [0, 1] is a tiny bit worse?
             # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], -1., 1., cv2.NORM_MINMAX)
             # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], -1., 1., cv2.NORM_MINMAX)
             # data[:, 0] = (data[:, 0] - np.min(data[:, 0])) / (np.max(data[:, 0]) - np.min(data[:, 0]))
             # data[:, 1] = (data[:, 1] - np.min(data[:, 1])) / (np.max(data[:, 1]) - np.min(data[:, 1]))
             # data[:, 2] = (data[:, 2] - np.min(data[:, 2])) / (np.max(data[:, 2]) - np.min(data[:, 2]))
             # print(data)
-            print("Density scaled to [0, 1] range!")
+            # print("Density scaled to [0, 1] range!")
 
             # print("Vel x mean std", np.mean(data[:, 1]), np.std(data[:, 1]))
             # factor = 2
@@ -188,7 +196,7 @@ def load_data(dataset, exp, mode):
             # input("norm")
 
             # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            # print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
             # print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
             # print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
             # print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
@@ -277,12 +285,12 @@ def load_data(dataset, exp, mode):
                 # data_train = np.append(data_train, data[10710:13500], axis=0)
                 # data_train = np.append(data_train, data[13710:], axis=0) # 13950 in total
 
-                # """
+                """
                 # ens10
                 data_train = data[:3000]
                 data_train = np.append(data_train, data[6000:15000], axis=0)
                 data_train = np.append(data_train, data[18000:], axis=0)
-                # """
+                """
 
                 """
                 # ens16
@@ -290,6 +298,12 @@ def load_data(dataset, exp, mode):
                 data_train = np.append(data_train, data[21000:30000], axis=0)
                 data_train = np.append(data_train, data[33000:48000], axis=0)
                 """
+
+                # """
+                # ens21
+                data_train = data[:21000]
+                data_train = np.append(data_train, data[24000:60000], axis=0)
+                # """
          
                 # data_train = data[3000:18000] # ens7
                 # data_train = np.append(data_train, data[21000:30000], axis=0)
@@ -312,7 +326,8 @@ def load_data(dataset, exp, mode):
 
                 # data_val = data[30000:33000] # ens16
                 # data_val = data[18000:21000] # ens7
-                data_val = data[3000:6000] # ens10
+                # data_val = data[3000:6000] # ens10
+                data_val = data[60000:63000] # ens21
 
                 # data_val = data[3000:3210]
                 # data_val = np.append(data_val, data[5000:5210], axis=0)
@@ -348,22 +363,31 @@ def load_data(dataset, exp, mode):
             if dataset != "rectangle2d":
                 # prepare data for training - use only each third frame while shifting the sampling; this is important!!
                 print("use 3rd while shifting the sampling")
-                data_train_ = []
-                data_val_ = []
-                for shift in range(3):
-                    for i in range(shift, data_train.shape[0], 3): # 10
-                        data_train_.append(data_train[i])
-                    for i in range(shift, data_val.shape[0], 3): 
-                        data_val_.append(data_val[i])
-                data_train = data_train_
-                data_val = data_val_
-                data_train = np.asarray(data_train)
-                data_val = np.asarray(data_val)
+                # data_train_ = []
+                # data_val_ = []
+                # for shift in range(3):
+                #     for i in range(shift, data_train.shape[0], 3): # 10
+                #         data_train_.append(data_train[i])
+                #     for i in range(shift, data_val.shape[0], 3): 
+                #         data_val_.append(data_val[i])
+                # data_train = data_train_
+                # data_val = data_val_
+                # data_train = np.asarray(data_train)
+                # data_val = np.asarray(data_val)
+
+                data_train_new = data_train[::3] # array is more efficient than list in case of large
+                data_val_new = data_val[::3]
+                for shift in range(1, 3):
+                    data_train_new = np.vstack([data_train_new, data_train[shift::3]])
+                    data_val_new = np.vstack([data_val_new, data_val[shift::3]])
+                data_train = data_train_new
+                data_val = data_val_new
+
                 print(data_train.shape)
                 print(data_val.shape)
-                print(len(data_train_))
-                # input("x")
-                del data_train_, data_val_
+                # input("3rd")
+                del data_train_new, data_val_new
+                # input("del")
 
                 # print("use 5th while shifting the sampling")
                 # data_train_5 = []
@@ -471,16 +495,18 @@ def load_data(dataset, exp, mode):
                     # data_val = np.array(data_val_three)
                     # print("data_val in three:", data_val.shape)
 
-                    # TODO: on the fly with less memory
+                    # on the fly with less memory
                     for i in range(0, data_train.shape[0]-2, 2):
-                        data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0))
-                    data_train = np.array(data_train_three)
+                        data_train[i] = np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)
+                    data_train = data_train[:data_train.shape[0]:3]
                     print("data_train in three:", data_train.shape)
 
                     for i in range(0, data_val.shape[0]-2, 2):
-                        data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0))
-                    data_val = np.array(data_val_three)
+                        data_val[i] = np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)
+                    data_val = data_val[:data_val.shape[0]:3]
                     print("data_val in three:", data_val.shape)
+
+                    # input("data_train data_train in three")
 
                     # # visualize
                     # factor = 2
@@ -565,9 +591,11 @@ def load_data(dataset, exp, mode):
                 # data_test = data[4605:4710]
                 # data_test = data[1000:1300]
                 # data_test = data[10605:10710]
-                data_test = data[15000:18000] # ens10
+                # data_test = data[15000:18000] # ens10
                 # data_test = data[16605:18000] # ens10
                 # data_test = data[18000:21000] # ens16
+                data_test = data[21000:24000] # ens21
+                # data_test = data[22605:24000] # ens21
 
                 # data_test = data[30100:30400] # data[30000:33000] 
                 # data_test = data[40100:40400]

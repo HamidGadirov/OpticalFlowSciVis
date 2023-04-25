@@ -41,9 +41,9 @@ from utils import plot_loss, visualize_ind, visualize_series, visualize_series_f
 # implement photometric loss +
 # implement laplacian pyramid loss +
 # merge with 2D model (parts) -
-# fix bug with 3rd dim + ?
-# fix bugs that I found in 2D model: flow, data + ?
+# fix bug with 3rd dim +
 # mixed precision model (3D) +
+# TODO: remove amp and try on Habrok -
 
 device = torch.device("cuda")
 
@@ -54,11 +54,13 @@ def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000.
         # return 3e-4 * mul
-        return 3e-5 * mul
+        return 6e-4 * mul
+        # return 3e-5 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (3e-5 - 3e-6) * mul + 3e-6
+        return (6e-4 - 6e-6) * mul + 6e-6
+        # return (3e-5 - 3e-6) * mul + 3e-6
     # return 1e-6 # worse
 
 def flow2rgb(flow_map_np):
@@ -499,16 +501,22 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, w
         # print("dump loss to json")
     loss_file.close()
 
-    lr_path = 'learning_rate.json'
-    lr_path = os.path.join(dir_model, lr_path)
-    if (os.path.exists(lr_path)):
-        lr_file = open(lr_path, 'r')
-        lr_data_old = json.load(lr_file)
-        lr_data_old.extend(learning_rate)
-        learning_rate = lr_data_old
-        lr_file.close()
-    with open(lr_path, 'w') as lr_file:
-        json.dump(learning_rate, lr_file, indent=4)
+    # lr_path = 'learning_rate.json'
+    # lr_path = os.path.join(dir_model, lr_path)
+    # if (os.path.exists(lr_path)):
+    #     lr_file = open(lr_path, 'r')
+    #     lr_data_old = json.load(lr_file)
+    #     lr_data_old.extend(learning_rate)
+    #     learning_rate = lr_data_old
+    #     lr_file.close()
+    # with open(lr_path, 'w') as lr_file:
+    #     json.dump(learning_rate, lr_file, indent=4)
+    # lr_file.close()
+
+    lr_file_name = 'learning_rate.txt'
+    lr_path = os.path.join(dir_model, lr_file_name)
+    lr_file = open(lr_path, 'a')
+    lr_file.write(str(learning_rate) + "\n")
     lr_file.close()
     
     eval_time_interval = time.time() - time_stamp
@@ -524,7 +532,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=1000, type=int) # 300 500
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank')
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -588,6 +596,7 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test2.pkl" 
     # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test_BN.pkl" 
     # model_name = "flownet_l1_reg_flow5e-1_v1_128_jets_RIFE_eqRes_test_lr.pkl" 
+    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test3.pkl" 
     
     """ tangaroa """
     # model_name = "flownet_lapl_tangaroa3d.pkl"

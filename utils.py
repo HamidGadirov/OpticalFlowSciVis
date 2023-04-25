@@ -314,7 +314,10 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
     shift = 1
 
     if "lbs2d" in dataset:
-        vmin = 10 # 95
+        vmin = 95
+        print("vis range:", vmin, data_to_vis.max())
+    if "droplet2d" in dataset:
+        vmin = 0
         print("vis range:", vmin, data_to_vis.max())
 
     # wspace is x; hspace is y
@@ -354,16 +357,17 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         if round(index) == round(columns * skip):
             index = 0
 
-    normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
-    im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
-    if "lbs2d" in dataset:
-        cb_ax = fig.add_axes([0.91, 0.18, 0.005, 0.62])
-    elif "rectangle2d" in dataset:
-        cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
-    cb_ax.tick_params(labelsize=20) 
-    fmt = lambda x, pos: '{:0.1f}'.format(x)
-    bar = np.linspace(vmin, data_to_vis.max(), 4, endpoint=True)
-    plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+    if dataset == "vimeo2d":
+        normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
+        im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
+        if "lbs2d" in dataset:
+            cb_ax = fig.add_axes([0.91, 0.18, 0.005, 0.62])
+        elif "rectangle2d" in dataset:
+            cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
+        cb_ax.tick_params(labelsize=20) 
+        fmt = lambda x, pos: '{:0.1f}'.format(x)
+        bar = np.linspace(vmin, data_to_vis.max(), 4, endpoint=True)
+        plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
 
     if show:
         plt.show() 
@@ -528,7 +532,7 @@ def visualize_large(original_data, interpol_data, diffs,
         max_flow_gt = flow_gt.max() # None # 0.1
         max_flow_pred = 0.5
         scale = None
-        vmin = 10 # 95 # 100
+        vmin = 95 # 100
         print("vis range:", vmin, data_to_vis.max())
     # input("norm")
 
@@ -639,7 +643,7 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print(data_range)
                 if round(index) >= data_range:
                     break
-        if int((i-1)/columns) == 5 and round(index - 1) % 2 == 0: # flow pred; only for interpolated!
+        if int((i-1)/columns) == 5 and round(index - 1) % 2 == 0 and dataset == "lbs2d": # flow pred; only for interpolated!
             u = flow_u[round((index - 1) / 2)]
             v = flow_v[round((index - 1) / 2)]
             norm = np.sqrt(u * u + v * v) # / norm_coeff
@@ -678,7 +682,7 @@ def visualize_large(original_data, interpol_data, diffs,
             # print(data_range)
             if round(index) >= data_range:
                 break
-        if int((i-1)/columns) == 6 and round(index - 1) % 2 == 0: # flow diff vec
+        if int((i-1)/columns) == 6 and round(index - 1) % 2 == 0 and dataset == "lbs2d": # flow diff vec
             u_diff = flow_u_diff[round((index - 1) / 2)]
             v_diff = flow_v_diff[round((index - 1) / 2)]
             norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff) # / norm_coeff
@@ -726,31 +730,32 @@ def visualize_large(original_data, interpol_data, diffs,
         if round(index) == round(columns * skip):
             index = 0
 
-    # each image has a different vmin and vmax
-    # cmap=cm.get_cmap('viridis')
-    # colorbar for density
-    normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
-    im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
-    if "lbs2d" in dataset:
-        # cb_ax = fig.add_axes([0.91, 0.5, 0.005, 0.3])
-        cb_ax = fig.add_axes([0.82, 0.5, 0.005, 0.35])
-    elif "rectangle2d" in dataset:
-        cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
-    # cb.ax.tick_params(labelsize=font_size)
-    fmt = lambda x, pos: '{:0.1f}'.format(x)
-    bar = np.linspace(vmin, data_to_vis.max(), 5, endpoint=True)
-    plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
-    # colorbar for flow
-    normalizer=Normalize(vmin=0., vmax=max_flow_gt)
-    im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
-    if "lbs2d" in dataset:
-        # cb_ax = fig.add_axes([0.91, 0.2, 0.005, 0.25])
-        cb_ax = fig.add_axes([0.82, 0.15, 0.005, 0.25])
-    elif "rectangle2d" in dataset:
-        cb_ax = fig.add_axes([0.75, 0.12, 0.005, 0.3])
-    bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
-    fmt = lambda x, pos: '{:0.2f}'.format(x)
-    plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+    if dataset == "vimeo2d":
+        # each image has a different vmin and vmax
+        # cmap=cm.get_cmap('viridis')
+        # colorbar for density
+        normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
+        im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
+        if "lbs2d" in dataset:
+            # cb_ax = fig.add_axes([0.91, 0.5, 0.005, 0.3])
+            cb_ax = fig.add_axes([0.82, 0.5, 0.005, 0.35])
+        elif "rectangle2d" in dataset:
+            cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
+        # cb.ax.tick_params(labelsize=font_size)
+        fmt = lambda x, pos: '{:0.1f}'.format(x)
+        bar = np.linspace(vmin, data_to_vis.max(), 5, endpoint=True)
+        plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+        # colorbar for flow
+        normalizer=Normalize(vmin=0., vmax=max_flow_gt)
+        im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
+        if "lbs2d" in dataset:
+            # cb_ax = fig.add_axes([0.91, 0.2, 0.005, 0.25])
+            cb_ax = fig.add_axes([0.82, 0.15, 0.005, 0.25])
+        elif "rectangle2d" in dataset:
+            cb_ax = fig.add_axes([0.75, 0.12, 0.005, 0.3])
+        bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
+        fmt = lambda x, pos: '{:0.2f}'.format(x)
+        plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
 
     fig = plt.gcf()
     suptitle = dataset + "_" + str(factor) + "x"

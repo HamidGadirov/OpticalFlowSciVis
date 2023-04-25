@@ -1,6 +1,6 @@
 # ssh -Y hamid@129.125.75.167
 # conda activate gpu
-# python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=rectangle2d --mode=train
+# python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=lbs2d --mode=train
 
 # rsync -avz -e 'ssh' hamid@129.125.75.167:~/Desktop/OpticalFlow/RIFE/train_log/ /Users/hamidgadirov/Desktop/OpticalFlow/RIFE/train_log/
 
@@ -215,6 +215,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 if exp == 1: # # img0, img1, gt
                     imgs = data_gpu[:, :2] # :6
                     gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
+                    # print(imgs.dtype)
                     # gt = data_gpu # use flows from im0 and im1
                     # print(imgs.shape)
                     # print(gt.shape)
@@ -300,8 +301,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # input("x")
         print("Saving at:", dir_model)
         # data = data_train
-        # scale_list = [4, 2, 1]
-        scale_list = [1, 1, 1]
+        scale_list = [4, 2, 1]
+        # scale_list = [1, 1, 1]
         # print(data.shape)
         # input("x")
         # for i in range(0, data.shape[0], 2):
@@ -329,6 +330,9 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 data_gpu = data_gpu.to(device, non_blocking=True) / 255.
             elif dataset == "droplet2d":
                 # print("droplet2d")
+                # print(data.dtype)
+                # input("x")
+                data = data.float() # because it was double
                 data_gpu = data
                 for b in range(data_gpu.shape[0]):
                     data_test_combined.append(np.asarray(data_gpu[b, 0] ))
@@ -648,16 +652,27 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     # writer_val.add_scalar('psnr_teacher', np.array(psnr_list_teacher).mean(), nr_eval)
 
 if __name__ == "__main__":    
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank')
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
     parser.add_argument('--exp', dest='exp', type=int, default=1)
     args = parser.parse_args()
     assert (not args.dataset is None)
+
+    # # Remove the local_rank argument
+    # if '--local_rank' in sys.argv:
+    #     parser.add_argument('--local_rank', default=0, type=int, help='local rank')
+    #     args = parser.parse_args()
+    #     sys.argv.remove('--local_rank')
+    # else:
+    #     args = parser.parse_args()
+
+    # args.local_rank = os.environ['LOCAL_RANK']
 
     torch.distributed.init_process_group(backend="nccl", world_size=args.world_size)
     torch.cuda.set_device(args.local_rank)
@@ -980,15 +995,26 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_3rdShift_ScaleAllVel10_gamma_RIFE_lr6e-4.pkl" # flow error much higher
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rdShift_ScaleAllVel10_gamma_RIFE_lr6e-4.pkl" # flow error higher than best
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rdShift_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # flow error higher than best
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rd5thShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best?
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rd5thShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # flow error higher than best
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best?
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best; epe: 0.017
     # model_name = "flownet_lapl_v1_240_lbs_skip3_combi_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.06
     # model_name = "flownet_lapl_v1_240_lbs_skip3_ens10_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.12
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_100ep.pkl" # not bad, but 300ep better
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens16_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # not nenough memory
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # all time best?
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # all time best + epe: 0.017
+    # model_name = "flownet_l1_dist_photo1e-5_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_RIFE_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_l1_dist_photo1e-5_reg1e-7_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_RIFE_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_l1_dist_photo1e-5_reg1e-7_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # bad flow
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNorm01ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # good but a bit worse
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # similarly good as best +
+    # model_name = "flownet_lapl_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.0171
+    # model_name = "flownet_l1_dist_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.0171
     # flow improves with larger ensemble; TODO: run experiment with 30 members on Habrok
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # works
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best + epe: 0.0138
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.014
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_lr6e-4.pkl" # epe: 0.0228
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1175,19 +1201,18 @@ if __name__ == "__main__":
             print("original data is in range %f to %f" % (np.min(original_data_gt), np.max(original_data_gt)))
             print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
 
-            # data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std() # it is important!
-            # original_data = original_data * statistics['dens_std']
-            # original_data = original_data + statistics['dens_mean']
-            # original_data_gt = original_data_gt * statistics['dens_std']
-            # original_data_gt = original_data_gt + statistics['dens_mean']
-            # interpol_data = interpol_data * statistics['dens_std']
-            # interpol_data = interpol_data + statistics['dens_mean']
-
             # original_data = cv2.normalize(original_data, original_data, 0., statistics['dens_max'], cv2.NORM_MINMAX)
-            # interpol_data = cv2.normalize(interpol_data, interpol_data, 0., statistics['dens_max'], cv2.NORM_MINMAX)
-            original_data = original_data * statistics['dens_max'] 
-            original_data_gt = original_data_gt * statistics['dens_max'] 
-            interpol_data = interpol_data * statistics['dens_max'] 
+            # original_data = original_data * statistics['dens_max'] 
+            # original_data_gt = original_data_gt * statistics['dens_max'] 
+            # interpol_data = interpol_data * statistics['dens_max'] 
+
+            # data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std() # it is important!
+            original_data = original_data * statistics['dens_std'] + statistics['dens_mean']
+            original_data_gt = original_data_gt * statistics['dens_std'] + statistics['dens_mean']
+            interpol_data = interpol_data * statistics['dens_std'] + statistics['dens_mean']
+
+            # print("Density range %f to %f" % (np.min(original_data), np.max(original_data)))
+            # input("x")
 
         #     flow_x_mean = statistics['flow_x_mean']
         #     flow_y_mean = statistics['flow_y_mean']
@@ -1295,19 +1320,19 @@ if __name__ == "__main__":
         plot_distribution(flow[:, 1], dir_model, name="dist_flow_pred_y.png", save=True)
 
         # visualize_ind
-        # max_flow_gt = flow_gt.max()
-        # title = "Flow_gt_ind_0"
-        # visualize_ind_flow(flow_gt[0], max_flow_gt, dir_model, title=title, show=False, save=True)
-        # title = "Flow_pred_ind_0"
-        # visualize_ind_flow(flow[0], max_flow_gt, dir_model, title=title, show=False, save=True)
-        # title = "Flow_gt_ind_300"
-        # visualize_ind_flow(flow_gt[300], max_flow_gt, dir_model, title=title, show=False, save=True)
-        # title = "Flow_pred_ind_300"
-        # visualize_ind_flow(flow[300], max_flow_gt, dir_model, title=title, show=False, save=True)
-        # title = "Flow_gt_ind_600"
-        # visualize_ind_flow(flow_gt[600], max_flow_gt, dir_model, title=title, show=False, save=True)
-        # title = "Flow_pred_ind_600"
-        # visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
+        max_flow_gt = flow_gt.max()
+        title = "Flow_gt_ind_0"
+        visualize_ind_flow(flow_gt[0], max_flow_gt, dir_model, title=title, show=False, save=True)
+        title = "Flow_pred_ind_0"
+        visualize_ind_flow(flow[0], max_flow_gt, dir_model, title=title, show=False, save=True)
+        title = "Flow_gt_ind_300"
+        visualize_ind_flow(flow_gt[300], max_flow_gt, dir_model, title=title, show=False, save=True)
+        title = "Flow_pred_ind_300"
+        visualize_ind_flow(flow[300], max_flow_gt, dir_model, title=title, show=False, save=True)
+        title = "Flow_gt_ind_600"
+        visualize_ind_flow(flow_gt[600], max_flow_gt, dir_model, title=title, show=False, save=True)
+        title = "Flow_pred_ind_600"
+        visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
 
         # EPE metric:
         print(flow_gt.shape, flow.shape)
@@ -1325,9 +1350,10 @@ if __name__ == "__main__":
         title = "Density_gt_pred_diff"
         visualize_seq_dens(original_data_gt, interpol_data, diffs,
                 factor, dataset, dir_model, title=title, show=False, save=True)
-        title = "Flow_gt_pred_diff"
-        visualize_seq_flow(flow_gt, flow, u_diff, v_diff,
-                factor, dataset, dir_model, title=title, show=False, save=True)
+        if dataset == "lbs2d":
+            title = "Flow_gt_pred_diff"
+            visualize_seq_flow(flow_gt, flow, u_diff, v_diff,
+                    factor, dataset, dir_model, title=title, show=False, save=True)
 
 # print("Dataset:", dataset)
 

@@ -28,8 +28,8 @@ def load_files_from_folder(folder):
 
 	return filenames
 # """
-# filenames = load_files_from_folder(".")
-filenames = load_files_from_folder("ensemble10")
+filenames = load_files_from_folder(".")
+# filenames = load_files_from_folder("ensemble10")
 
 data = []
 dir_model = "./Distributions"
@@ -58,7 +58,8 @@ print(data.shape)
 input("x")
 
 # pkl_filename = "lbs2d_skip3_ensemble16m_f32" + ".pkl" 
-pkl_filename = "lbs2d_skip3_ensemble10" + ".pkl" 
+# pkl_filename = "lbs2d_skip3_ensemble10" + ".pkl" 
+pkl_filename = "lbs2d_skip3_ensemble21m_f32" + ".pkl" 
 pkl_file = open(pkl_filename, 'wb')
 pickle.dump(data, pkl_file, protocol=4)
 pkl_file.close
