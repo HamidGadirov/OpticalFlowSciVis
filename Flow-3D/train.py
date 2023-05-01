@@ -73,9 +73,27 @@ def flow2rgb(flow_map_np):
     rgb_map[:, :, 2] += normalized_flow_map[:, :, 1]
     return rgb_map.clip(0, 1)
 
-early_stop_patience = 1001
-early_stop_k = 0
-val_loss_best = 0.
+# early_stop_patience = 1001
+# early_stop_k = 0
+# val_loss_best = 0.
+
+class EarlyStopper:
+    def __init__(self, patience=1, min_delta=0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_loss = np.inf
+
+    def early_stop(self, validation_loss):
+        if validation_loss < self.min_validation_loss:
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+            return 2
+        elif validation_loss > (self.min_validation_loss + self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return 1
+        return 0
 
 def train(model, dataset, exp, model_name, mode, local_rank):
     # if local_rank == 0:
@@ -83,17 +101,19 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     #     writer_val = SummaryWriter('validate')
     step = 0
     nr_eval = 0
+    early_stopper = EarlyStopper(patience=30, min_delta=0.01)
 
+    num_workers = 1 # 8
     if mode == "train":
         data_train, data_val = load_data(dataset, mode)
         # sampler = DistributedSampler(data_train)
         # train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
-        train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True)
+        train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=num_workers, pin_memory=True, drop_last=True)
         args.step_per_epoch = train_data.__len__()
         # input("train loaded")
         print(len(data_train))
         print(data_train[0].shape)
-        val_data = DataLoader(data_val, batch_size=args.batch_size, pin_memory=True, num_workers=8)
+        val_data = DataLoader(data_val, batch_size=args.batch_size, pin_memory=True, num_workers=num_workers)
         print("len:", len(val_data))
         # print(len(train_data.dataset))
         # for i, data in enumerate(train_data):
@@ -101,7 +121,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     else:
         data_test = load_data(dataset, mode)
         shuffle = False
-        data_test = DataLoader(data_test, batch_size=16, shuffle=shuffle, pin_memory=True, num_workers=8)
+        data_test = DataLoader(data_test, batch_size=8, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
 
     # input("x")
 
@@ -230,7 +250,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 global val_loss_best 
                 val_loss_best = info['loss_G']
                 print(val_loss_best)
-            evaluate(model, dataset, val_data, step, local_rank, learning_rate) #, writer_val)
+            evaluate(model, dataset, val_data, step, local_rank, learning_rate, early_stopper) #, writer_val)   
+            # evaluate(model, dataset, val_data, step, local_rank, learning_rate) #, writer_val)
             # print("evaluated")
             # dist.barrier() # ?
     else:
@@ -287,6 +308,9 @@ def train(model, dataset, exp, model_name, mode, local_rank):
 
             imgs = imgs[:, :, 0]
             gt = gt[:, :, 0]
+            # imgs = imgs[..., 0]
+            # gt = gt[..., 0]
+            # (299, 3, 4, 128, 128, 128) menas: batch, three, fields, x, y, z
 
             print(imgs.shape, gt.shape)
             imgs = imgs.permute(0, 1, 3, 4, 2) # (0, 1, 2, 5, 3, 4) # 3rd is dim0
@@ -319,6 +343,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         mask_combined = np.squeeze(np.array(mask_combined))
         flow_gt_combined = np.array(flow_gt_combined)
         print("Flow:", flow_combined.shape)
+        # input("x")
 
         # merged = np.asarray(merged.detach().cpu().numpy())
         # print(merged.shape)
@@ -393,17 +418,13 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # return data_test, interpol_data, flow_combined
         return original_data, interpol_data, flow_combined, flow_gt_combined, mask_combined
     
-def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, writer_val):
+def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early_stopper): #, writer_val):
     print("Evaluate")
     # writer = SummaryWriter('train') #
     # writer_val = SummaryWriter('validate') #
-
-    # loss_l1_list = []
-    loss_G_list = []
-    # loss_distill_list = []
-    # loss_tea_list = []
-    psnr_list = []
-    psnr_list_teacher = []
+    # psnr_list = []
+    # psnr_list_teacher = []
+    loss_all_list = [0. for i in range(7)] # all loss components
     time_stamp = time.time()
     for i, data in enumerate(val_data):
         data_gpu = data.to(device, non_blocking=True) # / 255.
@@ -426,7 +447,8 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, w
         loss_all = (info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
             info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy(), 
             info['loss_flow'].cpu().numpy())
-
+        print("loss_G:", info['loss_G'])
+        loss_all_list = [a + b for a, b in zip(loss_all_list, loss_all)]
         # loss_l1_list.append(info['loss_l1'].cpu().numpy())
         # loss_tea_list.append(info['loss_tea'].cpu().numpy())
         # loss_distill_list.append(info['loss_distill'].cpu().numpy())
@@ -467,12 +489,20 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, w
     #     val_loss_best = val_loss_now
     #     model.save_model(model_name, log_path, local_rank) 
 
-    model.save_model(model_name, log_path, local_rank) 
+    loss_all = [x / float(i + 1) for x in loss_all_list] # avg over batches
+    # input(loss_all)
+    validation_loss = loss_all[0] # info['loss_G'].cpu().numpy()
+    if early_stopper.early_stop(validation_loss) == 2: 
+        model.save_model(model_name, log_path, local_rank) 
+        # input("saved")
+    elif early_stopper.early_stop(validation_loss) == 1:   
+        print("Early stop.")          
+        sys.exit(0)
 
     val_loss = []
-    # val_loss.append(float(np.array(loss_G_list).mean()))
-    loss_all = np.array(loss_all).tolist()
+    # loss_all = np.array(loss_all).tolist()
     val_loss.append(loss_all)
+    # print("loss_all", loss_all)
     loss_path = 'loss.json'
     factor = 2
     dir_res = "Results"
@@ -494,12 +524,18 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, w
         loss_data = loss_data_old
         # print("exists:", loss_data)
         loss_file.close()
-    # print(loss_data)
+    # print("loss_data:", loss_data)
     # input("x")
-    with open(loss_path, 'w') as loss_file:
+    with open(loss_path, 'w+') as loss_file:
         json.dump(loss_data, loss_file, indent=4)
         # print("dump loss to json")
     loss_file.close()
+
+    lr_file_name = 'learning_rate.txt'
+    lr_path = os.path.join(dir_model, lr_file_name)
+    lr_file = open(lr_path, 'a')
+    lr_file.write(str(learning_rate) + "\n")
+    lr_file.close()
 
     # lr_path = 'learning_rate.json'
     # lr_path = os.path.join(dir_model, lr_path)
@@ -512,12 +548,6 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate): #, w
     # with open(lr_path, 'w') as lr_file:
     #     json.dump(learning_rate, lr_file, indent=4)
     # lr_file.close()
-
-    lr_file_name = 'learning_rate.txt'
-    lr_path = os.path.join(dir_model, lr_file_name)
-    lr_file = open(lr_path, 'a')
-    lr_file.write(str(learning_rate) + "\n")
-    lr_file.close()
     
     eval_time_interval = time.time() - time_stamp
 
@@ -552,7 +582,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle3d":
         args.batch_size = 40
     if args.dataset == "jets3d":
-        args.batch_size = 45
+        args.batch_size = 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -597,6 +627,7 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test_BN.pkl" 
     # model_name = "flownet_l1_reg_flow5e-1_v1_128_jets_RIFE_eqRes_test_lr.pkl" 
     model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test3.pkl" 
+    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test4.pkl" 
     
     """ tangaroa """
     # model_name = "flownet_lapl_tangaroa3d.pkl"
@@ -662,6 +693,12 @@ if __name__ == "__main__":
         print("original data is in range %f to %f" % (np.min(original_data_gt), np.max(original_data_gt)))
         print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
         # input("x")
+
+        # TODO: denormalize
+        print("Data gt mean and std:", np.mean(original_data_gt), np.std(original_data_gt))
+        print("Data pred mean and std:", np.mean(interpol_data), np.std(interpol_data))
+        print("Flow gt mean and std:", np.mean(flow_gt), np.std(flow_gt))
+        print("Flow pred mean and std:", np.mean(flow), np.std(flow))
 
         # calc diff, metrics
         diffs = calculate_diff(original_data_gt, interpol_data, dataset, factor, dir_model)

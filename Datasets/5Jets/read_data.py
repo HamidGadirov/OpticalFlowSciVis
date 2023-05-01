@@ -172,6 +172,10 @@ print(np.array(data).shape)
 
 data = np.float32(data)
 
+# print(data.shape)
+data = np.transpose(data, (0, 4, 1, 2, 3))
+# input(data.shape)
+
 # Normalize/scale
 print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
 print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
@@ -180,11 +184,12 @@ print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
 # input(data.shape)
 # input("Data range")
-data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
+data = (data - np.min(data)) / (np.max(data) - np.min(data))
+# data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
 print("Density scaled to [0, 1] range!")
-data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], 0., 1., cv2.NORM_MINMAX)
-data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], 0., 1., cv2.NORM_MINMAX)
-data[:, 3] = cv2.normalize(data[:, 3], data[:, 3], 0., 1., cv2.NORM_MINMAX)
+# data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], 0., 1., cv2.NORM_MINMAX)
+# data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], 0., 1., cv2.NORM_MINMAX)
+# data[:, 3] = cv2.normalize(data[:, 3], data[:, 3], 0., 1., cv2.NORM_MINMAX)
 print("Velocities scaled to [0, 1] range!")
 print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
 print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
@@ -200,33 +205,38 @@ data_train = data[:300] #
 data_val = data[300:372] #
 data_test = data[300:372] #
 
-# print("before augmented:", data_train.shape)
-# data_train = np.append(data_train, data_train[:,:,:,::-1,:], axis=0)
+print("before augmented:", data_train.shape)
+data_train = np.append(data_train, data_train[:,:,:,::-1,:], axis=0)
 # data_train = np.append(data_train, data_train[:,:,::-1,:,:], axis=0)
-# print("augmented:", data_train.shape)
+# TODO: try add aug with more RAM
+print("augmented:", data_train.shape)
 # input("x")
 # data_train = np.float16(data_train)
 
 data_train_three = []
 data_val_three = []
 # data_train = np.array(data_train)
-for i in range(0, data_train.shape[0], 3): 
+for i in range(0, data_train.shape[0]-2, 2): # TODO: try shift only by 1 with more RAM
     data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
 data_train = np.array(data_train_three)
 print("data_train in three:", data_train.shape)
 # input("x")
 # data_train = np.array(data_train)
-for i in range(0, data_val.shape[0], 3): 
+for i in range(0, data_val.shape[0]-2, 2): 
     data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
 data_val = np.array(data_val_three)
 print("data_val in three:", data_val.shape)
 # input("x")
 data_test_three = []
 # data_train = np.array(data_train)
-for i in range(0, data_test.shape[0], 3): 
+for i in range(0, data_test.shape[0]-2, 2): 
     data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
 data_test = np.array(data_test_three)
 print("data_test in three:", data_test.shape)
+
+# input("x")
+# input("x")
+# input("x")
 
 pkl_train_filename = "5jets3d" + "_fp32" + "_flow" + "_aug" + "_train" + ".pkl" 
 pkl_file = open(pkl_train_filename, 'wb')

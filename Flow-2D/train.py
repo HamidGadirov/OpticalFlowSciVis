@@ -117,31 +117,32 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     step = 0
     nr_eval = 0
 
+    num_workers = 1 # 8
     if mode == "train":
         if dataset == "vimeo2d": 
             dataset_train = VimeoDataset('train')
             sampler = DistributedSampler(dataset_train)
-            train_data = DataLoader(dataset_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
+            train_data = DataLoader(dataset_train, batch_size=args.batch_size, num_workers=num_workers, pin_memory=True, drop_last=True, sampler=sampler)
             args.step_per_epoch = train_data.__len__()
             dataset_val = VimeoDataset('validation')
-            val_data = DataLoader(dataset_val, batch_size=16, pin_memory=True, num_workers=8)
+            val_data = DataLoader(dataset_val, batch_size=16, pin_memory=True, num_workers=num_workers)
         else:
             data_train, data_val = load_data(dataset, exp, mode)
             # print(data_train.shape)
             # sampler = DistributedSampler(data_train)
             # train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
-            train_data = DataLoader(data_train, batch_size=args.batch_size, shuffle=True, num_workers=8, pin_memory=True, drop_last=True)
+            train_data = DataLoader(data_train, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
             args.step_per_epoch = train_data.__len__()
             # # input("train loaded...")
             print("len:", len(data_train))
             print(data_train[0].shape)
             # input("train loaded")
-            val_data = DataLoader(data_val, args.batch_size, pin_memory=True, num_workers=8)
+            val_data = DataLoader(data_val, args.batch_size, pin_memory=True, num_workers=num_workers)
             print("len:", len(val_data))
     else: # mode == "test"
         if dataset == "vimeo2d": 
             dataset_test = VimeoDataset('test')
-            data_test = DataLoader(dataset_test, batch_size=16, pin_memory=True, num_workers=8)
+            data_test = DataLoader(dataset_test, batch_size=16, pin_memory=True, num_workers=num_workers)
         else:
             if dataset == "lbs2d":
                 # data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std = load_data(dataset, exp, mode)
@@ -151,7 +152,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             shuffle = False
             if dataset == "droplet2d": 
                 shuffle = True
-            data_test = DataLoader(data_test, batch_size=16, shuffle=shuffle, pin_memory=True, num_workers=8)
+            data_test = DataLoader(data_test, batch_size=16, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
 
     # model_name = "flownet"
     # model_name += "_lapl" if lapl_loss else ""
@@ -350,6 +351,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             # input("data")
             imgs = data_gpu[:, :2]
             gt = data_gpu[:, 2:3]
+            print(imgs.shape)
+            print(gt.shape)
             # gt = data_gpu
 
             if dataset == "pipedcylinder2d"  or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
@@ -365,9 +368,17 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 imgs = imgs[:, :, 0]
                 gt = gt[:, :, 0]
 
-            # print(imgs.shape)
-            # print(gt.shape)
-            # input("imgs gt")
+            # torch.Size([16, 2, 3, 100, 400])
+            # torch.Size([16, 1, 3, 100, 400])
+            # torch.Size([16, 2, 100, 400])
+            # torch.Size([16, 1, 100, 400])
+
+            # torch.Size([16, 2, 128, 128, 128, 4]) 
+            # torch.Size([16, 1, 128, 128, 128, 4])
+
+            print(imgs.shape)
+            print(gt.shape)
+            input("imgs gt")
             I0 = imgs[:, :1]
             I1 = imgs[:, 1:2]
             if exp == 1: # # img0, img1, gt
