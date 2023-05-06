@@ -534,6 +534,13 @@ def visualize_large(original_data, interpol_data, diffs,
         scale = None
         vmin = 95 # 100
         print("vis range:", vmin, data_to_vis.max())
+    elif "jets3d" in dataset:
+        quiver_steps = 4
+        max_flow_gt = flow_gt.max() # None # 0.1
+        # max_flow_pred = 0.5
+        scale = None
+        vmin = 0
+        print("vis range:", vmin, data_to_vis.max())
     # input("norm")
 
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
@@ -797,6 +804,11 @@ def visualize_large(original_data, interpol_data, diffs,
     elif "vimeo2d" in dataset:
         plt.subplots_adjust(wspace=0.01, hspace=0.01)
         x = 0.075
+        y = 0.8
+        step = (y - 0.15) / 6.
+    elif "jets3d" in dataset:
+        plt.subplots_adjust(wspace=-0.95, hspace=0.01)
+        x = 0.25
         y = 0.8
         step = (y - 0.15) / 6.
 

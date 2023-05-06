@@ -30,7 +30,7 @@ from torch.utils.data.distributed import DistributedSampler
 
 from load_datasets import load_data
 from error import calculate_diff
-from utils import plot_loss, visualize_ind, visualize_series, visualize_series_flow, visualize_large_3d
+from utils import plot_loss, visualize_ind, visualize_series, visualize_series_flow, visualize_large_3d, visualize_large
 
 # If your model is returning NaNs, you could set 
 # torch.autograd.detect_anomaly(True) 
@@ -54,13 +54,17 @@ def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000.
         # return 3e-4 * mul
-        return 6e-4 * mul
+        # return 6e-4 * mul
         # return 3e-5 * mul
+        # return 6e-6 * mul
+        return 3e-7 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (6e-4 - 6e-6) * mul + 6e-6
+        # return (6e-4 - 6e-6) * mul + 6e-6
         # return (3e-5 - 3e-6) * mul + 3e-6
+        # return (6e-6 - 6e-7) * mul + 6e-7
+        return (3e-7 - 3e-8) * mul + 3e-8
     # return 1e-6 # worse
 
 def flow2rgb(flow_map_np):
@@ -310,9 +314,9 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             gt = gt[:, :, 0]
             # imgs = imgs[..., 0]
             # gt = gt[..., 0]
-            # (299, 3, 4, 128, 128, 128) menas: batch, three, fields, x, y, z
+            # (299, 3, 4, 128, 128, 128) means: batch, three, fields, x, y, z
 
-            print(imgs.shape, gt.shape)
+            print(imgs.shape, gt.shape) 
             imgs = imgs.permute(0, 1, 3, 4, 2) # (0, 1, 2, 5, 3, 4) # 3rd is dim0
             gt = gt.permute(0, 1, 3, 4, 2)
             # print("permuted:", imgs.shape, gt.shape)
@@ -582,7 +586,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle3d":
         args.batch_size = 40
     if args.dataset == "jets3d":
-        args.batch_size = 32
+        args.batch_size = 8
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -627,7 +631,12 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test_BN.pkl" 
     # model_name = "flownet_l1_reg_flow5e-1_v1_128_jets_RIFE_eqRes_test_lr.pkl" 
     model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test3.pkl" 
-    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test4.pkl" 
+    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test4.pkl" # wrong preprocessing?
+    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test5.pkl" # loss increases -
+    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test6.pkl" # lr3e-5: loss increases -
+    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test7.pkl" # lr6e-6: loss increases - ???
+    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test8.pkl" # lr3e-7: loss constant -
+    # is there a bug? why loss does not decrease?
     
     """ tangaroa """
     # model_name = "flownet_lapl_tangaroa3d.pkl"
@@ -745,10 +754,30 @@ if __name__ == "__main__":
         print("Flow gt mean and std:", np.mean(flow_gt), np.std(flow_gt))
         print("Flow pred mean and std:", np.mean(flow), np.std(flow))
 
-        title = "GT_Interpol_Diff_Flow_" + str(factor) + "x" + "_3D"
-        visualize_large_3d(original_data, interpol_data, diffs, 
-                flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
-                factor, dataset, dir_model, title=title, show=False, save=True)
+        # title = "GT_Interpol_Diff_Flow_" + str(factor) + "x" + "_3D"
+        # visualize_large_3d(original_data, interpol_data, diffs, 
+        #         flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
+        #         factor, dataset, dir_model, title=title, show=False, save=True)
+
+        print(original_data.shape, interpol_data.shape, diffs.shape)
+        print(flow.shape, flow_gt.shape, diffs_flow.shape)
+        print(u_diff.shape, v_diff.shape, mask.shape)
+
+        # 2D FOR VIS
+        original_data = original_data[..., 64]
+        interpol_data = interpol_data[..., 64]
+        diffs = diffs[..., 64]
+        flow = flow[..., 64]
+        flow_gt = flow_gt[..., 64]
+        diffs_flow = diffs_flow[..., 64]
+        u_diff = u_diff[..., 64]
+        v_diff = v_diff[..., 64]
+        mask = mask[..., 64]
+
+        title = "GT_Interpol_Diff_Flow_" + str(factor) + "x" + "_2D"
+        visualize_large(original_data, interpol_data, diffs,
+            flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
+            factor, dataset, dir_model, title=title, show=False, save=True)
 
         # slice_num = 40
         # # calc diff, metrics

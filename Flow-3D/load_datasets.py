@@ -151,11 +151,11 @@ def load_data(dataset, mode):
             # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], 0., 1., cv2.NORM_MINMAX)
             # data[:, 3] = cv2.normalize(data[:, 3], data[:, 3], 0., 1., cv2.NORM_MINMAX)
             # print("Velocities scaled to [0, 1] range!")
-            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
-            print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
-            print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
-            print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
-            input("Data range")
+            # print("Density range %f to %f" % (np.min(data[:, :, 0]), np.max(data[:, :, 0])))
+            # print("Vel x range %f to %f" % (np.min(data[:, :, 1]), np.max(data[:, :, 1])))
+            # print("Vel y range %f to %f" % (np.min(data[:, :, 2]), np.max(data[:, :, 2])))
+            # print("Vel z range %f to %f" % (np.min(data[:, :, 3]), np.max(data[:, :, 3])))
+            # input("Data range")
         
         if dataset == "rectangle3d": # or dataset == "jets3d": # expand dims for later concatenating
             data = np.expand_dims(data, axis=1)

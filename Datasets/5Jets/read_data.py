@@ -25,6 +25,44 @@ import pickle
 import re
 import pandas as pd
 import numpy as np
+from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from skimage.measure import block_reduce
+
+def visualize_series(data_to_vis, dir_res="Results", title="Data", show=True, save=False):
+    fig = plt.figure()
+    columns = 10
+    rows = 10
+
+    print("data_to_vis is in range %f to %f" % (np.min(data_to_vis), np.max(data_to_vis)))
+
+    j = 0
+    for i in range(1, columns*rows+1):
+        index = i
+
+        if (index >= data_to_vis.shape[0]):
+            break
+
+        img = data_to_vis[index,...]
+        ax = fig.add_subplot(rows, columns, i)
+
+        plt.axis('off')
+        # print("range:", data_to_vis.min(), data_to_vis.max())
+        # input("x")
+        # plt.imshow(img, cmap='viridis', vmin=data_to_vis.min(), vmax=data_to_vis.max())
+        plt.imshow(img, cmap='viridis')
+        # plt.imshow(img, cmap='viridis', vmin=0, vmax=255)
+
+    fig = plt.gcf()
+    plt.suptitle(title) 
+    fig.set_size_inches(12, 9) # 30, 9 ?
+    if show:
+        plt.show() 
+    if save:
+        title += ".pdf"
+        if not os.path.isdir(dir_res):
+            os.makedirs(dir_res)
+        fig.savefig(os.path.join(dir_res, title), dpi = 300)
 
 def getListOfFiles(dirName):
     # For the given path, get the List of all files in the directory tree 
@@ -195,6 +233,40 @@ print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
 print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
 print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
 print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
+
+# print(data.shape)
+# # data_to_vis = data[:, 0, :, :, 64]
+# data_to_vis = data[:, 0, 64, :, :]
+# print(data_to_vis.shape)
+# # viz
+# visualize_series(data_to_vis, dir_res="Results", title="5Jets_Densities_2D", show=False, save=True)
+
+data_to_vis = data[:, 0]
+print(data_to_vis.shape)
+
+# Choose some volumes to visualize
+volumes_to_visualize = [0, 10, 20, 30]
+
+# Threshold value for creating boolean array
+threshold = 0.75
+
+# Plot each selected volume
+fig = plt.figure()
+for i, vol_idx in enumerate(volumes_to_visualize):
+    volume = data_to_vis[vol_idx, :, :, :]
+    volume = block_reduce(volume, block_size=(2, 2, 2), func=np.mean)
+    print(volume.shape)
+    voxels = volume > threshold  # Convert to boolean array
+    ax = fig.add_subplot(2, 2, i+1, projection='3d')
+    print("yes")
+    ax.voxels(voxels, edgecolor='k')
+    ax.set_title(f"Volume {vol_idx}")
+    print("yes")
+plt.show()
+dir_res = "Results"
+title = "5Jets_Densities_3D"
+fig.savefig(os.path.join(dir_res, title), dpi = 300)
+input("viz")
 
 # input("32")
 # data = np.float16(data)

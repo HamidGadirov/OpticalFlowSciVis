@@ -368,17 +368,9 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 imgs = imgs[:, :, 0]
                 gt = gt[:, :, 0]
 
-            # torch.Size([16, 2, 3, 100, 400])
-            # torch.Size([16, 1, 3, 100, 400])
-            # torch.Size([16, 2, 100, 400])
-            # torch.Size([16, 1, 100, 400])
-
-            # torch.Size([16, 2, 128, 128, 128, 4]) 
-            # torch.Size([16, 1, 128, 128, 128, 4])
-
-            print(imgs.shape)
-            print(gt.shape)
-            input("imgs gt")
+            # print(imgs.shape)
+            # print(gt.shape)
+            # input("imgs gt")
             I0 = imgs[:, :1]
             I1 = imgs[:, 1:2]
             if exp == 1: # # img0, img1, gt
@@ -667,7 +659,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank
+    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1064,7 +1056,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_drop50K.pkl" # best so far: interpol and flow, how improve?
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" # not so bad, reg might be higher
     # we don't have flow for supervision
-    # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad, reg might be higher
+    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad, reg might be higher
     # model_name = "flownet_lapl_v1_240_lbs_drop50K_float_lr3e-4_RIFE.pkl" # ???
 
     """ pipedcylinder2d """
