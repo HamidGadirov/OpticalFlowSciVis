@@ -64,7 +64,7 @@ class Model(nn.Module):
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
+    def inference(self, img0, img1, gt_flow, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
@@ -138,7 +138,7 @@ class Model(nn.Module):
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         mask = mask[2] # only gt (pred) durig training
         # correct shapes
@@ -288,7 +288,8 @@ class Model(nn.Module):
         # Print model's state_dict
         # print("Model's state_dict:")
 
-        """
+        """ L1 regularization """
+        # """
         block2_params = 0.
         for param_tensor in self.flownet.state_dict():
             # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
@@ -301,8 +302,8 @@ class Model(nn.Module):
         # l1_lambda = 1e-5 # 1e-4
         l1_norm = block2_params
         l1_reg = l1_norm # l1_lambda * l1_norm
-        """
-        l1_reg = torch.tensor(0.)
+        # """
+        # l1_reg = torch.tensor(0.)
 
         def charbonnier(x, alpha=0.25, epsilon=1.e-9): # for photo or smooth loss
             return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
@@ -374,7 +375,7 @@ class Model(nn.Module):
             warped_frame = F.grid_sample(frame, grid)
 
             return warped_frame
-        """
+        # """
         # Photometric loss
         # computed as the difference between the first image and the backward/inverse warped second image
         # in this case: can combine img1, img2 (pred); img2 (pred), img3
@@ -395,17 +396,17 @@ class Model(nn.Module):
         loss_photo /= 2
         # print(loss_photo)
         # input("x")
-        """
-        loss_photo = torch.tensor(0.)
+        # """
+        # loss_photo = torch.tensor(0.)
         """ end Photometric consistency """
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 0 # 1e-6 best on rectangle 1e-7
-        lambda_photo = 0 # 2 3 4 5 # 1e-5 best
+        lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_reg = 1e-7 # 1e-6 best on rectangle 1e-7
+        lambda_photo = 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.2 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter

@@ -207,7 +207,9 @@ def load_data(dataset, exp, mode):
             with open(filename, 'rb') as pkl_file:
                 data = pickle.load(pkl_file)
             print(data.shape)
-            # data = np.float32(data)
+            print("data type:", data.dtype) # droplet2d was in float64 ???
+            data = np.float32(data)
+            print("data type:", data.dtype)
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             data = (data - np.min(data)) / (np.max(data) - np.min(data))
             print("Normalized to mean 0 and std 1!")
@@ -480,31 +482,31 @@ def load_data(dataset, exp, mode):
                     # prepare img0, gt, img1 (2x interpolation)
                     print("prepare img0, gt, img1 (2x interpolation)")
                     # TODO: shift by 2 each iter +
-                    # for i in range(0, data_train.shape[0], 2): 
-                    #     try:
-                    #         data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
-                    #     except:
-                    #         print("data_train_three ready")
-                    # data_train = np.array(data_train_three)
-                    # print("data_train in three:", data_train.shape)
-                    # for i in range(0, data_val.shape[0], 2): 
-                    #     try:
-                    #         data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
-                    #     except:
-                    #         print("data_val_three ready")
-                    # data_val = np.array(data_val_three)
-                    # print("data_val in three:", data_val.shape)
-
-                    # on the fly with less memory
-                    for i in range(0, data_train.shape[0]-2, 2):
-                        data_train[i] = np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)
-                    data_train = data_train[:data_train.shape[0]:3]
+                    for i in range(0, data_train.shape[0], 2): 
+                        try:
+                            data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
+                        except:
+                            print("data_train_three ready")
+                    data_train = np.array(data_train_three)
                     print("data_train in three:", data_train.shape)
-
-                    for i in range(0, data_val.shape[0]-2, 2):
-                        data_val[i] = np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)
-                    data_val = data_val[:data_val.shape[0]:3]
+                    for i in range(0, data_val.shape[0], 2): 
+                        try:
+                            data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
+                        except:
+                            print("data_val_three ready")
+                    data_val = np.array(data_val_three)
                     print("data_val in three:", data_val.shape)
+
+                    # # on the fly with less memory
+                    # for i in range(0, data_train.shape[0]-2, 2):
+                    #     data_train[i] = np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)
+                    # data_train = data_train[:data_train.shape[0]:3]
+                    # print("data_train in three:", data_train.shape)
+
+                    # for i in range(0, data_val.shape[0]-2, 2):
+                    #     data_val[i] = np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)
+                    # data_val = data_val[:data_val.shape[0]:3]
+                    # print("data_val in three:", data_val.shape)
 
                     # input("data_train data_train in three")
 
@@ -594,8 +596,8 @@ def load_data(dataset, exp, mode):
                 # data_test = data[15000:18000] # ens10
                 # data_test = data[16605:18000] # ens10
                 # data_test = data[18000:21000] # ens16
-                data_test = data[21000:24000] # ens21
-                # data_test = data[22605:24000] # ens21
+                # data_test = data[21000:24000] # ens21
+                data_test = data[22607:24000] # ens21 22605
 
                 # data_test = data[30100:30400] # data[30000:33000] 
                 # data_test = data[40100:40400]
@@ -647,7 +649,8 @@ def load_data(dataset, exp, mode):
                 # print("Vel y mean std", data_test[:, :, 2].mean(), data_test[:, :, 2].std())
                 # input("xxxx")
             elif "droplet2d" in filename:
-                data_test = data[:2700]
+                # data_test = data[:2700]
+                data_test = data[900:2700]
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:
                 data_test = data[810:1080]
                 # invert magnitude

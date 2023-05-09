@@ -50,9 +50,9 @@ def get_learning_rate(step):
         # return 3e-6 * mul
         # return 6e-6 * mul
         # return 1e-4 * mul
-        # return 3e-4 * mul # # orig
+        return 3e-4 * mul # # orig
         # return 4e-4 * mul
-        return 6e-4 * mul
+        # return 6e-4 * mul
         # return 8e-4 * mul
         # return 1e-3 * mul
     else:
@@ -62,9 +62,9 @@ def get_learning_rate(step):
         # return (6e-6 - 6e-8) * mul + 6e-8
         # return (1e-4 - 1e-6) * mul + 1e-6
         # return (3e-4 - 3e-6) * mul + 3e-6
-        # return (3e-4 - 3e-5) * mul + 3e-5 # orig
+        return (3e-4 - 3e-5) * mul + 3e-5 # orig
         # return (4e-4 - 4e-6) * mul + 4e-6
-        return (6e-4 - 6e-6) * mul + 6e-6
+        # return (6e-4 - 6e-6) * mul + 6e-6
         # return (8e-4 - 8e-6) * mul + 8e-6
         # return (1e-3 - 1e-5) * mul + 1e-5
     # return 1e-6 # worse
@@ -302,7 +302,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # input("x")
         print("Saving at:", dir_model)
         # data = data_train
-        scale_list = [4, 2, 1]
+        scale_list = [1, 1, 1]
         # scale_list = [1, 1, 1]
         # print(data.shape)
         # input("x")
@@ -688,8 +688,8 @@ if __name__ == "__main__":
     model = Model(args.local_rank)
     if args.dataset == "vimeo2d" and args.mode == "train":
         args.batch_size = 55
-    if args.dataset == "droplet2d" or args.dataset == "rectangle2d":
-        args.batch_size = 128
+    if args.dataset == "droplet2d":
+        args.batch_size = 40
     if args.dataset == "rectangle2d":
         args.batch_size = 100 # 200
     if args.dataset == "lbs2d":
@@ -1016,8 +1016,8 @@ if __name__ == "__main__":
     # flow improves with larger ensemble; TODO: run experiment with 30 members on Habrok
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # works
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best + epe: 0.0138
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.014
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_lr6e-4.pkl" # epe: 0.0228
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.014
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_lr6e-4.pkl" # epe: 0.0228
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1056,7 +1056,10 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_drop50K.pkl" # best so far: interpol and flow, how improve?
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" # not so bad, reg might be higher
     # we don't have flow for supervision
-    model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad, reg might be higher
+    # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad
+    # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v1_256_drop50K.pkl" # reg too high?
+    model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K.pkl" # beginning was good but then loss jumped - lr too high? lr6e-4
+    model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K_lr3e-4.pkl"
     # model_name = "flownet_lapl_v1_240_lbs_drop50K_float_lr3e-4_RIFE.pkl" # ???
 
     """ pipedcylinder2d """

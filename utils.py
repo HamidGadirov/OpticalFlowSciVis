@@ -218,93 +218,12 @@ def visualize_series_flow(data_to_vis, flow_u, flow_v, dataset, dir_res="Results
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
 
-# def visualize_seq_dens(original_data, interpol_data, diffs,
-    # factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
-    # fig = plt.figure(figsize=(30, 10))
-    # columns = 10
-    # if "droplet2d" in dataset:
-    #     columns = 15
-    # elif dataset == "lbs2d":
-    #     columns = 10 
-    # rows = 3
-    # skip = 1
-    # data_to_vis = original_data
-    # index = 0
-
-    # if "lbs2d" in dataset:
-    #     vmin = 90
-
-    # for i in range(1, columns*rows+1):
-    #     ax = fig.add_subplot(rows, columns, i)
-    #     # print(int(i/columns))
-    #     if int((i-1)/columns) == 0: # gt
-    #         img = original_data[round(index)]
-    #         if dataset == "lbs2d":
-    #             plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
-    #         else:
-    #             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
-    #         ax_title = "t=" + str(index + 3000)
-    #         if index % 3 == 1:
-    #             ax_title += "*"
-    #         ax.set_title(ax_title, fontsize=10)
-    #     if int((i-1)/columns) == 1 and round(index - 1) % 3 == 0: # interpol
-    #         img = interpol_data[round((index - 1) / 3)]
-    #         if dataset == "lbs2d":
-    #             plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
-    #         else:
-    #             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
-    #     if int((i-1)/columns) == 2 and round(index - 1) % 3 == 0: # diff
-    #         img = diffs[round((index - 1) / 3)]
-    #         plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
-
-    # plt.axis('off')
-    # index += skip
-   
-    # if round(index) == round(columns * skip):
-    #     index = 0
-
-    # normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
-    # im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
-    # if "lbs2d" in dataset:
-    #     cb_ax = fig.add_axes([0.83, 0.5, 0.005, 0.3])
-    # elif "rectangle2d" in dataset:
-    #     cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
-    # fmt = lambda x, pos: '{:0.2f}'.format(x)
-    # bar = np.linspace(vmin, data_to_vis.max(), 5, endpoint=True)
-    # plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
-
-    # fig = plt.gcf()
-    # fig.set_size_inches(20, 3)
-    # # wspace is x; hspace is y 
-    # if "droplet2d" in dataset:
-    #     plt.subplots_adjust(wspace=-0.9, hspace=0.01)
-    #     x = 0.18
-    #     y = 0.8
-    #     step = (y - 0.15) / 6.
-    # elif "lbs2d" in dataset:
-    #     plt.subplots_adjust(wspace=-0.73, hspace=0.02)
-    #     x = 0.15
-    #     y = 0.8
-    #     step = (y - 0.15) / 6.
-
-    # fig.text(x, y, 'Dens GT', size=12)
-    # fig.text(x, y - step, 'Dens pred', size=12)
-    # fig.text(x, y - step*2, 'Dens diff', size=12)
-
-    # if show:
-    #     plt.show() 
-    # if save:
-    #     title += ".pdf"
-    #     if not os.path.isdir(dir_res):
-    #         os.makedirs(dir_res)
-    #     fig.savefig(os.path.join(dir_res, title), dpi = 300)
-
 def visualize_seq_dens(original_data, interpol_data, diffs,
     factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
     
     columns = 10
     if "droplet2d" in dataset:
-        columns = 15
+        columns = 25
     elif dataset == "lbs2d":
         columns = 10 
     rows = 3
@@ -316,12 +235,18 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
     if "lbs2d" in dataset:
         vmin = 95
         print("vis range:", vmin, data_to_vis.max())
+        hspace = -0.41
+        wspace = 0.01
+        cmap ='turbo'
     if "droplet2d" in dataset:
         vmin = 0
         print("vis range:", vmin, data_to_vis.max())
+        hspace = -0.25
+        wspace = 0.01
+        cmap ='gray'
 
     # wspace is x; hspace is y
-    fig, axs = plt.subplots(nrows=rows, ncols=columns, figsize=(30, 3), gridspec_kw={'hspace': -0.41, 'wspace': 0.01})
+    fig, axs = plt.subplots(nrows=rows, ncols=columns, figsize=(30, 3), gridspec_kw={'hspace': hspace, 'wspace': wspace})
 
     # TODO: fix timesteps, t
 
@@ -330,10 +255,13 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         ax = axs[0][i]
         img = original_data[round(index)]
         if dataset == "lbs2d":
-            ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
+            ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
         else:
-            ax.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
-        ax_title = "t=" + str(index + shift + 3000 + 1605)
+            ax.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
+        if dataset == "lbs2d":
+            ax_title = "t=" + str(index + shift + 3000 + 1605)
+        elif dataset == "droplet2d":
+            ax_title = "t=" + str(index + shift + 900)
         ax.set_title(ax_title, fontsize=20)
         ax.axis('off')
 
@@ -341,15 +269,15 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         ax = axs[1][i]
         img = interpol_data[round(index)]
         if dataset == "lbs2d":
-            ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
+            ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
         else:
-            ax.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+            ax.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
         ax.axis('off')
 
         # Third row: difference data
         ax = axs[2][i]
         img = diffs[round(index)]
-        ax.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+        ax.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
         ax.axis('off')
 
         index += skip
@@ -357,7 +285,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         if round(index) == round(columns * skip):
             index = 0
 
-    if dataset == "vimeo2d":
+    if dataset == "lbs2d":
         normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
         im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
         if "lbs2d" in dataset:
@@ -382,7 +310,7 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         
     columns = 10
     if "droplet2d" in dataset:
-        columns = 15
+        columns = 25
     elif dataset == "lbs2d":
         columns = 10 
     rows = 3
@@ -737,7 +665,7 @@ def visualize_large(original_data, interpol_data, diffs,
         if round(index) == round(columns * skip):
             index = 0
 
-    if dataset == "vimeo2d":
+    if dataset == "lbs2d":
         # each image has a different vmin and vmax
         # cmap=cm.get_cmap('viridis')
         # colorbar for density
