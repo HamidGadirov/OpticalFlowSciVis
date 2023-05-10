@@ -259,13 +259,12 @@ class Model(nn.Module):
         # print("Laplace pyramid + AdamW (L2)")
         # print(merged[2].shape, gt.shape)
         # loss_l1 = (self.lap(merged[2], gt)).mean() # laplacian
+        loss_l1 = torch.nn.functional.l1_loss(merged[2], gt) # l1
         # print("L1 loss")
         # print(merged[2].shape, gt.shape)
-        # loss_l1 = torch.nn.functional.l1_loss(merged[4], gt)
-        loss_l1 = torch.nn.functional.l1_loss(merged[2], gt) # my
         # loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
+        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1
         # print(merged_teacher.shape, gt.shape)
-        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # my
         # sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
 
         # adding L1 reg: ? only to the last block
@@ -403,7 +402,7 @@ class Model(nn.Module):
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
         lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 1e-7 # 1e-6 best on rectangle 1e-7
+        lambda_reg = 1e-8 # 1e-7 droplet # 1e-6 best on rectangle
         lambda_photo = 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
         lambda_flow = 0 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle

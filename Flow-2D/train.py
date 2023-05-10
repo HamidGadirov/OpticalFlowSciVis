@@ -30,7 +30,8 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 
 from load_datasets import load_data
-from error import calculate_diff, calculate_epe
+from error import calculate_diff, calculate_avg_epe
+from error import calculate_avg_psnr, calculate_avg_ssim, calculate_avg_lpips
 from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_ind_flow, visualize_series, visualize_series_flow, visualize_large, \
     visualize_seq_dens, visualize_seq_flow
 
@@ -49,8 +50,8 @@ def get_learning_rate(step):
         # return 1e-6 * mul
         # return 3e-6 * mul
         # return 6e-6 * mul
-        # return 1e-4 * mul
-        return 3e-4 * mul # # orig
+        return 1e-4 * mul
+        # return 3e-4 * mul # # orig
         # return 4e-4 * mul
         # return 6e-4 * mul
         # return 8e-4 * mul
@@ -60,9 +61,9 @@ def get_learning_rate(step):
         # return (1e-6 - 1e-8) * mul + 1e-8
         # return (3e-6 - 3e-8) * mul + 3e-8
         # return (6e-6 - 6e-8) * mul + 6e-8
-        # return (1e-4 - 1e-6) * mul + 1e-6
+        return (1e-4 - 1e-5) * mul + 1e-5
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (3e-4 - 3e-5) * mul + 3e-5 # orig
+        # return (3e-4 - 3e-5) * mul + 3e-5 # orig
         # return (4e-4 - 4e-6) * mul + 4e-6
         # return (6e-4 - 6e-6) * mul + 6e-6
         # return (8e-4 - 8e-6) * mul + 8e-6
@@ -150,8 +151,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             else:
                 data_test = load_data(dataset, exp, mode)
             shuffle = False
-            if dataset == "droplet2d": 
-                shuffle = True
+            # if dataset == "droplet2d": 
+            #     shuffle = True
             data_test = DataLoader(data_test, batch_size=16, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
 
     # model_name = "flownet"
@@ -302,8 +303,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # input("x")
         print("Saving at:", dir_model)
         # data = data_train
+        # scale_list = [4, 2, 1]
         scale_list = [1, 1, 1]
-        # scale_list = [1, 1, 1]
         # print(data.shape)
         # input("x")
         # for i in range(0, data.shape[0], 2):
@@ -1013,7 +1014,7 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # similarly good as best +
     # model_name = "flownet_lapl_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.0171
     # model_name = "flownet_l1_dist_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.0171
-    # flow improves with larger ensemble; TODO: run experiment with 30 members on Habrok
+    # flow improves with larger ensemble; TODO: run experiment with 30 members on Habrok 21m+
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # works
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best + epe: 0.0138
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.014
@@ -1059,7 +1060,9 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v1_256_drop50K.pkl" # reg too high?
     model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K.pkl" # beginning was good but then loss jumped - lr too high? lr6e-4
-    model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K_lr3e-4.pkl"
+    model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K_lr3e-4.pkl" # l1: good interpol, some flow, loss unstable +
+    model_name = "flownet_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # RIFE baseline: good interpol and good flow +
+    model_name = "flownet_l1_dist_reg1e-8_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl"
     # model_name = "flownet_lapl_v1_240_lbs_drop50K_float_lr3e-4_RIFE.pkl" # ???
 
     """ pipedcylinder2d """
@@ -1340,13 +1343,21 @@ if __name__ == "__main__":
         title = "Flow_pred_ind_600"
         visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
 
-        # EPE metric:
+        # Desnity metrics
+        print("original data is in range %f to %f" % (np.min(original_data_gt), np.max(original_data_gt)))
+        print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
+        avg_psnr = calculate_avg_psnr(original_data_gt, interpol_data)
+        avg_ssim = calculate_avg_ssim(original_data_gt, interpol_data)
+        avg_lpips = calculate_avg_lpips(original_data_gt, interpol_data)
+        # Flow metric:
         print(flow_gt.shape, flow.shape)
-        epe_score = calculate_epe(flow_gt, flow)
-        epe_file_name = 'EPE.txt'
-        epe_path = os.path.join(dir_model, epe_file_name)
-        with open(epe_path, 'w') as epe_file:
-            epe_file.write(str(epe_score) + "\n")
+        avg_epe = calculate_avg_epe(flow_gt, flow)
+
+        with open('metrics.txt', 'w') as f:
+            f.write('PSNR: {:.2f}\n'.format(avg_psnr))
+            f.write('SSIM: {:.3f}\n'.format(avg_ssim))
+            f.write('LPIPS: {:.3f}\n'.format(avg_lpips))
+            f.write('EPE: {:.3f}\n'.format(avg_epe))
 
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         visualize_large(original_data, interpol_data, diffs,

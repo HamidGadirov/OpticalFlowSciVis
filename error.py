@@ -19,6 +19,10 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 
+import torch
+import lpips
+from skimage.metrics import structural_similarity as ssim
+
 from utils import visualize_ind, visualize_series
 
 # TODO: add frames or images that were GT for interpolation
@@ -74,12 +78,63 @@ def calculate_ssim(img1, img2):
             return ssim(np.squeeze(img1), np.squeeze(img2))
     else:
         raise ValueError('Wrong input image dimensions.')
+
+def calculate_avg_psnr(original_data_gt, interpol_data):
+    # Convert the input arrays to numpy ndarrays and normalize to [0, 1]
+    original_data_gt_array = np.asarray(original_data_gt) / 255.0
+    interpol_data_array = np.asarray(interpol_data) / 255.0
+
+    # Calculate the squared error between the two arrays
+    mse = np.mean(np.square(original_data_gt_array - interpol_data_array))
+
+    # Calculate the maximum possible pixel value
+    max_pixel_value = 1.0
+
+    # Calculate the PSNR in dB
+    psnr = 20 * math.log10(max_pixel_value) - 10 * math.log10(mse)
+
+    # Calculate the average PSNR distance
+    avg_psnr = psnr.mean()
+
+    print('avg PSNR: %.4f' % avg_psnr)
+    return avg_psnr
+
+def calculate_avg_ssim(original_data_gt, interpol_data):
+    # Convert the input arrays to numpy ndarrays and normalize to [0, 1]
+    original_data_gt_array = original_data_gt / 255.0
+    interpol_data_array = interpol_data / 255.0
+
+    # Calculate the SSIM index between the two arrays
+    ssim_index = ssim(original_data_gt_array, interpol_data_array, multichannel=True)
+
+    # Calculate the average SSIM index
+    avg_ssim = np.mean(ssim_index)
+
+    print('avg SSIM: %.4f' % avg_ssim)
+    return avg_ssim
+
+def calculate_avg_lpips(original_data_gt, interpol_data):
+    # Convert the input arrays to PyTorch tensors and normalize to [0, 1]
+    original_data_gt_tensor = torch.from_numpy(original_data_gt).float() / 255.0
+    interpol_data_tensor = torch.from_numpy(interpol_data).float() / 255.0
+
+    # Create the LPIPS model with the VGG feature extractor
+    lpips_model = lpips.LPIPS(net='vgg').cuda()
+
+    # Calculate the LPIPS distance between the two arrays
+    distances = lpips_model(original_data_gt_tensor.cuda(), interpol_data_tensor.cuda())
+
+    # Calculate the average LPIPS distance
+    avg_lpips = distances.mean().item()
+
+    print('avg LPIPS: %.4f' % avg_lpips)
+    return avg_lpips
     
-def calculate_epe(flow_gt, flow_pred):
+def calculate_avg_epe(flow_gt, flow_pred):
     # return torch.norm(flow_pred - flow_gt, p=2, dim=1).mean()
     error = np.sqrt(np.sum((flow_pred - flow_gt) ** 2, axis=1))
     mean_error = np.mean(error)
-    print('Mean endpoint error: {:.3f}'.format(mean_error))
+    print('Mean endpoint error: {:.4f}'.format(mean_error))
     return mean_error
 
 def calculate_metrics(original_data, interpol_data, factor):

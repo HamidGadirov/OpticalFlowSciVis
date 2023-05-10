@@ -650,7 +650,7 @@ def load_data(dataset, exp, mode):
                 # input("xxxx")
             elif "droplet2d" in filename:
                 # data_test = data[:2700]
-                data_test = data[900:2700]
+                data_test = data[350:2700]
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:
                 data_test = data[810:1080]
                 # invert magnitude
@@ -667,8 +667,10 @@ def load_data(dataset, exp, mode):
             print(data_test.shape)
             # input("x")
 
-            if dataset != "rectangle2d" or dataset != "lbs2d":
+            # if dataset != "rectangle2d" or dataset != "lbs2d":
+            if dataset != "rectangle2d": # droplet2d
                 # prepare data for training - use only each third frame while shifting the sampling
+                print("3rd, test time")
                 data_test_ = []
                 for shift in range(3):
                     for i in range(shift, data_test.shape[0], 3): # 10

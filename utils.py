@@ -261,7 +261,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         if dataset == "lbs2d":
             ax_title = "t=" + str(index + shift + 3000 + 1605)
         elif dataset == "droplet2d":
-            ax_title = "t=" + str(index + shift + 900)
+            ax_title = "t=" + str(index + shift + 10)
         ax.set_title(ax_title, fontsize=20)
         ax.axis('off')
 
@@ -344,7 +344,10 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         img = np.zeros((flow_u_gt.shape[1], flow_u_gt.shape[2]))
         plt.axis('off')
         pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
-        ax_title = "t=" + str(index + shift + 3000 + 1605)
+        if dataset == "lbs2d":
+            ax_title = "t=" + str(index + shift + 3000 + 1605)
+        elif dataset == "droplet2d":
+            ax_title = "t=" + str(index + shift + 10)
         ax.set_title(ax_title, fontsize=20)
         ax.axis('off')
 
@@ -462,6 +465,11 @@ def visualize_large(original_data, interpol_data, diffs,
         scale = None
         vmin = 95 # 100
         print("vis range:", vmin, data_to_vis.max())
+        cmap ='turbo'
+    elif "droplet2d" in dataset:
+        vmin = 0
+        print("vis range:", vmin, data_to_vis.max())
+        cmap ='gray'
     elif "jets3d" in dataset:
         quiver_steps = 4
         max_flow_gt = flow_gt.max() # None # 0.1
@@ -487,10 +495,10 @@ def visualize_large(original_data, interpol_data, diffs,
         if int((i-1)/columns) == 0: # gt
             img = original_data[round(index)]
             if dataset == "lbs2d":
-                plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
+                plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
                 # plt.imshow(img, vmin=original_data.std()-original_data.mean(), vmax=data_to_vis.max())
             else:
-                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
             # print("original_data:", original_data[round(index)])
             # if index % 3 == 0:
             #     ax.set_title('t=0') # can we help model with info of seq?
@@ -498,7 +506,10 @@ def visualize_large(original_data, interpol_data, diffs,
             #     ax.set_title('t=1')
             # else:
             #     ax.set_title('t=2')
-            ax_title = "t=" + str(index + 3000 + 1605)
+            if dataset == "lbs2d":
+                ax_title = "t=" + str(index + 3000 + 1605)
+            elif dataset == "droplet2d":
+                ax_title = "t=" + str(index + 10)
             if index % 2 == 1: # if index % 3 == 1:
                 ax_title += "*"
             ax.set_title(ax_title, fontsize=10)
@@ -506,21 +517,21 @@ def visualize_large(original_data, interpol_data, diffs,
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
             img = interpol_data[round((index - 1) / 2)] # [index-columns*2,...] # (index - 1) % 3
             if dataset == "lbs2d":
-                plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap='turbo')
+                plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
                 # plt.imshow(img, vmin=interpol_data.std()-interpol_data.mean(), vmax=data_to_vis.max())
             else:
-                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+                plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
             # print("index:", index)
             # print("(index - 1) % 3:", (index - 1) / 3)
 
         if int((i-1)/columns) == 2 and round(index - 1) % 2 == 0: # diff
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
             img = diffs[round((index - 1) / 2)] # [index-columns*2*2,...]
-            plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap='turbo')
+            plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
         if int((i-1)/columns) == 3 and round(index - 1) % 2 == 0: # mask
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
             img = mask[round((index - 1) / 2)] # [index-columns*2*2,...]
-            plt.imshow(img, vmin=mask.min(), vmax=mask.max(), cmap='turbo')
+            plt.imshow(img, vmin=mask.min(), vmax=mask.max(), cmap=cmap)
 
         # if int((i-1)/columns) == 6: # flow diff
         #     img = diffs_flow[round(index)] # [index-columns*2*2,...]
@@ -554,7 +565,7 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
                 #  pyimof.display.quiver(u, v, c, ax=ax, clim=(-5, 5)) --- use clim
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
-                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
+                pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap=cmap, clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, u_gt, c=u_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
                 # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
@@ -592,7 +603,7 @@ def visualize_large(original_data, interpol_data, diffs,
             # print("u at 300, 25:", u[25, 300])
             # print("u at 300, 75:", u[75, 300])
             # print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
-            pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
+            pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap=cmap, clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, u, c=u, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
             # pyimof.display.plot(u, v, ax=ax, colorwheel=True) # rgb with colormap. correct direction!
@@ -629,7 +640,7 @@ def visualize_large(original_data, interpol_data, diffs,
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
-            pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap='turbo', scale = scale, bg_cmap='gray', step=quiver_steps)
+            pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap=cmap, scale = scale, bg_cmap='gray', step=quiver_steps)
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
             data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
             # print(data_range)
@@ -650,7 +661,7 @@ def visualize_large(original_data, interpol_data, diffs,
         #         ax.add_patch(rect)
 
         plt.axis('off')
-        cmap='viridis'
+        # cmap='viridis'
         if "rectangle2d" in dataset:
             cmap = "gray"
         # plt.imshow(img, cmap=cmap, vmin=data_to_vis.min(), vmax=data_to_vis.max())
