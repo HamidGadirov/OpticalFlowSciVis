@@ -288,7 +288,7 @@ class Model(nn.Module):
         # print("Model's state_dict:")
 
         """ L1 regularization """
-        # """
+        """
         block2_params = 0.
         for param_tensor in self.flownet.state_dict():
             # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
@@ -301,8 +301,8 @@ class Model(nn.Module):
         # l1_lambda = 1e-5 # 1e-4
         l1_norm = block2_params
         l1_reg = l1_norm # l1_lambda * l1_norm
-        # """
-        # l1_reg = torch.tensor(0.)
+        """
+        l1_reg = torch.tensor(0.)
 
         def charbonnier(x, alpha=0.25, epsilon=1.e-9): # for photo or smooth loss
             return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
@@ -374,6 +374,7 @@ class Model(nn.Module):
             warped_frame = F.grid_sample(frame, grid)
 
             return warped_frame
+
         # """
         # Photometric loss
         # computed as the difference between the first image and the backward/inverse warped second image
@@ -383,16 +384,31 @@ class Model(nn.Module):
             h, w = wraped.shape[2:]
             frame1 = F.interpolate(frame1, (h, w), mode='bilinear', align_corners=False)
             p_loss = charbonnier(wraped - frame1)
-            p_loss = torch.sum(p_loss, dim=1) / 3 # ?
+            p_loss = torch.sum(p_loss, dim=1) # / 3 this is for channels
             return torch.sum(p_loss) / frame1.size(0)
         
-        frame1 = img0
-        warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
-        loss_photo = photometric_loss(warped_frame2, frame1)
-        frame3 = img1
-        warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
-        loss_photo += photometric_loss(warped_frame2, frame3)
-        loss_photo /= 2
+        # frame1 = img0
+        # warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
+        # loss_photo = photometric_loss(warped_frame2, frame1)
+        # frame3 = img1
+        # warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
+        # loss_photo += photometric_loss(warped_frame2, frame3)
+        # loss_photo /= 2
+        block_losses = []
+        num_blocks = len(flow) # 3 blocks
+        gamma = 0.8 # idea from RAFT
+        for i in range(num_blocks):
+            frame1 = img0
+            warped_frame2 = backwrd_warp(flow[i][:, 2:4, ...], merged[i])
+            loss_photo = photometric_loss(warped_frame2, frame1)
+            frame3 = img1
+            warped_frame2 = backwrd_warp(flow[i][:, :2, ...], merged[i])
+            loss_photo += photometric_loss(warped_frame2, frame3)
+            loss_photo /= 2
+            loss_photo *= gamma ** (num_blocks - i - 1) # 0.64 0.8 1
+            block_losses.append(loss_photo)
+        total_loss_photo = sum(block_losses)
+        loss_photo = total_loss_photo
         # print(loss_photo)
         # input("x")
         # """
@@ -401,8 +417,8 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 1e-8 # 1e-7 droplet # 1e-6 best on rectangle
+        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_reg = 0 # 1e-7 droplet # 1e-6 best on rectangle
         lambda_photo = 1e-5 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
         lambda_flow = 0 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle

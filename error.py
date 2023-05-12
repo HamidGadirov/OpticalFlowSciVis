@@ -81,31 +81,27 @@ def calculate_ssim(img1, img2):
 
 def calculate_avg_psnr(original_data_gt, interpol_data):
     # Convert the input arrays to numpy ndarrays and normalize to [0, 1]
-    original_data_gt_array = np.asarray(original_data_gt) / 255.0
-    interpol_data_array = np.asarray(interpol_data) / 255.0
+    # original_data_gt_array = np.asarray(original_data_gt) / 255.0
+    # interpol_data_array = np.asarray(interpol_data) / 255.0
 
     # Calculate the squared error between the two arrays
-    mse = np.mean(np.square(original_data_gt_array - interpol_data_array))
+    mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1,2))
 
     # Calculate the maximum possible pixel value
     max_pixel_value = 1.0
 
     # Calculate the PSNR in dB
-    psnr = 20 * math.log10(max_pixel_value) - 10 * math.log10(mse)
+    psnr = 20 * np.log10(max_pixel_value) - 10 * np.log10(mse)
 
     # Calculate the average PSNR distance
-    avg_psnr = psnr.mean()
+    avg_psnr = np.mean(psnr)
 
     print('avg PSNR: %.4f' % avg_psnr)
     return avg_psnr
 
 def calculate_avg_ssim(original_data_gt, interpol_data):
-    # Convert the input arrays to numpy ndarrays and normalize to [0, 1]
-    original_data_gt_array = original_data_gt / 255.0
-    interpol_data_array = interpol_data / 255.0
-
     # Calculate the SSIM index between the two arrays
-    ssim_index = ssim(original_data_gt_array, interpol_data_array, multichannel=True)
+    ssim_index = ssim(original_data_gt, interpol_data)
 
     # Calculate the average SSIM index
     avg_ssim = np.mean(ssim_index)
@@ -113,16 +109,30 @@ def calculate_avg_ssim(original_data_gt, interpol_data):
     print('avg SSIM: %.4f' % avg_ssim)
     return avg_ssim
 
-def calculate_avg_lpips(original_data_gt, interpol_data):
-    # Convert the input arrays to PyTorch tensors and normalize to [0, 1]
-    original_data_gt_tensor = torch.from_numpy(original_data_gt).float() / 255.0
-    interpol_data_tensor = torch.from_numpy(interpol_data).float() / 255.0
+def calculate_avg_lpips(original_data_gt, interpol_data, batch_size=16):
+    # Add channel dimension to the input arrays
+    original_data_gt = np.expand_dims(original_data_gt, axis=1)
+    interpol_data = np.expand_dims(interpol_data, axis=1)
+
+    # Convert the input arrays to PyTorch tensors
+    original_data_gt_tensor = torch.from_numpy(original_data_gt).float()
+    interpol_data_tensor = torch.from_numpy(interpol_data).float()
 
     # Create the LPIPS model with the VGG feature extractor
-    lpips_model = lpips.LPIPS(net='vgg').cuda()
+    lpips_model = lpips.LPIPS(net='alex').cuda() # vgg
 
-    # Calculate the LPIPS distance between the two arrays
-    distances = lpips_model(original_data_gt_tensor.cuda(), interpol_data_tensor.cuda())
+    # Calculate the LPIPS distance between the two arrays in mini-batches
+    num_batches = int(np.ceil(original_data_gt.shape[0] / batch_size))
+    distances = []
+    for i in range(num_batches):
+        start_idx = i * batch_size
+        end_idx = min((i + 1) * batch_size, original_data_gt.shape[0])
+        distances_batch = lpips_model(original_data_gt_tensor[start_idx:end_idx].cuda(), interpol_data_tensor[start_idx:end_idx].cuda())
+        distances.append(distances_batch)
+        torch.cuda.empty_cache()
+
+    # Concatenate the distances from all mini-batches
+    distances = torch.cat(distances, dim=0)
 
     # Calculate the average LPIPS distance
     avg_lpips = distances.mean().item()

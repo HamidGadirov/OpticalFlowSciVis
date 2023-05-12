@@ -660,7 +660,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1059,10 +1059,13 @@ if __name__ == "__main__":
     # we don't have flow for supervision
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v1_256_drop50K.pkl" # reg too high?
-    model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K.pkl" # beginning was good but then loss jumped - lr too high? lr6e-4
-    model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K_lr3e-4.pkl" # l1: good interpol, some flow, loss unstable +
-    model_name = "flownet_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # RIFE baseline: good interpol and good flow +
-    model_name = "flownet_l1_dist_reg1e-8_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl"
+    # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K.pkl" # beginning was good but then loss jumped - lr too high? lr6e-4
+    # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K_lr3e-4.pkl" # l1: good interpol, some flow, loss unstable +
+    # model_name = "flownet_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # RIFE baseline: good interpol and good flow +
+    # model_name = "flownet_l1_dist_reg1e-8_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" worse than baeline: flow worse -
+    # model_name = "flownet_l1_dist_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # worse than baeline: distill exploded -
+    # model_name = "flownet_l1_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # similar to baseline: distill is not important
+    model_name = "flownet_l1_photo1e-5AllBlocksGamma_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # now photo to all blocks
     # model_name = "flownet_lapl_v1_240_lbs_drop50K_float_lr3e-4_RIFE.pkl" # ???
 
     """ pipedcylinder2d """
@@ -1343,22 +1346,6 @@ if __name__ == "__main__":
         title = "Flow_pred_ind_600"
         visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
 
-        # Desnity metrics
-        print("original data is in range %f to %f" % (np.min(original_data_gt), np.max(original_data_gt)))
-        print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
-        avg_psnr = calculate_avg_psnr(original_data_gt, interpol_data)
-        avg_ssim = calculate_avg_ssim(original_data_gt, interpol_data)
-        avg_lpips = calculate_avg_lpips(original_data_gt, interpol_data)
-        # Flow metric:
-        print(flow_gt.shape, flow.shape)
-        avg_epe = calculate_avg_epe(flow_gt, flow)
-
-        with open('metrics.txt', 'w') as f:
-            f.write('PSNR: {:.2f}\n'.format(avg_psnr))
-            f.write('SSIM: {:.3f}\n'.format(avg_ssim))
-            f.write('LPIPS: {:.3f}\n'.format(avg_lpips))
-            f.write('EPE: {:.3f}\n'.format(avg_epe))
-
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         visualize_large(original_data, interpol_data, diffs,
             flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
@@ -1371,6 +1358,29 @@ if __name__ == "__main__":
             title = "Flow_gt_pred_diff"
             visualize_seq_flow(flow_gt, flow, u_diff, v_diff,
                     factor, dataset, dir_model, title=title, show=False, save=True)
+        
+        # input("metrics")
+        del model
+        torch.cuda.empty_cache()
+        # input("metrics")
+        # Desnity metrics
+        # print("original data is in range %f to %f" % (np.min(original_data_gt), np.max(original_data_gt)))
+        # print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
+        avg_psnr = calculate_avg_psnr(original_data_gt, interpol_data)
+        avg_ssim = calculate_avg_ssim(original_data_gt, interpol_data)
+        avg_lpips = calculate_avg_lpips(original_data_gt, interpol_data)
+        if dataset != "vimeo2d" and dataset != "droplet2d":
+            # Flow metric
+            print(flow_gt.shape, flow.shape)
+            avg_epe = calculate_avg_epe(flow_gt, flow)
+        # save metrics score
+        filename = os.path.join(dir_model, 'metrics.txt')
+        with open(filename, 'w') as f:
+            f.write('PSNR: {:.2f}\n'.format(avg_psnr))
+            f.write('SSIM: {:.3f}\n'.format(avg_ssim))
+            f.write('LPIPS: {:.3f}\n'.format(avg_lpips))
+            if dataset != "vimeo2d" and dataset != "droplet2d":
+                f.write('EPE: {:.3f}\n'.format(avg_epe))
 
 # print("Dataset:", dataset)
 
