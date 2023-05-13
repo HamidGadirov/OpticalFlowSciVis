@@ -650,7 +650,8 @@ def load_data(dataset, exp, mode):
                 # input("xxxx")
             elif "droplet2d" in filename:
                 # data_test = data[:2700]
-                data_test = data[350:2700]
+                data_test = data[350:800]
+                # 450: 2m, 600: 7m, 900: 27m for dist_matrix
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:
                 data_test = data[810:1080]
                 # invert magnitude

@@ -387,28 +387,28 @@ class Model(nn.Module):
             p_loss = torch.sum(p_loss, dim=1) # / 3 this is for channels
             return torch.sum(p_loss) / frame1.size(0)
         
-        # frame1 = img0
-        # warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
-        # loss_photo = photometric_loss(warped_frame2, frame1)
-        # frame3 = img1
-        # warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
-        # loss_photo += photometric_loss(warped_frame2, frame3)
-        # loss_photo /= 2
-        block_losses = []
-        num_blocks = len(flow) # 3 blocks
-        gamma = 0.8 # idea from RAFT
-        for i in range(num_blocks):
-            frame1 = img0
-            warped_frame2 = backwrd_warp(flow[i][:, 2:4, ...], merged[i])
-            loss_photo = photometric_loss(warped_frame2, frame1)
-            frame3 = img1
-            warped_frame2 = backwrd_warp(flow[i][:, :2, ...], merged[i])
-            loss_photo += photometric_loss(warped_frame2, frame3)
-            loss_photo /= 2
-            loss_photo *= gamma ** (num_blocks - i - 1) # 0.64 0.8 1
-            block_losses.append(loss_photo)
-        total_loss_photo = sum(block_losses)
-        loss_photo = total_loss_photo
+        frame1 = img0
+        warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
+        loss_photo = photometric_loss(warped_frame2, frame1)
+        frame3 = img1
+        warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
+        loss_photo += photometric_loss(warped_frame2, frame3)
+        loss_photo /= 2
+        # block_losses = []
+        # num_blocks = len(flow) # 3 blocks
+        # gamma = 0.8 # idea from RAFT
+        # for i in range(num_blocks):
+        #     frame1 = img0
+        #     warped_frame2 = backwrd_warp(flow[i][:, 2:4, ...], merged[i])
+        #     loss_photo = photometric_loss(warped_frame2, frame1)
+        #     frame3 = img1
+        #     warped_frame2 = backwrd_warp(flow[i][:, :2, ...], merged[i])
+        #     loss_photo += photometric_loss(warped_frame2, frame3)
+        #     loss_photo /= 2
+        #     loss_photo *= gamma ** (num_blocks - i - 1) # 0.64 0.8 1
+        #     block_losses.append(loss_photo)
+        # total_loss_photo = sum(block_losses)
+        # loss_photo = total_loss_photo
         # print(loss_photo)
         # input("x")
         # """
@@ -417,9 +417,9 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_distill = 5e-3 # 0.01 0.1 # without is bad # 0.01 best
         lambda_reg = 0 # 1e-7 droplet # 1e-6 best on rectangle
-        lambda_photo = 1e-5 # 2 3 4 5 # 1e-5 best
+        lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
         lambda_flow = 0 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study

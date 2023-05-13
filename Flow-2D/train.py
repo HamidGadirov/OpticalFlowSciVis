@@ -30,8 +30,9 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 
 from load_datasets import load_data
-from error import calculate_diff, calculate_avg_epe
-from error import calculate_avg_psnr, calculate_avg_ssim, calculate_avg_lpips
+from metrics import calculate_diff, calculate_avg_epe
+from metrics import calculate_avg_psnr, calculate_avg_ssim, calculate_avg_lpips
+from metrics import calculate_dist_matrix
 from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_ind_flow, visualize_series, visualize_series_flow, visualize_large, \
     visualize_seq_dens, visualize_seq_flow
 
@@ -1061,11 +1062,15 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v1_256_drop50K.pkl" # reg too high?
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K.pkl" # beginning was good but then loss jumped - lr too high? lr6e-4
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K_lr3e-4.pkl" # l1: good interpol, some flow, loss unstable +
-    # model_name = "flownet_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # RIFE baseline: good interpol and good flow +
+    model_name = "flownet_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # RIFE baseline: good interpol and good flow +
     # model_name = "flownet_l1_dist_reg1e-8_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" worse than baeline: flow worse -
     # model_name = "flownet_l1_dist_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # worse than baeline: distill exploded -
     # model_name = "flownet_l1_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # similar to baseline: distill is not important
-    model_name = "flownet_l1_photo1e-5AllBlocksGamma_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # now photo to all blocks
+    # model_name = "flownet_l1_photo1e-5AllBlocksGamma_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # now photo to all blocks -
+    # model_name = "flownet_l1_photo2e-6AllBlocksGamma_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # worse than B. -
+    model_name = "flownet_l1_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # all time best +
+    model_name = "flownet_l1_v1_256_drop50K_lr1e-4.pkl" # 2x faster; eqRes and distill is heavy; worse than B&B -
+    model_name = "flownet_l1_dist5e-3_photo1e-6_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" #
     # model_name = "flownet_lapl_v1_240_lbs_drop50K_float_lr3e-4_RIFE.pkl" # ???
 
     """ pipedcylinder2d """
@@ -1331,20 +1336,20 @@ if __name__ == "__main__":
         plot_distribution(flow[:, 0], dir_model, name="dist_flow_pred_x.png", save=True)
         plot_distribution(flow[:, 1], dir_model, name="dist_flow_pred_y.png", save=True)
 
-        # visualize_ind
-        max_flow_gt = flow_gt.max()
-        title = "Flow_gt_ind_0"
-        visualize_ind_flow(flow_gt[0], max_flow_gt, dir_model, title=title, show=False, save=True)
-        title = "Flow_pred_ind_0"
-        visualize_ind_flow(flow[0], max_flow_gt, dir_model, title=title, show=False, save=True)
-        title = "Flow_gt_ind_300"
-        visualize_ind_flow(flow_gt[300], max_flow_gt, dir_model, title=title, show=False, save=True)
-        title = "Flow_pred_ind_300"
-        visualize_ind_flow(flow[300], max_flow_gt, dir_model, title=title, show=False, save=True)
-        title = "Flow_gt_ind_600"
-        visualize_ind_flow(flow_gt[600], max_flow_gt, dir_model, title=title, show=False, save=True)
-        title = "Flow_pred_ind_600"
-        visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # # visualize_ind
+        # max_flow_gt = flow_gt.max()
+        # title = "Flow_gt_ind_0"
+        # visualize_ind_flow(flow_gt[0], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_pred_ind_0"
+        # visualize_ind_flow(flow[0], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_gt_ind_300"
+        # visualize_ind_flow(flow_gt[300], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_pred_ind_300"
+        # visualize_ind_flow(flow[300], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_gt_ind_600"
+        # visualize_ind_flow(flow_gt[600], max_flow_gt, dir_model, title=title, show=False, save=True)
+        # title = "Flow_pred_ind_600"
+        # visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
 
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         visualize_large(original_data, interpol_data, diffs,
@@ -1381,6 +1386,11 @@ if __name__ == "__main__":
             f.write('LPIPS: {:.3f}\n'.format(avg_lpips))
             if dataset != "vimeo2d" and dataset != "droplet2d":
                 f.write('EPE: {:.3f}\n'.format(avg_epe))
+
+        # DO it only for small subset
+        dist_matrix = calculate_dist_matrix(original_data_gt, interpol_data)
+        print(dist_matrix.shape)
+        print(dist_matrix)
 
 # print("Dataset:", dataset)
 
