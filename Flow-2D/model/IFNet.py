@@ -177,7 +177,7 @@ class IFNet(nn.Module):
 
     # @torch.cuda.amp.autocast(True)
     # def forward(self, x, gt_flow, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
-    def forward(self, x, scale=[1, 1, 1], timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
+    def forward(self, x, scale=[4, 2, 1], timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
         img0 = x[:, :1] # :3
         img1 = x[:, 1:2] # 3:6
         gt = x[:, 2:3] # 6:   In inference time, gt is None

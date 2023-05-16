@@ -64,7 +64,7 @@ class Model(nn.Module):
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, gt_flow, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
+    def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
@@ -138,7 +138,7 @@ class Model(nn.Module):
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         mask = mask[2] # only gt (pred) durig training
         # correct shapes
@@ -259,6 +259,12 @@ class Model(nn.Module):
         # print("Laplace pyramid + AdamW (L2)")
         # print(merged[2].shape, gt.shape)
         # loss_l1 = (self.lap(merged[2], gt)).mean() # laplacian
+
+        # L1 for all blocks (with gamma):
+        # loss_l1 = 0.
+        # loss_l1 += torch.nn.functional.l1_loss(merged[0], gt) * 0.64
+        # loss_l1 += torch.nn.functional.l1_loss(merged[1], gt) * 0.8
+        # loss_l1 += torch.nn.functional.l1_loss(merged[2], gt) * 1.
         loss_l1 = torch.nn.functional.l1_loss(merged[2], gt) # l1
         # print("L1 loss")
         # print(merged[2].shape, gt.shape)
@@ -288,7 +294,7 @@ class Model(nn.Module):
         # print("Model's state_dict:")
 
         """ L1 regularization """
-        """
+        # """
         block2_params = 0.
         for param_tensor in self.flownet.state_dict():
             # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
@@ -301,8 +307,8 @@ class Model(nn.Module):
         # l1_lambda = 1e-5 # 1e-4
         l1_norm = block2_params
         l1_reg = l1_norm # l1_lambda * l1_norm
-        """
-        l1_reg = torch.tensor(0.)
+        # """
+        # l1_reg = torch.tensor(0.)
 
         def charbonnier(x, alpha=0.25, epsilon=1.e-9): # for photo or smooth loss
             return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
@@ -417,8 +423,8 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 5e-3 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 0 # 1e-7 droplet # 1e-6 best on rectangle
+        lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_reg = 1e-8 # 1e-7 droplet # 1e-6 best on rectangle
         lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best
         lambda_smooth = 0 # 1e-8 not important
         lambda_flow = 0 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle

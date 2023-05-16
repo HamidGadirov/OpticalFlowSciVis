@@ -596,8 +596,8 @@ def load_data(dataset, exp, mode):
                 # data_test = data[15000:18000] # ens10
                 # data_test = data[16605:18000] # ens10
                 # data_test = data[18000:21000] # ens16
-                # data_test = data[21000:24000] # ens21
-                data_test = data[22607:24000] # ens21 22605
+                data_test = data[21000:24000] # ens21
+                # data_test = data[22607:24000] # ens21 22605
 
                 # data_test = data[30100:30400] # data[30000:33000] 
                 # data_test = data[40100:40400]
@@ -650,7 +650,7 @@ def load_data(dataset, exp, mode):
                 # input("xxxx")
             elif "droplet2d" in filename:
                 # data_test = data[:2700]
-                data_test = data[350:800]
+                data_test = data[350:2700]
                 # 450: 2m, 600: 7m, 900: 27m for dist_matrix
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:
                 data_test = data[810:1080]

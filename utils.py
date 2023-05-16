@@ -468,8 +468,12 @@ def visualize_large(original_data, interpol_data, diffs,
         cmap ='turbo'
     elif "droplet2d" in dataset:
         vmin = 0
+        max_flow_gt = flow.max()
         print("vis range:", vmin, data_to_vis.max())
+        print("vis flow range:", 0, max_flow_gt)
         cmap ='gray'
+        quiver_steps = 4
+        scale = None
     elif "jets3d" in dataset:
         quiver_steps = 4
         max_flow_gt = flow_gt.max() # None # 0.1
@@ -589,7 +593,7 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print(data_range)
                 if round(index) >= data_range:
                     break
-        if int((i-1)/columns) == 5 and round(index - 1) % 2 == 0 and dataset == "lbs2d": # flow pred; only for interpolated!
+        if int((i-1)/columns) == 5 and round(index - 1) % 2 == 0: # and dataset == "lbs2d": # flow pred; only for interpolated!
             u = flow_u[round((index - 1) / 2)]
             v = flow_v[round((index - 1) / 2)]
             norm = np.sqrt(u * u + v * v) # / norm_coeff
@@ -603,7 +607,7 @@ def visualize_large(original_data, interpol_data, diffs,
             # print("u at 300, 25:", u[25, 300])
             # print("u at 300, 75:", u[75, 300])
             # print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
-            pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap=cmap, clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
+            pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, u, c=u, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
             # pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='jet', bg_cmap='gray')
             # pyimof.display.plot(u, v, ax=ax, colorwheel=True) # rgb with colormap. correct direction!
@@ -711,7 +715,7 @@ def visualize_large(original_data, interpol_data, diffs,
     # wspace is x; hspace is y 
     if "droplet2d" in dataset:
         plt.subplots_adjust(wspace=-0.9, hspace=0.01)
-        x = 0.18
+        x = 0.16
         y = 0.8
         step = (y - 0.15) / 6.
     elif "FluidSimML2d" in dataset:
@@ -760,7 +764,8 @@ def visualize_large(original_data, interpol_data, diffs,
     else:
         fig.text(x, y - step*4, 'Flow GT', size=13)
     fig.text(x, y - step*5, 'Flow pred', size=13)
-    fig.text(x, y - step*6, 'Flow diff', size=13)
+    if dataset != "droplet2d" and dataset != "vimeo2d":
+        fig.text(x, y - step*6, 'Flow diff', size=13)
 
     if show:
         plt.show() 

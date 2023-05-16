@@ -84,6 +84,9 @@ def calculate_avg_psnr(original_data_gt, interpol_data):
     # Convert the input arrays to numpy ndarrays and normalize to [0, 1]
     # original_data_gt_array = np.asarray(original_data_gt) / 255.0
     # interpol_data_array = np.asarray(interpol_data) / 255.0
+    # original_data_gt = (original_data_gt - original_data_gt.mean()) / original_data_gt.std()
+    # interpol_data = (interpol_data - interpol_data.mean()) / interpol_data.std()
+    # TODO: min-max normal to 0,1
 
     # Calculate the squared error between the two arrays
     mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1,2))
