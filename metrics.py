@@ -81,12 +81,9 @@ def calculate_ssim(img1, img2):
         raise ValueError('Wrong input image dimensions.')
 
 def calculate_avg_psnr(original_data_gt, interpol_data):
-    # Convert the input arrays to numpy ndarrays and normalize to [0, 1]
-    # original_data_gt_array = np.asarray(original_data_gt) / 255.0
-    # interpol_data_array = np.asarray(interpol_data) / 255.0
-    # original_data_gt = (original_data_gt - original_data_gt.mean()) / original_data_gt.std()
-    # interpol_data = (interpol_data - interpol_data.mean()) / interpol_data.std()
-    # TODO: min-max normal to 0,1
+    # normalize to [0, 1]
+    original_data_gt = (original_data_gt - original_data_gt.min()) / (original_data_gt.max() - original_data_gt.min())
+    interpol_data = (interpol_data - interpol_data.min()) / (interpol_data.max() - interpol_data.min())
 
     # Calculate the squared error between the two arrays
     mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1,2))
@@ -104,6 +101,10 @@ def calculate_avg_psnr(original_data_gt, interpol_data):
     return avg_psnr
 
 def calculate_avg_ssim(original_data_gt, interpol_data):
+    # normalize to [0, 1]
+    original_data_gt = (original_data_gt - original_data_gt.min()) / (original_data_gt.max() - original_data_gt.min())
+    interpol_data = (interpol_data - interpol_data.min()) / (interpol_data.max() - interpol_data.min())
+
     # Calculate the SSIM index between the two arrays
     ssim_index = ssim(original_data_gt, interpol_data)
 
@@ -114,6 +115,10 @@ def calculate_avg_ssim(original_data_gt, interpol_data):
     return avg_ssim
 
 def calculate_avg_lpips(original_data_gt, interpol_data, batch_size=16):
+    # normalize to [0, 1]
+    original_data_gt = (original_data_gt - original_data_gt.min()) / (original_data_gt.max() - original_data_gt.min())
+    interpol_data = (interpol_data - interpol_data.min()) / (interpol_data.max() - interpol_data.min())
+
     # Add channel dimension to the input arrays
     original_data_gt = np.expand_dims(original_data_gt, axis=1)
     interpol_data = np.expand_dims(interpol_data, axis=1)
@@ -148,7 +153,7 @@ def calculate_avg_epe(flow_gt, flow_pred):
     # return torch.norm(flow_pred - flow_gt, p=2, dim=1).mean()
     error = np.sqrt(np.sum((flow_pred - flow_gt) ** 2, axis=1))
     mean_error = np.mean(error)
-    print('Mean endpoint error: {:.4f}'.format(mean_error))
+    print('avg EPE: {:.4f}'.format(mean_error))
     return mean_error
 
 def calculate_psnr(orig, interp):

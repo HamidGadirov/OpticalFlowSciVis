@@ -64,7 +64,7 @@ class Model(nn.Module):
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
+    def inference(self, img0, img1, gt_flow, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
@@ -138,7 +138,7 @@ class Model(nn.Module):
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         mask = mask[2] # only gt (pred) durig training
         # correct shapes
@@ -212,10 +212,11 @@ class Model(nn.Module):
             # """
             # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             # loss_flow /= 2.
-            # """
+            ###
             # loss_flow = torch.tensor(0.)
+
             """
-            # TODO: flow magn of diff vec loss: no improvements
+            # test: flow magn of diff vec loss: no improvements
             loss_flow = 0.
             # loss_flow += torch.norm(flow[0][:, 2:4] - gt_flow) * 0.64
             # loss_flow += torch.norm(flow[1][:, 2:4] - gt_flow) * 0.8
@@ -223,7 +224,7 @@ class Model(nn.Module):
             loss_flow += torch.norm(flow_teacher[:, 2:4] - gt_flow) * 1.
             """
             
-            # TODO: flow magn loss: No!
+            # test: flow magn loss: No!
             """"
             # norm = np.sqrt(u * u + v * v)
             norm_flow_gt = torch.sqrt(gt_flow[:, 0] * gt_flow[:, 0] + gt_flow[:, 1] * gt_flow[:, 1])
@@ -294,21 +295,18 @@ class Model(nn.Module):
         # print("Model's state_dict:")
 
         """ L1 regularization """
-        # """
-        block2_params = 0.
+        """
+        block2_params_norm = 0.
         for param_tensor in self.flownet.state_dict():
             # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
             if "block2" in param_tensor or "block_tea" in param_tensor:
-                p = self.flownet.state_dict()[param_tensor]
-                # print(p)
-                block2_params += torch.norm(p, 1)
-        # print(block2_params)
+                block2_params = self.flownet.state_dict()[param_tensor]
+                block2_params_norm += torch.norm(block2_params, 1)
+        # print(block2_params_norm)
         # input("x")
-        # l1_lambda = 1e-5 # 1e-4
-        l1_norm = block2_params
-        l1_reg = l1_norm # l1_lambda * l1_norm
-        # """
-        # l1_reg = torch.tensor(0.)
+        l1_reg = block2_params_norm
+        """
+        l1_reg = torch.tensor(0.)
 
         def charbonnier(x, alpha=0.25, epsilon=1.e-9): # for photo or smooth loss
             return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
@@ -340,9 +338,7 @@ class Model(nn.Module):
             return torch.sum(s_loss) / b
 
         loss_smooth = smoothness_loss(flow)
-        # smooth_lambda = 0.01
-        # loss_smooth = smooth_lambda * smooth
-        """
+        # """
         """ end Smoothness consistency """
 
         """ Photometric consistency """
@@ -381,7 +377,7 @@ class Model(nn.Module):
 
             return warped_frame
 
-        # """
+        """
         # Photometric loss
         # computed as the difference between the first image and the backward/inverse warped second image
         # in this case: can combine img1, img2 (pred); img2 (pred), img3
@@ -417,17 +413,17 @@ class Model(nn.Module):
         # loss_photo = total_loss_photo
         # print(loss_photo)
         # input("x")
-        # """
-        # loss_photo = torch.tensor(0.)
+        """
+        loss_photo = torch.tensor(0.)
         """ end Photometric consistency """
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 1e-8 # 1e-7 droplet # 1e-6 best on rectangle
-        lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best
+        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_reg = 0 # 1e-8 droplet # 1e-6 best on rectangle
+        lambda_photo = 0 # 2 3 4 5 # 1e-5 best 1e-6
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0 # 0.2 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0.1 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter
@@ -436,7 +432,7 @@ class Model(nn.Module):
         if math.isnan(loss_distill) or loss_distill > 10.:
             loss_distill = torch.tensor(0.)
         if dataset == "droplet2d" or dataset == "vimeo2d":
-             loss_flow = torch.tensor(0.)
+            loss_flow = torch.tensor(0.)
 
         loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
                 l1_reg * lambda_reg + loss_photo * lambda_photo + loss_flow * lambda_flow # + loss_smooth * lambda_smooth
@@ -458,7 +454,6 @@ class Model(nn.Module):
         else:
             flow_teacher = flow[2]
             merged_teacher = merged[2]
-        
 
         return merged[2], {
             'merged_tea': merged_teacher,
@@ -471,6 +466,7 @@ class Model(nn.Module):
             'loss_distill': loss_distill * lambda_distill,
             'l1_reg': l1_reg * lambda_reg,
             'loss_photo': loss_photo * lambda_photo,
+            # 'loss_smooth': loss_smooth * lambda_smooth,
             'loss_flow': loss_flow * lambda_flow,
             'loss_G': loss_G
             }

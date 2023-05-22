@@ -49,20 +49,21 @@ def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000.
         # return 6e-5 * mul
-        return 1e-4 * mul
+        # return 1e-4 * mul
         # return 3e-4 * mul # # orig
         # return 4e-4 * mul
-        # return 6e-4 * mul
+        return 6e-4 * mul
         # return 8e-4 * mul
         # return 1e-3 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
         # return (6e-5 - 6e-6) * mul + 6e-6
-        return (1e-4 - 1e-5) * mul + 1e-5
+        # return (1e-4 - 1e-5) * mul + 1e-5
         # return (3e-4 - 3e-6) * mul + 3e-6
         # return (3e-4 - 3e-5) * mul + 3e-5 # orig
         # return (4e-4 - 4e-6) * mul + 4e-6
-        # return (6e-4 - 6e-6) * mul + 6e-6
+        return (6e-4 - 6e-6) * mul + 6e-6
+        # return (6e-4 - 6e-5) * mul + 6e-5
         # return (8e-4 - 8e-6) * mul + 8e-6
         # return (1e-3 - 1e-5) * mul + 1e-5
     # return 1e-6 # worse
@@ -162,7 +163,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     # model_name += "_" + dataset
     # model_name += ".pkl"
 
-    model.load_model(model_name, log_path)
+    # model.load_model(model_name, log_path)
     try:
         model.load_model(model_name, log_path)
         # print("Loaded RIFE model:", model_name)
@@ -300,8 +301,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         # input("x")
         print("Saving at:", dir_model)
         # data = data_train
-        scale_list = [4, 2, 1]
-        # scale_list = [1, 1, 1]
+        # scale_list = [4, 2, 1]
+        scale_list = [1, 1, 1]
         # print(data.shape)
         # input("x")
         # for i in range(0, data.shape[0], 2):
@@ -514,7 +515,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     # writer_val = SummaryWriter('validate') #
     # psnr_list = []
     # psnr_list_teacher = []
-    loss_all_list = [0. for i in range(7)] # all loss components
+    loss_all_list = [0. for i in range(8)] # all loss components 7
     time_stamp = time.time()
     for i, data in enumerate(val_data):
         # data = torch.zeros([16, 9, 150, 450], dtype=torch.float)
@@ -542,6 +543,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
         # input("x")
         loss_all = [info['loss_G'].cpu().numpy(), info['loss_l1'].cpu().numpy(), info['loss_tea'].cpu().numpy(), 
             info['loss_distill'].cpu().numpy(), info['l1_reg'].cpu().numpy(), info['loss_photo'].cpu().numpy(), 
+            # info['loss_smooth'].cpu().numpy(), 
             info['loss_flow'].cpu().numpy()]
         print("loss_G:", info['loss_G'])
         loss_all_list = [a + b for a, b in zip(loss_all_list, loss_all)]
@@ -999,9 +1001,9 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_cyl_tau_3rd5thShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # flow error higher than best
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens7_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best?
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best; epe: 0.017
-#    model_name = "flownet_lapl_v1_240_lbs_skip3_combi_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.06
+    # model_name = "flownet_lapl_v1_240_lbs_skip3_combi_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.06
     model_name = "flownet_lapl_v1_240_lbs_skip3_ens10_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.12
-    # PSNR: 29.26 SSIM: 0.999 LPIPS: 0.001 EPE: 0.1913
+    # PSNR: 48.52 SSIM: 0.999 LPIPS: 0.001 EPE: 0.1800
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_100ep.pkl" # not bad, but 300ep better
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens16_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # not nenough memory
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # best + epe: 0.017
@@ -1014,11 +1016,18 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_dist_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.0171
     # flow improves with larger ensemble; TODO: run experiment with 30 members on Habrok 21m+
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # works
-    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best + epe: 0.0136
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best + epe: 0.0136
     # PSNR: 54.73 SSIM: 1.000 LPIPS: 0.000 EPE: 0.0136
-    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.014
-    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_lr6e-4.pkl" # epe: 0.0228
     # untrained: PSNR: 21.8099 SSIM: 0.9965 LPIPS: 0.0074
+    # TODO: ablation: 1. without flow loss 2. 4,2,1 and lapl 3. 128 instead of 256
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.014 
+    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_lr6e-4.pkl" # param s. epe: 0.0228
+    # model_name = "flownet_l1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # ablation PSNR: 50.38 EPE: 0.01469
+    # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
+    # model_name = "flownet_lapl_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 49.668 EPE: 0.0139
+    model_name = "flownet_l1_flow3e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 47.87 EPE: 0.0138
+    model_name = "flownet_l1_flow1e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
+    # TODO: param s.: flow3e-1 + flow1e-1 - no L1 -  
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1057,11 +1066,12 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_drop50K.pkl" # best so far: interpol and flow, how improve?
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" # not so bad, reg might be higher
     # we don't have flow for supervision
+    # model_name = "flownet_lapl_v1_240_lbs_drop50K_float_lr3e-4_RIFE.pkl" # ???
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v1_256_drop50K.pkl" # reg too high?
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K.pkl" # beginning was good but then loss jumped - lr too high? lr6e-4
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K_lr3e-4.pkl" # l1: good interpol, some flow, loss unstable +
-    model_name = "flownet_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # RIFE Baseline: good interpol and good flow + PSNR: 35.35 LPIPS: 0.026
+    # model_name = "flownet_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # RIFE Baseline: good interpol and good flow + PSNR: 35.35 LPIPS: 0.026
     # model_name = "flownet_l1_dist_reg1e-8_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" worse than baeline: flow worse -
     # model_name = "flownet_l1_dist_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # worse than baeline: distill exploded -
     # model_name = "flownet_l1_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # similar to baseline: distill is not important
@@ -1076,9 +1086,25 @@ if __name__ == "__main__":
     # model_name = "flownet_l1AllBlocksGamma_photo1e-7_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # PSNR: 30.19 LPIPS: 0.053
     # model_name = "flownet_l1_dist_v1_256_drop50K_eqRes_deconv_lr3e-4.pkl" # PSNR: 31.19 LPIPS: 0.046 -
     # model_name = "flownet_l1_v1_256_drop50K_eqRes_deconv_lr3e-4.pkl" # worse than before -
-    model_name = "flownet_l1_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr3e-4.pkl" # all time best + PSNR: 35.82 LPIPS: 0.022
-    model_name = "flownet_l1_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr1e-4.pkl"
-    # model_name = "flownet_lapl_v1_240_lbs_drop50K_float_lr3e-4_RIFE.pkl" # ???
+    # model_name = "flownet_l1_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr3e-4.pkl" # best + PSNR: 35.82 LPIPS: 0.022
+    # model_name = "flownet_l1_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr1e-4.pkl" # worse than before -
+    # model_name = "flownet_l1_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # best + PSNR: 36.13 LPIPS: 0.022
+    # model_name = "flownet_l1_dist_reg1e-9_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # loss increased -
+    # model_name = "flownet_l1_dist_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # ablation
+    # model_name = "flownet_l1_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # ablation
+    # model_name = "flownet_l1_dist_reg1e-8_v1_256_drop50K_lr6e-4.pkl" # ablation
+    # model_name = "flownet_l1_dist_reg1e-8_photo1e-6_v1_128_drop50K_lr6e-4.pkl" # param s.
+    # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # all time best ++ PSNR: 37.381 LPIPS: 0.0144
+    # got worse after training more...
+    # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_smooth1e-8_v1_256_drop50K_lr6e-4.pkl" # param s.
+    # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_100ep.pkl" # PSNR: 32.13 LPIPS: 0.199
+    # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # reproduce: PSNR: 37.381 LPIPS: 0.0144
+    # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_6e-5.pkl" # reproduce: PSNR: 33 LPIPS: 0.0143
+    # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_6e-6.pkl" # reproduce: all time best ++ PSNR: 35.818 LPIPS: 0.0086
+    # model_name = "flownet_lapl_dist_reg1e-8_photo1e-5_v1_256_drop50K_lr6e-4.pkl" # param s.
+    # model_name = "flownet_lapl_dist_reg1e-7_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
+    # model_name = "flownet_lapl_dist2e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
+    # TODO: param s.: dist3e-2 - dist1e-2 - no Lapl - reg1e-7 - reg1e-9 + photo1e-5 + photo1e-7 +
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"
@@ -1388,9 +1414,9 @@ if __name__ == "__main__":
         # save metrics score
         filename = os.path.join(dir_model, 'metrics.txt')
         with open(filename, 'w') as f:
-            f.write('PSNR: {:.2f}\n'.format(avg_psnr))
-            f.write('SSIM: {:.3f}\n'.format(avg_ssim))
-            f.write('LPIPS: {:.3f}\n'.format(avg_lpips))
+            f.write('PSNR: {:.3f}\n'.format(avg_psnr))
+            f.write('SSIM: {:.4f}\n'.format(avg_ssim))
+            f.write('LPIPS: {:.4f}\n'.format(avg_lpips))
             if dataset != "vimeo2d" and dataset != "droplet2d":
                 f.write('EPE: {:.4f}\n'.format(avg_epe))
 

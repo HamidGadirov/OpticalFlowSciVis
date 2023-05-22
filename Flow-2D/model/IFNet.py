@@ -34,6 +34,10 @@ five_blocks = False
 blocks_range = 3 if not five_blocks else 5
 refine = False # True
 use_deconv = True # True
+if use_deconv:
+    scales = [1, 1, 1]
+else:
+    scales = [4, 2, 1]
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -177,7 +181,7 @@ class IFNet(nn.Module):
 
     # @torch.cuda.amp.autocast(True)
     # def forward(self, x, gt_flow, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
-    def forward(self, x, scale=[4, 2, 1], timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
+    def forward(self, x, scale=scales, timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
         img0 = x[:, :1] # :3
         img1 = x[:, 1:2] # 3:6
         gt = x[:, 2:3] # 6:   In inference time, gt is None
