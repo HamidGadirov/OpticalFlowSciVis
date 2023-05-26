@@ -64,7 +64,8 @@ class Model(nn.Module):
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, gt_flow, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
+    # def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
+    def inference(self, img0, img1, gt_flow, TTA=False, timestep=0.5):
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
@@ -136,11 +137,12 @@ class Model(nn.Module):
             self.eval()
         # flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
-        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1))
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
-        mask = mask[2] # only gt (pred) durig training
+        # mask = mask[2] # only gt (pred) durig training
+        mask = mask[-1] # 2 blocks
         # correct shapes
         max_shape_2 = min(img0.shape[2], mask.shape[2])
         max_shape_3 = min(img0.shape[3], mask.shape[3])
@@ -192,15 +194,17 @@ class Model(nn.Module):
             # i_weight = gamma**(n_predictions - i - 1)
             # i_loss = (flow_preds[i] - flow_gt).abs()
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
+
+            # # five blocks
             # loss_flow = 0.
-            # five blocks
             # loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.4096
             # loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.512
             # loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 0.64
             # loss_flow += (flow[3][:, 2:4] - gt_flow).abs().mean() * 0.8
             # loss_flow += (flow[4][:, 2:4] - gt_flow).abs().mean() * 1.
+            # loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
 
-            # """
+            """
             loss_flow = 0.
             loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
             loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.8
@@ -209,11 +213,11 @@ class Model(nn.Module):
             # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
             # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
             loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
-            # """
+            """
             # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             # loss_flow /= 2.
             ###
-            # loss_flow = torch.tensor(0.)
+            loss_flow = torch.tensor(0.)
 
             """
             # test: flow magn of diff vec loss: no improvements
@@ -260,17 +264,20 @@ class Model(nn.Module):
         # print("Laplace pyramid + AdamW (L2)")
         # print(merged[2].shape, gt.shape)
         # loss_l1 = (self.lap(merged[2], gt)).mean() # laplacian
+        # loss_l1 = (self.lap(merged[4], gt)).mean() # laplacian 5 blocks
+        loss_l1 = (self.lap(merged[-1], gt)).mean() # laplacian 2 blocks
 
         # L1 for all blocks (with gamma):
         # loss_l1 = 0.
         # loss_l1 += torch.nn.functional.l1_loss(merged[0], gt) * 0.64
         # loss_l1 += torch.nn.functional.l1_loss(merged[1], gt) * 0.8
         # loss_l1 += torch.nn.functional.l1_loss(merged[2], gt) * 1.
-        loss_l1 = torch.nn.functional.l1_loss(merged[2], gt) # l1
+        # loss_l1 = torch.nn.functional.l1_loss(merged[2], gt) # l1
+        # loss_l1 = torch.nn.functional.l1_loss(merged[4], gt) # l1 5Blocks
         # print("L1 loss")
         # print(merged[2].shape, gt.shape)
-        # loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
-        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1
+        loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
+        # loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1
         # print(merged_teacher.shape, gt.shape)
         # sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
 
@@ -295,18 +302,19 @@ class Model(nn.Module):
         # print("Model's state_dict:")
 
         """ L1 regularization """
-        """
+        # """
         block2_params_norm = 0.
         for param_tensor in self.flownet.state_dict():
             # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
-            if "block2" in param_tensor or "block_tea" in param_tensor:
+            # if "block2" in param_tensor or "block_tea" in param_tensor:
+            if "block1" in param_tensor or "block_tea" in param_tensor: # 5 blocks 2b
                 block2_params = self.flownet.state_dict()[param_tensor]
                 block2_params_norm += torch.norm(block2_params, 1)
         # print(block2_params_norm)
         # input("x")
         l1_reg = block2_params_norm
-        """
-        l1_reg = torch.tensor(0.)
+        # """
+        # l1_reg = torch.tensor(0.)
 
         def charbonnier(x, alpha=0.25, epsilon=1.e-9): # for photo or smooth loss
             return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
@@ -377,7 +385,7 @@ class Model(nn.Module):
 
             return warped_frame
 
-        """
+        # """
         # Photometric loss
         # computed as the difference between the first image and the backward/inverse warped second image
         # in this case: can combine img1, img2 (pred); img2 (pred), img3
@@ -390,10 +398,12 @@ class Model(nn.Module):
             return torch.sum(p_loss) / frame1.size(0)
         
         frame1 = img0
-        warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2])
+        # warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2]) # 3 blocks
+        warped_frame2 = backwrd_warp(flow[-1][:, 2:4, ...], merged[-1])
         loss_photo = photometric_loss(warped_frame2, frame1)
         frame3 = img1
-        warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2])
+        # warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2]) # 3 blocks
+        warped_frame2 = backwrd_warp(flow[-1][:, :2, ...], merged[-1])
         loss_photo += photometric_loss(warped_frame2, frame3)
         loss_photo /= 2
         # block_losses = []
@@ -413,17 +423,17 @@ class Model(nn.Module):
         # loss_photo = total_loss_photo
         # print(loss_photo)
         # input("x")
-        """
-        loss_photo = torch.tensor(0.)
+        # """
+        # loss_photo = torch.tensor(0.)
         """ end Photometric consistency """
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 0 # 1e-8 droplet # 1e-6 best on rectangle
-        lambda_photo = 0 # 2 3 4 5 # 1e-5 best 1e-6
+        lambda_distill = 0.01 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
+        lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.1 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter
@@ -452,14 +462,15 @@ class Model(nn.Module):
             loss_G.backward()
             self.optimG.step()
         else:
-            flow_teacher = flow[2]
-            merged_teacher = merged[2]
+            flow_teacher = flow[-1] # [2]
+            merged_teacher = merged[-1] # [2]
 
-        return merged[2], {
+        # return merged[2], {
+        return merged[-1], {
             'merged_tea': merged_teacher,
             'mask': mask,
             'mask_tea': mask,
-            'flow': flow[2][:, :2], # sup_flow[2],
+            'flow': flow[-1][:, :2], # sup_flow[2],
             'flow_tea': flow_teacher,
             'loss_l1': loss_l1 * lambda_l1,
             'loss_tea': loss_tea * lambda_tea,

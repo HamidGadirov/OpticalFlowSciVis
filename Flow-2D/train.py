@@ -302,9 +302,10 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         print("Saving at:", dir_model)
         # data = data_train
         # scale_list = [4, 2, 1]
-        scale_list = [1, 1, 1]
+        # scale_list = [1, 1, 1]
         # print(data.shape)
         # input("x")
+
         # for i in range(0, data.shape[0], 2):
         #     I0 = data[i].to(device, non_blocking=True) / 255.
         #     I1 = data[i+1].to(device, non_blocking=True) / 255.
@@ -375,7 +376,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
             if exp == 1: # # img0, img1, gt
                 # middle, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
                 # merged, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
-                merged, flow, mask = model.inference(I0, I1, np.squeeze(data_gpu[:, 2:3, 1:3]), scale_list) # get the flow too
+                # merged, flow, mask = model.inference(I0, I1, np.squeeze(data_gpu[:, 2:3, 1:3]), scale_list) # get the flow too
+                merged, flow, mask = model.inference(I0, I1, np.squeeze(data_gpu[:, 2:3, 1:3]))
                 # merged_0 = np.asarray(merged[0].detach().cpu().numpy())
                 # merged_1 = np.asarray(merged[1].detach().cpu().numpy())
                 # merged_2 = np.asarray(merged[2].detach().cpu().numpy())
@@ -418,10 +420,11 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 # mask_combined.extend(mask_m)
                 # mask_combined.extend(mask_r)
             elif exp == 2: # img0, img1, gt0, gt1, gt2
-                middle, flow_middle, mask = model.inference(I0, I1, scale_list) # get the flow too
+                # middle, flow_middle, mask = model.inference(I0, I1, scale_list) # get the flow too
+                middle, flow_middle, mask = model.inference(I0, I1) # get the flow too
                 # pred, info = model.update(imgs, gt[:, 1:2], dataset, learning_rate, training=True) # img0, img1, gt1
-                middle_left, flow_left, mask = model.inference(I0, middle, scale_list) # get the flow too
-                middle_right, flow_right, mask = model.inference(middle, I1, scale_list) # get the flow too
+                middle_left, flow_left, mask = model.inference(I0, middle) # get the flow too
+                middle_right, flow_right, mask = model.inference(middle, I1) # get the flow too
                 middle = np.asarray(middle.detach().cpu().numpy())
                 middle_left = np.asarray(middle_left.detach().cpu().numpy())
                 middle_right = np.asarray(middle_right.detach().cpu().numpy())
@@ -659,7 +662,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1016,7 +1019,7 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_dist_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.0171
     # flow improves with larger ensemble; TODO: run experiment with 30 members on Habrok 21m+
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # works
-    # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best + epe: 0.0136
+    model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best + epe: 0.0136
     # PSNR: 54.73 SSIM: 1.000 LPIPS: 0.000 EPE: 0.0136
     # untrained: PSNR: 21.8099 SSIM: 0.9965 LPIPS: 0.0074
     # TODO: ablation: 1. without flow loss 2. 4,2,1 and lapl 3. 128 instead of 256
@@ -1025,9 +1028,13 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # ablation PSNR: 50.38 EPE: 0.01469
     # model_name = "flownet_l1_flow2e-1_v1_128_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
     # model_name = "flownet_lapl_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 49.668 EPE: 0.0139
-    model_name = "flownet_l1_flow3e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 47.87 EPE: 0.0138
-    model_name = "flownet_l1_flow1e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
-    # TODO: param s.: flow3e-1 + flow1e-1 - no L1 -  
+    # model_name = "flownet_l1_flow3e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 47.87 EPE: 0.0138
+    # model_name = "flownet_l1_flow1e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
+    # model_name = "flownet_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
+    model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
+    model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # 120ep: 48.79, 0.0122 + bugs -
+    # TODO: param s.: flow3e-1 + flow1e-1 + no L1 +
+    # TODO: num_blocks - gamma - refine -
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1065,7 +1072,6 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K.pkl" # reg was too much
     # model_name = "flownet_lapl_dist_photo1e-5_v2_128_drop50K.pkl" # best so far: interpol and flow, how improve?
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v2_128_drop50K.pkl" # not so bad, reg might be higher
-    # we don't have flow for supervision
     # model_name = "flownet_lapl_v1_240_lbs_drop50K_float_lr3e-4_RIFE.pkl" # ???
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v2_128_drop50K_v2.pkl" # not so bad
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v1_256_drop50K.pkl" # reg too high?
@@ -1104,7 +1110,16 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-8_photo1e-5_v1_256_drop50K_lr6e-4.pkl" # param s.
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
     # model_name = "flownet_lapl_dist2e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
-    # TODO: param s.: dist3e-2 - dist1e-2 - no Lapl - reg1e-7 - reg1e-9 + photo1e-5 + photo1e-7 +
+    # model_name = "flownet_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
+    # model_name = "flownet_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
+    model_name = "flownet_5Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.: loss jumped -
+    model_name = "flownet_5Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr3e-4_3e-6.pkl" # distill loss jumped -
+    model_name = "flownet_5Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # worse than before -
+    model_name = "flownet_5Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 33.34 0.032 - scale = [1, 1, 1, 1, 1], other bugs
+    model_name = "flownet_5Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_scale.pkl" # scale = [4, 2, 2, 1, 1]
+    model_name = "flownet_2Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # scale = [2, 1]
+    # TODO: param s.: dist5e-3 + dist2e-2 + no Lapl + reg1e-7 + reg1e-9 + photo1e-5 + photo1e-7 +
+    # TODO: num_blocks - gamma - refine -
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"
@@ -1405,7 +1420,7 @@ if __name__ == "__main__":
         # print("original data is in range %f to %f" % (np.min(original_data_gt), np.max(original_data_gt)))
         # print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
         avg_psnr = calculate_avg_psnr(original_data_gt, interpol_data)
-        avg_ssim = calculate_avg_ssim(original_data_gt, interpol_data)
+        # avg_ssim = calculate_avg_ssim(original_data_gt, interpol_data)
         avg_lpips = calculate_avg_lpips(original_data_gt, interpol_data)
         if dataset != "vimeo2d" and dataset != "droplet2d":
             # Flow metric
@@ -1415,7 +1430,7 @@ if __name__ == "__main__":
         filename = os.path.join(dir_model, 'metrics.txt')
         with open(filename, 'w') as f:
             f.write('PSNR: {:.3f}\n'.format(avg_psnr))
-            f.write('SSIM: {:.4f}\n'.format(avg_ssim))
+            # f.write('SSIM: {:.4f}\n'.format(avg_ssim))
             f.write('LPIPS: {:.4f}\n'.format(avg_lpips))
             if dataset != "vimeo2d" and dataset != "droplet2d":
                 f.write('EPE: {:.4f}\n'.format(avg_epe))

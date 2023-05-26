@@ -30,10 +30,13 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
     )
 
 version = 1
+three_blocks = False
+two_blocks = True
 five_blocks = False
 blocks_range = 3 if not five_blocks else 5
+blocks_range = 3 if not two_blocks else 2
 refine = False # True
-use_deconv = True # True
+use_deconv = False # True
 if use_deconv:
     scales = [1, 1, 1]
 else:
@@ -163,8 +166,9 @@ class IFNet(nn.Module):
     def __init__(self):
         super(IFNet, self).__init__()
         self.block0 = IFBlock(2, c=256) # 6 c=240 128 256
-        self.block1 = IFBlock(5+4, c=192) # 13 c=150 96 192
-        self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
+        # self.block1 = IFBlock(5+4, c=192) # 13 c=150 96 192
+        # self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
+        self.block1 = IFBlock(5+4, c=128) # 13 c=90 96 64 128 # 2 blocks
 
         if five_blocks:
             self.block0 = IFBlock(2, c=256) # 128 256
@@ -172,6 +176,10 @@ class IFNet(nn.Module):
             self.block2 = IFBlock(5+4, c=192) # 96 192
             self.block3 = IFBlock(5+4, c=128) # 64 128
             self.block4 = IFBlock(5+4, c=128) # 64 128
+
+        if two_blocks:
+            self.block0 = IFBlock(2, c=256) # 128 256
+            self.block1 = IFBlock(5+4, c=128) # 64 128
 
         self.block_tea = IFBlock(6+4, c=128) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64 128
         # modified
@@ -181,7 +189,8 @@ class IFNet(nn.Module):
 
     # @torch.cuda.amp.autocast(True)
     # def forward(self, x, gt_flow, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
-    def forward(self, x, scale=scales, timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
+    # def forward(self, x, scale=scales, timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
+    def forward(self, x, timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
         img0 = x[:, :1] # :3
         img1 = x[:, 1:2] # 3:6
         gt = x[:, 2:3] # 6:   In inference time, gt is None
@@ -197,11 +206,16 @@ class IFNet(nn.Module):
         warped_img1 = img1
         flow = None 
         loss_distill = 0
-        stu = [self.block0, self.block1, self.block2]
-        if five_blocks:
+        if three_blocks:
+            stu = [self.block0, self.block1, self.block2]
+            scale = [1, 1, 1] if use_deconv else [4, 2, 1]
+        elif five_blocks:
             stu = [self.block0, self.block1, self.block2, self.block3, self.block4]
-            # scale = [4, 2, 2, 1, 1]
-            scale = [1, 1, 1, 1, 1]
+            scale = [1, 1, 1, 1, 1] if use_deconv else [4, 2, 2, 1, 1]
+        elif two_blocks:
+            stu = [self.block0, self.block1]
+            scale = [1, 1] if use_deconv else [2, 1]
+
         for i in range(blocks_range):
             if flow != None:
                 # correct shapes
