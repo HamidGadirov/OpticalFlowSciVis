@@ -30,17 +30,12 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
     )
 
 version = 1
+two_blocks = False
 three_blocks = False
-two_blocks = True
+four_blocks = True
 five_blocks = False
-blocks_range = 3 if not five_blocks else 5
-blocks_range = 3 if not two_blocks else 2
 refine = False # True
-use_deconv = False # True
-if use_deconv:
-    scales = [1, 1, 1]
-else:
-    scales = [4, 2, 1]
+use_deconv = True # True
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -165,10 +160,16 @@ class IFBlock(nn.Module):
 class IFNet(nn.Module):
     def __init__(self):
         super(IFNet, self).__init__()
-        self.block0 = IFBlock(2, c=256) # 6 c=240 128 256
-        # self.block1 = IFBlock(5+4, c=192) # 13 c=150 96 192
-        # self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
-        self.block1 = IFBlock(5+4, c=128) # 13 c=90 96 64 128 # 2 blocks
+        if three_blocks:
+            self.block0 = IFBlock(2, c=256) # 6 c=240 128 256
+            self.block1 = IFBlock(5+4, c=192) # 13 c=150 96 192
+            self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
+
+        if four_blocks:
+            self.block0 = IFBlock(2, c=256) # 128 256
+            self.block1 = IFBlock(5+4, c=192) # 96 192
+            self.block2 = IFBlock(5+4, c=192) # 96 192
+            self.block3 = IFBlock(5+4, c=128) # 64 128
 
         if five_blocks:
             self.block0 = IFBlock(2, c=256) # 128 256
@@ -207,12 +208,19 @@ class IFNet(nn.Module):
         flow = None 
         loss_distill = 0
         if three_blocks:
+            blocks_range = 3
             stu = [self.block0, self.block1, self.block2]
             scale = [1, 1, 1] if use_deconv else [4, 2, 1]
+        elif four_blocks:
+            blocks_range = 4
+            stu = [self.block0, self.block1, self.block2, self.block3]
+            scale = [1, 1, 1, 1] if use_deconv else [8, 4, 2, 1]
         elif five_blocks:
+            blocks_range = 5
             stu = [self.block0, self.block1, self.block2, self.block3, self.block4]
             scale = [1, 1, 1, 1, 1] if use_deconv else [4, 2, 2, 1, 1]
         elif two_blocks:
+            blocks_range = 2
             stu = [self.block0, self.block1]
             scale = [1, 1] if use_deconv else [2, 1]
 
@@ -336,7 +344,7 @@ class IFNet(nn.Module):
             # c1 = c1[:,:,:max_shape_2,:max_shape_3]
             tmp = self.unet(img0, img1, warped_img0, warped_img1, mask, flow, c0, c1)
             res = tmp[:, :3] * 2 - 1
-            merged[2] = torch.clamp(merged[2] + res, 0, 1)
+            merged[-1] = torch.clamp(merged[-1] + res, 0, 1)
             # print(merged[2].shape)
             # input("x")
             # print("refined")

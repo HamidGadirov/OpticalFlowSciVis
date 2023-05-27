@@ -435,11 +435,11 @@ def train(model, dataset, exp, model_name, mode, local_rank):
                 flow_left = np.asarray(flow_left)
                 flow_middle = np.asarray(flow_middle)
                 flow_right = np.asarray(flow_right)
-                flow_array_ = flow_left[2].detach().cpu().numpy()
+                flow_array_ = flow_left[-1].detach().cpu().numpy()
                 flow_combined.append(flow_array_[:,0:4,:,:].squeeze()) # 0:4 because in x and y for Ft->0, Ft->1 intermediate flows
-                flow_array_ = flow_middle[2].detach().cpu().numpy()
+                flow_array_ = flow_middle[-1].detach().cpu().numpy()
                 flow_combined.append(flow_array_[:,0:4,:,:].squeeze())
-                flow_array_ = flow_right[2].detach().cpu().numpy()
+                flow_array_ = flow_right[-1].detach().cpu().numpy()
                 flow_combined.append(flow_array_[:,0:4,:,:].squeeze())
                 print(flow_middle.shape)
                 # input("exp2") 
@@ -662,7 +662,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1033,6 +1033,8 @@ if __name__ == "__main__":
     # model_name = "flownet_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
     model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
     model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # 120ep: 48.79, 0.0122 + bugs -
+    model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # debug
+    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" #
     # TODO: param s.: flow3e-1 + flow1e-1 + no L1 +
     # TODO: num_blocks - gamma - refine -
 
@@ -1112,12 +1114,13 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist2e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
     # model_name = "flownet_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
     # model_name = "flownet_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
-    model_name = "flownet_5Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.: loss jumped -
-    model_name = "flownet_5Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr3e-4_3e-6.pkl" # distill loss jumped -
-    model_name = "flownet_5Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # worse than before -
-    model_name = "flownet_5Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 33.34 0.032 - scale = [1, 1, 1, 1, 1], other bugs
-    model_name = "flownet_5Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_scale.pkl" # scale = [4, 2, 2, 1, 1]
-    model_name = "flownet_2Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # scale = [2, 1]
+    # model_name = "flownet_5Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.: loss jumped -
+    # model_name = "flownet_5Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr3e-4_3e-6.pkl" # distill loss jumped -
+    # model_name = "flownet_5Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # worse than before -
+    # model_name = "flownet_5Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 33.34 0.032 - scale = [1, 1, 1, 1, 1], other bugs
+    # model_name = "flownet_5Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_scale.pkl" # scale = [4, 2, 2, 1, 1] 34.378 0.0142
+    # model_name = "flownet_2Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # scale = [2, 1] 30.66 0.0255
+    # model_name = "flownet_4Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # [8, 4, 2, 1]
     # TODO: param s.: dist5e-3 + dist2e-2 + no Lapl + reg1e-7 + reg1e-9 + photo1e-5 + photo1e-7 +
     # TODO: num_blocks - gamma - refine -
 
