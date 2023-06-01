@@ -146,7 +146,7 @@ def calculate_avg_lpips(original_data_gt, interpol_data, batch_size=16):
     # Calculate the average LPIPS distance
     avg_lpips = distances.mean().item()
 
-    print('avg LPIPS: %.4f' % avg_lpips)
+    print('avg LPIPS: %.6f' % avg_lpips)
     return avg_lpips
     
 def calculate_avg_epe(flow_gt, flow_pred):

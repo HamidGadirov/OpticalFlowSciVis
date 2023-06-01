@@ -35,6 +35,7 @@ from metrics import calculate_avg_psnr, calculate_avg_ssim, calculate_avg_lpips
 from metrics import calculate_dist_matrix
 from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_ind_flow, visualize_series, visualize_series_flow, visualize_large, \
     visualize_seq_dens, visualize_seq_flow
+from baseline_interpol import *
 
 # TODO:
 # merge with 3d model (parts) -
@@ -662,7 +663,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -692,11 +693,11 @@ if __name__ == "__main__":
     if args.dataset == "vimeo2d" and args.mode == "train":
         args.batch_size = 55
     if args.dataset == "droplet2d":
-        args.batch_size = 40
+        args.batch_size = 64 # 40
     if args.dataset == "rectangle2d":
         args.batch_size = 100 # 200
     if args.dataset == "lbs2d":
-        args.batch_size = 40 # 20 55 120
+        args.batch_size = 40 # 20 40 55 120
     if args.dataset == "FluidSimML2d":
         args.batch_size = 64
     if args.dataset == "pipedcylinder2d" or args.dataset == "cylinder2d":
@@ -1020,7 +1021,7 @@ if __name__ == "__main__":
     # flow improves with larger ensemble; TODO: run experiment with 30 members on Habrok 21m+
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # works
     model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best + epe: 0.0136
-    # PSNR: 54.73 SSIM: 1.000 LPIPS: 0.000 EPE: 0.0136
+    # 3Blocks: PSNR: 53.083 EPE: 0.0136
     # untrained: PSNR: 21.8099 SSIM: 0.9965 LPIPS: 0.0074
     # TODO: ablation: 1. without flow loss 2. 4,2,1 and lapl 3. 128 instead of 256
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # epe: 0.014 
@@ -1031,12 +1032,15 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow3e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 47.87 EPE: 0.0138
     # model_name = "flownet_l1_flow1e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
     # model_name = "flownet_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
-    model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
-    model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # 120ep: 48.79, 0.0122 + bugs -
-    model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # debug
-    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" #
+    # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 49.42 0.0130 52.84 0.0129 53.24 0.0128
+    # 4Blocks: 53.24 0.0128
+    # model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 120ep: 57.52 EPE: 0.0130
+    # 5Blocks: full test: 48.43 0.0122 TODO: train again, 200 ep.
+    model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl"
+    # model_name = "flownet_6Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" 
+    # 6Blocks: second half of test set: 61 0.014; full test: PSNR: 46.021 EPE: 0.0124
     # TODO: param s.: flow3e-1 + flow1e-1 + no L1 +
-    # TODO: num_blocks - gamma - refine -
+    # TODO: num_blocks +- gamma - refine -
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1079,7 +1083,9 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-6_photo1e-5_v1_256_drop50K.pkl" # reg too high?
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K.pkl" # beginning was good but then loss jumped - lr too high? lr6e-4
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K_lr3e-4.pkl" # l1: good interpol, some flow, loss unstable +
+    ##############
     # model_name = "flownet_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # RIFE Baseline: good interpol and good flow + PSNR: 35.35 LPIPS: 0.026
+    # avg PSNR: 34.5642 avg LPIPS: 0.0299
     # model_name = "flownet_l1_dist_reg1e-8_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" worse than baeline: flow worse -
     # model_name = "flownet_l1_dist_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # worse than baeline: distill exploded -
     # model_name = "flownet_l1_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # similar to baseline: distill is not important
@@ -1103,12 +1109,13 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_dist_reg1e-8_v1_256_drop50K_lr6e-4.pkl" # ablation
     # model_name = "flownet_l1_dist_reg1e-8_photo1e-6_v1_128_drop50K_lr6e-4.pkl" # param s.
     # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # all time best ++ PSNR: 37.381 LPIPS: 0.0144
-    # got worse after training more...
+    # got worse after training more... 36.65 0.0170
     # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_smooth1e-8_v1_256_drop50K_lr6e-4.pkl" # param s.
     # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_100ep.pkl" # PSNR: 32.13 LPIPS: 0.199
     # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # reproduce: PSNR: 37.381 LPIPS: 0.0144
     # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_6e-5.pkl" # reproduce: PSNR: 33 LPIPS: 0.0143
     # model_name = "flownet_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_6e-6.pkl" # reproduce: all time best ++ PSNR: 35.818 LPIPS: 0.0086
+    # 35.34 0.0157 ??? 36.93 0.0188 full test set
     # model_name = "flownet_lapl_dist_reg1e-8_photo1e-5_v1_256_drop50K_lr6e-4.pkl" # param s.
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
     # model_name = "flownet_lapl_dist2e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s.
@@ -1118,11 +1125,18 @@ if __name__ == "__main__":
     # model_name = "flownet_5Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr3e-4_3e-6.pkl" # distill loss jumped -
     # model_name = "flownet_5Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # worse than before -
     # model_name = "flownet_5Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 33.34 0.032 - scale = [1, 1, 1, 1, 1], other bugs
-    # model_name = "flownet_5Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_scale.pkl" # scale = [4, 2, 2, 1, 1] 34.378 0.0142
-    # model_name = "flownet_2Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # scale = [2, 1] 30.66 0.0255
-    # model_name = "flownet_4Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # [8, 4, 2, 1]
+    # model_name = "flownet_5Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_scale.pkl" # scale = [4, 2, 2, 1, 1] 36.37 0.0164
+    # model_name = "flownet_2Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # scale = [2, 1] 34.78 0.0291
+    # model_name = "flownet_4Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # [8, 4, 2, 1] 34.42 LPIPS: 0.0153
+    # model_name = "flownet_4Blocks_4221_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # # distill loss jumped -
+    # model_name = "flownet_4Blocks_4221_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 33.97 0.0175 35.048 0.0164 35.41 0.0190
+    # model_name = "flownet_4Blocks_4221_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 35.50 0.0234
+    # model_name = "flownet_6Blocks_lapl_dist_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # scale = [4, 4, 2, 2, 1, 1] 35.80 0.0202
+    # model_name = "flownet_refine_5Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # scale = [4, 2, 2, 1, 1] very bad -
+    # model_name = "flownet_refine_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # 20.60 0.0483 baseline
+    model_name = "flownet_5Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # scale = [4, 2, 2, 1, 1]
     # TODO: param s.: dist5e-3 + dist2e-2 + no Lapl + reg1e-7 + reg1e-9 + photo1e-5 + photo1e-7 +
-    # TODO: num_blocks - gamma - refine -
+    # TODO: num_blocks +- refine +
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"
@@ -1237,24 +1251,52 @@ if __name__ == "__main__":
         original_data = data_test[:, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
         print("original_data:", original_data.shape)
 
+        # remove overlapping
+        original_data_new = []
+        for i, element in enumerate(original_data):
+            if i < 2 or (i + 1) % 3 != 0:
+                original_data_new.append(element)
+        original_data = np.array(original_data_new)
+        print("original_data:", original_data.shape)
+        original_flow_new = []
+        for i, element in enumerate(flow_original):
+            if i < 2 or (i + 1) % 3 != 0:
+                original_flow_new.append(element)
+        flow_original = np.array(original_flow_new)
+        print("flow_original:", flow_original.shape)
+
         # original_data_gt - only GT densities, original_data - all timesteps from orig. dens.
-        original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]
+        original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 2 == 0] # % 3
         original_data_gt = np.array(original_data_gt)
         original_data = np.array(original_data)
 
         print("flow_original:", flow_original.shape)
-        flow_gt = [flow for i, flow in enumerate(flow_original) if (i - 1) % 3 == 0]
+        flow_gt = [f for i, f in enumerate(flow_original) if (i - 1) % 2 == 0] # % 3
         flow_gt = np.array(flow_gt)
 
         print("flow_pred:", flow.shape)
         # viz Ft->1 (forward), that is flow[2][:, 2:4]
         flow = flow[:, 2:4, ...]
 
-        print("original_data:", original_data.shape)
-        print("original_data_gt:", original_data_gt.shape)
-        print("interpol_data:", interpol_data.shape)
+        print("original_data:", original_data.shape) # (2348, 160, 224)
+        print("original_data_gt:", original_data_gt.shape) # (1174, 160, 224)
+        print("interpol_data:", interpol_data.shape) # (1174, 160, 224)
         print("flow_gt:", flow_gt.shape)
         print("flow pred & mask:", flow.shape, mask.shape)
+
+        """
+        ##### Baseline evaluation
+        data_for_interpol = original_data[::2]
+        lin_interpol = linear_interpolation(data_for_interpol)
+        print(lin_interpol.shape)
+
+        avg_psnr = calculate_avg_psnr(original_data_gt, lin_interpol)
+        avg_lpips = calculate_avg_lpips(original_data_gt, lin_interpol)
+        # Droplets: linear: PSNR: 32.21 LPIPS: 0.0356; nearest: PSNR: 30.76 LPIPS: 0.0373
+        # LBS: linear: PSNR: 44.88; nearest: PSNR: 47.99
+        input("x")
+        #####
+        """
 
         if "lbs2d" in dataset: # denormalize
             # print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
@@ -1434,9 +1476,9 @@ if __name__ == "__main__":
         with open(filename, 'w') as f:
             f.write('PSNR: {:.3f}\n'.format(avg_psnr))
             # f.write('SSIM: {:.4f}\n'.format(avg_ssim))
-            f.write('LPIPS: {:.4f}\n'.format(avg_lpips))
+            f.write('LPIPS: {:.6f}\n'.format(avg_lpips))
             if dataset != "vimeo2d" and dataset != "droplet2d":
-                f.write('EPE: {:.4f}\n'.format(avg_epe))
+                f.write('EPE: {:.5f}\n'.format(avg_epe))
 
         # # 300-600 subset works
         # dist_matrix = calculate_dist_matrix(original_data_gt, interpol_data)

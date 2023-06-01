@@ -3,43 +3,35 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 
-def bilinear_interpolation(original_data_gt):
+def linear_interpolation(original_data):
     # Convert the array to a PyTorch tensor
-    tensor_data = torch.from_numpy(original_data_gt)
+    tensor_data = torch.from_numpy(original_data)
 
     # Reshape the tensor to match the expected input shape for interpolate
-    tensor_data = tensor_data.unsqueeze(0).unsqueeze(0)
+    # tensor_data = tensor_data.unsqueeze(1)
+    tensor_data = tensor_data.permute(1, 2, 0)
+    print("t", tensor_data.shape)
 
-    # Perform bilinear interpolation using PyTorch's interpolate function
-    interpolated_tensor = F.interpolate(tensor_data, scale_factor=2, mode='bilinear')
+    # expected: mini-batch x channels x [optional depth] x [optional height] x width.
+    interpolated_tensor = F.interpolate(tensor_data, scale_factor=(2), mode='linear') # nearest
 
-    # Convert the interpolated tensor back to a numpy array
+    interpolated_tensor = interpolated_tensor.permute(2, 0, 1)
+
+    # Convert the interpolated tensor to a NumPy array
     interpolated_data = interpolated_tensor.squeeze().numpy()
+
+    interpolated_data = interpolated_data[1::2]
 
     return interpolated_data
 
-def cubic_spline_interpolation(original_data_gt):
-    # Convert the array to a PyTorch tensor
-    tensor_data = torch.from_numpy(original_data_gt)
-
-    # Reshape the tensor to match the expected input shape for interpolate
-    tensor_data = tensor_data.unsqueeze(0).unsqueeze(0)
-
-    # Perform cubic spline interpolation using PyTorch's interpolate function
-    interpolated_tensor = F.interpolate(tensor_data, scale_factor=2, mode='bicubic')
-
-    # Convert the interpolated tensor back to a numpy array
-    interpolated_data = interpolated_tensor.squeeze().numpy()
-
-    return interpolated_data
-
-def lanczos_interpolation(original_data_gt):
+def lanczos_interpolation(original_data):
     # Convert the array to a PIL Image
-    image = Image.fromarray(original_data_gt)
+    image = Image.fromarray(original_data)
 
     # Resize the image using Lanczos interpolation
-    interpolated_image = image.resize((original_data_gt.shape[1]*2, original_data_gt.shape[0]*2), resample=Image.LANCZOS)
+    interpolated_image = image.resize((original_data.shape[0] * 2), resample=Image.LANCZOS)
 
+    # Convert the interpolated image to a NumPy array
     interpolated_data = np.array(interpolated_image)
 
     return interpolated_data
