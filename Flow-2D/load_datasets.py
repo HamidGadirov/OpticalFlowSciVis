@@ -649,9 +649,15 @@ def load_data(dataset, factor, mode):
                 # print("Vel y mean std", data_test[:, :, 2].mean(), data_test[:, :, 2].std())
                 # input("xxxx")
             elif "droplet2d" in filename:
-                # data_test = data[:2700]
-                data_test = data[350:2700]
-                # data_test = data[350:950]
+                # data_test = data[:5000] # 35.02
+                # data_test = data[:3000] # 36.82
+                data_test = data[:2700] # 36.81
+                # data_test = data[350:2700] # 35.12
+                # data_test = data[350:950] # 29.98
+                # data_test = data[:350] # 31.07
+                # data_test = data[1500:2100] # 30.57
+                # data_test = data[2400:2700] # 28.07
+                # data_test = data[0:100] # 27.46
                 # 450: 2m, 600: 7m, 900: 27m for dist_matrix
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:
                 data_test = data[810:1080]
@@ -698,12 +704,12 @@ def load_data(dataset, factor, mode):
                     concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
                     concat_in_between = np.concatenate(concat_in_between, axis=0)
                     
-                    # Ensure all arrays have the same number of dimensions
+                    # ensure same number of dimensions
                     data_test_i = np.expand_dims(data_test[i], axis=0)
                     data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
                     # print(np.array(concat_in_between).shape)
-                    # print(np.array(data_test[i]).shape)
-                    # print(np.array(data_test[i+n]).shape)
+                    # print(np.array(data_test_i).shape)
+                    # print(np.array(data_test_i_n).shape)
                     
                     data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
                 except:

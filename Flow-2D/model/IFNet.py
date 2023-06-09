@@ -31,8 +31,8 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 
 version = 1
 two_blocks = False
-three_blocks = False
-four_blocks = True
+three_blocks = False # False
+four_blocks = True # True
 five_blocks = False
 six_blocks = False
 refine = False # True

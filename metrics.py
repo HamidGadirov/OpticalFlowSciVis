@@ -8,6 +8,9 @@ import pickle
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')  # Use an interactive backend, such as TkAgg
+import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 # import skimage.measure
 # print("scikit-image version: {}".format(skimage.__version__))
@@ -94,10 +97,16 @@ def calculate_avg_psnr(original_data_gt, interpol_data):
     # Calculate the PSNR in dB
     psnr = 20 * np.log10(max_pixel_value) - 10 * np.log10(mse)
 
+    # Plot the boxplot
+    fig, ax = plt.subplots()
+    ax.set_title('PSNR Boxplot')
+    ax.boxplot(psnr)
+    plt.show()
+
     # Calculate the average PSNR distance
     avg_psnr = np.mean(psnr)
 
-    print('avg PSNR: %.4f' % avg_psnr)
+    print('avg PSNR: %.3f' % avg_psnr)
     return avg_psnr
 
 def calculate_avg_ssim(original_data_gt, interpol_data):
