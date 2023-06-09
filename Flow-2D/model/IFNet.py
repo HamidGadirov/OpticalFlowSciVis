@@ -32,8 +32,8 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 version = 1
 two_blocks = False
 three_blocks = False
-four_blocks = False
-five_blocks = True
+four_blocks = True
+five_blocks = False
 six_blocks = False
 refine = False # True
 use_deconv = False # True
@@ -133,7 +133,7 @@ class IFBlock(nn.Module):
             else:
                 tmp = self.deconvblock(x) # added
                 # print("deconvblock:", tmp.shape)
-            flow = tmp[:, :4] # * scale * 2 # ??? -> orig
+            flow = tmp[:, :4] # * scale * 2 # ??? -> orig; distill jump
             mask = tmp[:, 4:5]
         if version == 2:
             x = self.convblock0(x) + x
@@ -200,7 +200,8 @@ class IFNet(nn.Module):
     # @torch.cuda.amp.autocast(True)
     # def forward(self, x, gt_flow, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
     # def forward(self, x, scale=scales, timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
-    def forward(self, x, timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
+    def forward(self, x, timestep=0.4): # scale=[4, 2, 1] scale=[1, 1, 1]
+        # timestep = (x[:, :1].clone() * 0 + 1) * timestep # for arbitrary interpolation
         img0 = x[:, :1] # :3
         img1 = x[:, 1:2] # 3:6
         gt = x[:, 2:3] # 6:   In inference time, gt is None
@@ -239,7 +240,7 @@ class IFNet(nn.Module):
             scale = [1, 1, 1, 1, 1, 1] if use_deconv else [4, 4, 2, 2, 1, 1]
 
         for i in range(blocks_range):
-            if flow != None:
+            if flow != None: # not the block 0
                 # correct shapes
                 # print(max_shape_2, max_shape_3)
                 max_shape_2 = min(img0.shape[2], warped_img0.shape[2])
@@ -254,13 +255,15 @@ class IFNet(nn.Module):
                 # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
                 # flow_d, mask_d, sup_flow_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
                 flow_d, mask_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
+                # flow_d, mask_d = stu[i](torch.cat((img0, img1, timestep, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
                 flow_d = flow_d[:,:,:img0.shape[2],:img0.shape[3]]
                 mask_d = mask_d[:,:,:img0.shape[2],:img0.shape[3]]
                 flow = flow + flow_d
                 mask = mask + mask_d
-            else:
+            else: # block 0
                 # print("cat", torch.cat((img0, img1), 1).shape)
                 flow, mask = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i])
+                # flow, mask = stu[i](torch.cat((img0, img1, timestep), 1), None, scale=scale[i])
                 # flow, mask, sup_flow = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i])
             # correct shapes
             flow = flow[:,:,:img0.shape[2],:img0.shape[3]]
@@ -310,6 +313,7 @@ class IFNet(nn.Module):
 
             # print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
             flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+            # flow_d, mask_d = self.block_tea(torch.cat((img0, img1, timestep, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
             # flow_d, mask_d, sup_flow_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
             flow_d = flow_d[:,:,:max_shape_2,:max_shape_3]
             mask_d = mask_d[:,:,:max_shape_2,:max_shape_3]
@@ -327,7 +331,9 @@ class IFNet(nn.Module):
             merged_teacher = None
 
         for i in range(blocks_range):
-            merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
+            # merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
+            merged[i] = merged[i][0] * mask_list[i] * timestep * 2 + merged[i][1] * (1 - mask_list[i]) * (1 - timestep) * 2
+            # merged[i] = merged[i][0] * mask_list[i] * timestep + merged[i][1] * (1 - mask_list[i]) * (1 - timestep)
             merged[i] = merged[i][:,:,:gt.shape[2],:gt.shape[3]]
             
             if gt.shape[1] == 1: # 3

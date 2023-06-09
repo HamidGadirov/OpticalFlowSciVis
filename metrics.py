@@ -86,7 +86,7 @@ def calculate_avg_psnr(original_data_gt, interpol_data):
     interpol_data = (interpol_data - interpol_data.min()) / (interpol_data.max() - interpol_data.min())
 
     # Calculate the squared error between the two arrays
-    mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1,2))
+    mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2))
 
     # Calculate the maximum possible pixel value
     max_pixel_value = 1.0
@@ -182,26 +182,6 @@ def calculate_lpips(orig, interp):
 
     distance = lpips_model(orig_tensor.cuda(), interp_tensor.cuda())
     return distance
-
-def calculate_dist_matrix(original_data_gt, interpolated_data):
-    """Computes the distance matrix between interpolated timesteps using PSNR as the distance metric."""
-    n_timesteps = len(interpolated_data)
-    dist_matrix = np.zeros((n_timesteps, n_timesteps))
-    # lpips_model = lpips.LPIPS(net='alex').cuda() # vgg
-    for i in tqdm(range(n_timesteps)):
-        for j in range(i + 1, n_timesteps):
-            dist = 0.0
-            for k in range(i + 1, j):
-                interp = interpolated_data[k]
-                orig = original_data_gt[k]
-                dist += calculate_psnr(orig, interp) # 25h on SVCG, 9h on Habrok
-                # orig = np.expand_dims(orig, axis=0)
-                # interp = np.expand_dims(interp, axis=0)
-                # orig_tensor = torch.from_numpy(orig).float()
-                # interp_tensor = torch.from_numpy(interp).float()
-                # dist += lpips_model(orig_tensor.cuda(), interp_tensor.cuda()) # very long
-            dist_matrix[i, j] = dist
-    return dist_matrix
 
 def calculate_metrics(original_data, interpol_data, factor):
 

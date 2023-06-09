@@ -65,7 +65,8 @@ class Model(nn.Module):
             print("saved {}".format(model_name))
 
     # def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
-    def inference(self, img0, img1, gt_flow, TTA=False, timestep=0.5):
+    # def inference(self, img0, img1, gt_flow, TTA=False, timestep=0.5):
+    def inference(self, img0, img1, TTA=False, timestep=0.5):
         print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
@@ -199,9 +200,9 @@ class Model(nn.Module):
 
             loss_flow = 0.
 
-            # num_blocks = 5
+            # num_blocks = 4
             # for i in range(num_blocks):
-            #     gamma = 0.8 ** i
+            #     gamma = 0.7 ** i
             #     loss_flow += (flow[num_blocks - i - 1][:, 2:4] - gt_flow).abs().mean() * gamma
             # loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
 
@@ -314,7 +315,7 @@ class Model(nn.Module):
         for param_tensor in self.flownet.state_dict():
             # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
             # if "block2" in param_tensor or "block_tea" in param_tensor:
-            if "block4" in param_tensor or "block_tea" in param_tensor: # last block
+            if "block3" in param_tensor or "block_tea" in param_tensor: # last block
                 block_params = self.flownet.state_dict()[param_tensor]
                 block_params_norm += torch.norm(block_params, 1)
         # print(block2_params_norm)
@@ -436,7 +437,7 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.005 # 0.01 0.1 # without is bad # 0.01 best
+        lambda_distill = 0.01 # 0.1 # without is bad # 0.01 best
         lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
         lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
         lambda_smooth = 0 # 1e-8 not important

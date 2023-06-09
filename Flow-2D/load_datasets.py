@@ -31,7 +31,7 @@ from utils import plot_distribution
 # FluidSimML: downsample to 256x256? +
 # try some optimization (TensorRT, ONNX) -
 
-def load_data(dataset, exp, mode):
+def load_data(dataset, factor, mode):
     combined_data_train = []
     combined_data_val = []
     if dataset == 'rectangle2d':
@@ -439,7 +439,7 @@ def load_data(dataset, exp, mode):
 
             data_train_three = []
             data_val_three = []
-            if exp == 1: # img0, img1, gt
+            if factor == 2: # img0, img1, gt
                 if dataset == "rectangle2d__":
                     range_list = [3, 5, 7, 9]
                     repeat = 1
@@ -528,7 +528,7 @@ def load_data(dataset, exp, mode):
                     # visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
                     # input("x")
                 # input("x")
-            elif exp == 2:
+            elif factor == 4:
                 print("4x interpolation") 
                 for i in range(0, data_train.shape[0], 5): 
                     data_train_three.append(np.concatenate((data_train[i], data_train[i+4],
@@ -541,7 +541,7 @@ def load_data(dataset, exp, mode):
                 data_val = np.array(data_val_three)
                 print("data_val in three:", data_val.shape)
                 # input("x")
-            elif exp == 3:
+            elif factor == 8:
                 print("8x interpolation") # img0, img1, gt0, gt1, gt2, gt3, gt4, gt5, gt6
                 for i in range(0, data_train.shape[0], 9):
                     # print(i)
@@ -651,6 +651,7 @@ def load_data(dataset, exp, mode):
             elif "droplet2d" in filename:
                 # data_test = data[:2700]
                 data_test = data[350:2700]
+                # data_test = data[350:950]
                 # 450: 2m, 600: 7m, 900: 27m for dist_matrix
             elif "pipedcylinder2d" in filename or "cylinder2d" in filename:
                 data_test = data[810:1080]
@@ -680,10 +681,40 @@ def load_data(dataset, exp, mode):
                 data_test = np.asarray(data_test)
 
             print(data_test.shape)
+            data_test_non_overlap = np.squeeze(data_test)
+            print(data_test_non_overlap.shape)
+            # input("data_test_non_overlap")
 
             # if dataset == "pipedcylinder2d":
             #     data_test = data_test[:, np.newaxis, ...]
 
+            # data_test = np.squeeze(data_test)
+            data_test_combined = []
+            n = factor  # or any desired value for interpolation factor
+            print(f"preparing data for {n}x interpolation")
+
+            for i in range(0, data_test.shape[0], n):
+                try:
+                    concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
+                    concat_in_between = np.concatenate(concat_in_between, axis=0)
+                    
+                    # Ensure all arrays have the same number of dimensions
+                    data_test_i = np.expand_dims(data_test[i], axis=0)
+                    data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
+                    # print(np.array(concat_in_between).shape)
+                    # print(np.array(data_test[i]).shape)
+                    # print(np.array(data_test[i+n]).shape)
+                    
+                    data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
+                except:
+                    print("done")
+
+            data_test = np.array(data_test_combined)
+            data_test = np.squeeze(data_test)
+            print("data_test combined:", data_test.shape)
+            # input("n")
+
+            """
             data_test_three = []
             if exp == 1: # img0, img1, gt
                 if dataset == "rectangle2d__":
@@ -711,24 +742,28 @@ def load_data(dataset, exp, mode):
                     print("data_test in three:", data_test.shape)
                     # input("x")
             elif exp == 2:
-                print("4x interpolation") 
-                for i in range(0, data_test.shape[0], 5): 
-                    data_test_three.append(np.concatenate((data_test[i], data_test[i+4],
+                print("4x interpolation")  # hift by 4, not 5
+                for i in range(0, data_test.shape[0], 4): 
+                    try:
+                        data_test_three.append(np.concatenate((data_test[i], data_test[i+4],
                         data_test[i+1], data_test[i+2], data_test[i+3]), axis=0)) # img0, img1, gt0, gt1, gt2
+                    except:
+                        print("done")
                 data_test = np.array(data_test_three)
                 print("data_test in three:", data_test.shape)
-            elif exp == 3:
+            elif exp == 3:  
                 print("8x interpolation") # img0, img1, gt0, gt1, gt2, gt3, gt4, gt5, gt6
-                for i in range(0, data_test.shape[0], 9):
+                for i in range(0, data_test.shape[0], 8):
                     # print(i)
                     data_test_three.append(np.concatenate((data_test[i], data_test[i+8],
                         data_test[i+1], data_test[i+2], data_test[i+3],
                         data_test[i+4], data_test[i+5], data_test[i+6], data_test[i+7]), axis=0)) 
                 data_test = np.array(data_test_three)
                 print("data_test in three:", data_test.shape)
+            """
 
         if dataset == "lbs2d":
             # return data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std
             return data_test, dens_min, dens_max, dens_mean, dens_std
         else:
-            return data_test
+            return data_test, data_test_non_overlap
