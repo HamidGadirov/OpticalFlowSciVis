@@ -6,6 +6,9 @@
 
 from pickletools import uint2
 from matplotlib.pyplot import axes, title
+# import matplotlib
+# matplotlib.use('TkAgg')  # or 'Qt5Agg', depending on your system
+import matplotlib.pyplot as plt
 import os
 import cv2
 import math
@@ -293,7 +296,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             dist.barrier()
     else:
         print("inference...")
-        factor = 2
+        # factor = 2
+        # print(factor)
+        # input("factor")
         dir_res = "Results"
         dir_res = os.path.join(dir_res, dataset)
         dir_res = os.path.join(dir_res, str(factor) + "x")
@@ -316,7 +321,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         flow_combined = []
         mask_combined = []
         flow_gt_combined = []
-        data_test_combined = []
+        # data_test_combined = []
         for i, data in enumerate(data_test):
             # print("test len:", len(data_gpu))
             # print("data:", data.shape)
@@ -325,29 +330,29 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             if dataset == "vimeo2d":
                 # print("vimeo2d")
                 data_gpu, timestep = data
-                for b in range(data_gpu.shape[0]):
-                    data_test_combined.append(np.asarray(data_gpu[b, 0] / 255.))
-                    data_test_combined.append(np.asarray(data_gpu[b, 2] / 255.))
-                    data_test_combined.append(np.asarray(data_gpu[b, 1] / 255.))
-                data_gpu = data_gpu.to(device, non_blocking=True) / 255.
+                # for b in range(data_gpu.shape[0]):
+                #     data_test_combined.append(np.asarray(data_gpu[b, 0] / 255.))
+                #     data_test_combined.append(np.asarray(data_gpu[b, 2] / 255.))
+                #     data_test_combined.append(np.asarray(data_gpu[b, 1] / 255.))
+                # data_gpu = data_gpu.to(device, non_blocking=True) / 255.
             elif dataset == "droplet2d":
                 # print("droplet2d")
                 # print(data.dtype)
                 # input("x")
                 data = data.float() # because it was double
                 data_gpu = data
-                for b in range(data_gpu.shape[0]):
-                    data_test_combined.append(np.asarray(data_gpu[b, 0] ))
-                    data_test_combined.append(np.asarray(data_gpu[b, 2] ))
-                    data_test_combined.append(np.asarray(data_gpu[b, 1] ))
-                data_gpu = data_gpu.to(device, non_blocking=True) 
+                # for b in range(data_gpu.shape[0]):
+                #     data_test_combined.append(np.asarray(data_gpu[b, 0] ))
+                #     data_test_combined.append(np.asarray(data_gpu[b, 2] ))
+                #     data_test_combined.append(np.asarray(data_gpu[b, 1] ))
+                # data_gpu = data_gpu.to(device, non_blocking=True) 
             else:
                 data_gpu = data
-                for b in range(data_gpu.shape[0]):
-                    data_test_combined.append(np.asarray(data_gpu[b, 0, 0]))
-                    data_test_combined.append(np.asarray(data_gpu[b, 2, 0]))
-                    data_test_combined.append(np.asarray(data_gpu[b, 1, 0]))
-                data_gpu = data_gpu.to(device, non_blocking=True)
+                # for b in range(data_gpu.shape[0]):
+                #     data_test_combined.append(np.asarray(data_gpu[b, 0, 0]))
+                #     data_test_combined.append(np.asarray(data_gpu[b, 2, 0]))
+                #     data_test_combined.append(np.asarray(data_gpu[b, 1, 0]))
+                # data_gpu = data_gpu.to(device, non_blocking=True)
             # print("data to gpu:", data_gpu.shape)
             # input("data")
             imgs = data_gpu[:, :2]
@@ -374,6 +379,47 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             # input("imgs gt")
             I0 = imgs[:, :1]
             I1 = imgs[:, 1:2]
+
+            # arbitrary interpol
+            print(f"inference for {factor}x interpolation")
+            for j in range(1, factor):
+                interpol_step = float(j) / factor
+                print(interpol_step)
+                merged, flow, mask = model.inference(I0, I1, t=interpol_step)
+                merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
+                print(merged_last.shape)
+
+                fig, axs = plt.subplots(nrows=4, ncols=4, figsize=(10, 10))
+                axs = axs.flatten()
+                # Iterate over the images and plot them on the subplots
+                for i in range(16):
+                    # Remove the single channel dimension if it exists (assuming grayscale images)
+                    image = merged_last[i].squeeze()
+                    
+                    # Plot the image on the corresponding subplot
+                    axs[i].imshow(image, cmap='gray')
+                    axs[i].axis('off')
+
+                # Adjust the spacing between the subplots
+                plt.tight_layout()
+
+                # Show the plot
+                plt.show()
+                fig.savefig("droplets.png", dpi = 300)
+
+                input("x")
+                for b in range(data_gpu.shape[0]):
+                    interpol_data.append(merged_last[b].transpose((1,2,0)))
+
+                flow_last = np.asarray(flow[-1].detach().cpu().numpy())
+                for b in range(data_gpu.shape[0]):
+                    flow_combined.append(flow_last[b])
+
+                mask_last = np.asarray(mask[-1].detach().cpu().numpy())
+                for b in range(data_gpu.shape[0]):
+                    mask_combined.extend(mask_last[b])
+            # input("inf")
+            """
             if factor == 2: # # img0, img1, gt
                 # t = 0.5
                 # merged, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
@@ -433,10 +479,28 @@ def train(model, dataset, factor, model_name, mode, local_rank):
 
                 print(flow_middle.shape)
                 # input("factor2") 
+                """
 
         interpol_data = np.squeeze(np.array(interpol_data))
         print("interpolated:", interpol_data.shape)
-        title = "inference_" + str(factor) + "x"
+
+        # reorder based on factor
+        if factor > 2:
+            interpol_data_new = []
+            batch_size = 16 # what was used for inference
+            try:
+                for fb in range(0, interpol_data.shape[0], (factor - 1) * batch_size): # 0 32 64 ...
+                    print("fb", fb)
+                    for b in range(batch_size): # 0 1; 0 1; ...
+                        for k in range(fb, fb + (factor - 1) * batch_size, batch_size): # 0 16; 32 64; ... 
+                            print("k+b:", k + b)
+                            interpol_data_new.append(interpol_data[k + b])
+            except:
+                print("reordered")
+            interpol_data = np.squeeze(np.array(interpol_data_new))
+            print("interpolated:", interpol_data.shape)
+
+        # title = "inference_" + str(factor) + "x"
         # if "2d" in dataset:
         #     visualize_series(interpol_data, factor, dataset, dir_res, title=title, show=False, save=True)
 
@@ -452,47 +516,50 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # if "2d" in dataset:
         #     visualize_series_flow(interpol_data, flow_u, flow_v, dataset, dir_res, title=title, show=False, save=True)
 
-        loss_path = 'loss.json'
-        loss_path = os.path.join(dir_model, loss_path)
-        try:
-            with open(loss_path, 'r') as loss_file:
-                loss_data = json.load(loss_file)
-            val_loss = loss_data['val_loss']
-            loss_file.close()   
-            # from collections import Iterable
-            # def flatten(lis):
-            #     for item in lis:
-            #         if isinstance(item, Iterable) and not isinstance(item, str):
-            #             for x in flatten(item):
-            #                 yield x
-            #         else:        
-            #             yield item
-            # val_loss = list(flatten(val_loss))
-            val_loss = np.array(val_loss)
-        except:
-            print("loss json doesn't exist")
-        plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
+        if factor == 2:
+            loss_path = 'loss.json'
+            loss_path = os.path.join(dir_model, loss_path)
+            try:
+                with open(loss_path, 'r') as loss_file:
+                    loss_data = json.load(loss_file)
+                val_loss = loss_data['val_loss']
+                loss_file.close()   
+                # from collections import Iterable
+                # def flatten(lis):
+                #     for item in lis:
+                #         if isinstance(item, Iterable) and not isinstance(item, str):
+                #             for x in flatten(item):
+                #                 yield x
+                #         else:        
+                #             yield item
+                # val_loss = list(flatten(val_loss))
+                val_loss = np.array(val_loss)
+            except:
+                print("loss json doesn't exist")
+            plot_loss(val_loss, dir_model, name="val_loss.png", save=True)
 
-        lr_file_name = 'learning_rate.txt'
-        lr_path = os.path.join(dir_model, lr_file_name)
-        try:
-            with open(lr_path, "r") as lr_file:
-                lr_data = lr_file.read()
-                lr_data_into_list = lr_data.replace('\n', ' ').split(' ')
-            learning_rate = [float(x) for x in lr_data_into_list[:-1]]
-            learning_rate = np.array(learning_rate)
-            plot_lr(learning_rate, dir_model, name="learning_rate.png", save=True)
-        except:
-            print("learning rate file doesn't exist")
+            lr_file_name = 'learning_rate.txt'
+            lr_path = os.path.join(dir_model, lr_file_name)
+            try:
+                with open(lr_path, "r") as lr_file:
+                    lr_data = lr_file.read()
+                    lr_data_into_list = lr_data.replace('\n', ' ').split(' ')
+                learning_rate = [float(x) for x in lr_data_into_list[:-1]]
+                learning_rate = np.array(learning_rate)
+                plot_lr(learning_rate, dir_model, name="learning_rate.png", save=True)
+            except:
+                print("learning rate file doesn't exists")
+        else:
+            print("learning rate file is in 2x dir")
 
-        original_data = np.array(data_test_combined)
-        print("original_data:", original_data.shape)
+        # original_data = np.array(data_test_combined)
+        # print("original_data:", original_data.shape)
         # if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d" or dataset == "rectangle2d":
         #     original_data = data_test[:, :, 0] # gt
         # else:
         #     original_data = data_test
-        print("Data is in range %f to %f" % (np.min(original_data), np.max(original_data)))
-        # input("x")
+        # print("Data is in range %f to %f" % (np.min(original_data), np.max(original_data)))
+        input("x")
         
         if dataset == "lbs2d":
             # statistics = {'flow_x_mean': flow_x_mean, 'flow_y_mean': flow_y_mean, 'flow_x_std': flow_x_std, 'flow_y_std': flow_y_std}
@@ -1140,6 +1207,11 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_flowscale.pkl" # * scale * 2 distill jump -
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_interpol_t.pkl" 
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t.pkl"
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t_v2.pkl"
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.49 0.016
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-5_v1_256_drop50K_lr6e-4.pkl" # param s. 34.35 0.027
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-7_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.25 0.0243
+    model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl"
     # TODO: param s.: dist5e-3 + dist2e-2 + no Lapl + reg1e-7 + reg1e-9 + photo1e-5 + photo1e-7 +
     # TODO: num_blocks +- eqRes +- refine +
 
@@ -1259,8 +1331,8 @@ if __name__ == "__main__":
         data_test = data_test[:, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
         print("data_test:", data_test.shape)
         print("flow_test:", flow_test.shape)
-        print(type(data_test))
-        print(type(flow_test))
+        # print(type(data_test))
+        # print(type(flow_test))
         # input("x")
 
         data_original = [] # I0, I1 for interpol
@@ -1283,7 +1355,7 @@ if __name__ == "__main__":
         flow_original_interpol = np.array(flow_original_interpol)
         print("flow_original_interpol:", flow_original_interpol.shape)
         flow_gt = flow_original_interpol
-        # input("n")
+        input("n")
         
         """
         if args.exp == 1:
@@ -1511,21 +1583,21 @@ if __name__ == "__main__":
         # title = "Flow_pred_ind_600"
         # visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
 
-        """
+        # """
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         if args.factor == 2:
             visualize_large(data_original_interpol, interpol_data, diffs,
                 flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
                 factor, dataset, dir_model, title=title, show=False, save=True)
 
-            title = "Density_gt_pred_diff"
-            visualize_seq_dens(data_original_interpol, interpol_data, diffs,
+        title = "Density_gt_pred_diff"
+        visualize_seq_dens(data_original_interpol, interpol_data, diffs,
+                factor, dataset, dir_model, title=title, show=False, save=True)
+        if dataset == "lbs2d":
+            title = "Flow_gt_pred_diff"
+            visualize_seq_flow(flow_gt, flow, u_diff, v_diff,
                     factor, dataset, dir_model, title=title, show=False, save=True)
-            if dataset == "lbs2d":
-                title = "Flow_gt_pred_diff"
-                visualize_seq_flow(flow_gt, flow, u_diff, v_diff,
-                        factor, dataset, dir_model, title=title, show=False, save=True)
-        """
+        # """
         
         # input("metrics")
         del model
@@ -1543,7 +1615,6 @@ if __name__ == "__main__":
         avg_lpips = calculate_avg_lpips(data_original_interpol, interpol_data)
         if dataset != "vimeo2d" and dataset != "droplet2d":
             # Flow metric
-
             print(flow_gt.shape, flow.shape)
             avg_epe = calculate_avg_epe(flow_gt, flow)
         # save metrics score
@@ -1561,7 +1632,7 @@ if __name__ == "__main__":
         # print(dist_matrix.shape)
         # print(dist_matrix)
 
-        # """
+        """
         # arbitrary interpol: factor = n
         print("arbitrary interpolation")
         combined_for_interpol = []
@@ -1578,7 +1649,7 @@ if __name__ == "__main__":
             # data_test, interpol_data, flow, flow_original, mask, statistics = train(model, args.dataset, args.factor, model_name, args.mode, args.local_rank)
         print(combined_for_interpol.shape)
         print(gt_for_interpol_error.shape)
-        # """
+        """
 
 # print("Dataset:", dataset)
 

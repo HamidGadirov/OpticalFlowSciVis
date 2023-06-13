@@ -8,9 +8,9 @@ import pickle
 import matplotlib
 matplotlib.use('Agg')
 from matplotlib import pyplot as plt
-import matplotlib
-matplotlib.use('TkAgg')  # Use an interactive backend, such as TkAgg
-import matplotlib.pyplot as plt
+# import matplotlib
+# matplotlib.use('TkAgg')  # Use an interactive backend, such as TkAgg
+# import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 # import skimage.measure
 # print("scikit-image version: {}".format(skimage.__version__))
@@ -97,11 +97,18 @@ def calculate_avg_psnr(original_data_gt, interpol_data):
     # Calculate the PSNR in dB
     psnr = 20 * np.log10(max_pixel_value) - 10 * np.log10(mse)
 
+    # print("psnr:", psnr)
+    # Save the PSNR scores to a pickle file
+    filename = "psnr_for_boxplot.pkl"
+    with open(filename, 'wb') as f:
+        pickle.dump(psnr, f)
+    # input("psnr saved")
+
     # Plot the boxplot
-    fig, ax = plt.subplots()
-    ax.set_title('PSNR Boxplot')
-    ax.boxplot(psnr)
-    plt.show()
+    # fig, ax = plt.subplots()
+    # ax.set_title('PSNR Boxplot')
+    # ax.boxplot(psnr)
+    # plt.show()
 
     # Calculate the average PSNR distance
     avg_psnr = np.mean(psnr)
@@ -151,6 +158,14 @@ def calculate_avg_lpips(original_data_gt, interpol_data, batch_size=16):
 
     # Concatenate the distances from all mini-batches
     distances = torch.cat(distances, dim=0)
+
+    # Save LPIPS results for boxplot
+    filename = "lpips_for_boxplot.pkl"
+    with open(filename, 'wb') as f:
+        pickle.dump(np.squeeze(distances.detach().cpu().numpy()), f)
+    # print("lpips:", distances)
+    print(distances.shape)
+    # input("lpips saved")
 
     # Calculate the average LPIPS distance
     avg_lpips = distances.mean().item()

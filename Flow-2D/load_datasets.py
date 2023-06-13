@@ -703,14 +703,12 @@ def load_data(dataset, factor, mode):
                 try:
                     concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
                     concat_in_between = np.concatenate(concat_in_between, axis=0)
-                    
                     # ensure same number of dimensions
                     data_test_i = np.expand_dims(data_test[i], axis=0)
                     data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
                     # print(np.array(concat_in_between).shape)
                     # print(np.array(data_test_i).shape)
                     # print(np.array(data_test_i_n).shape)
-                    
                     data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
                 except:
                     print("done")
@@ -718,7 +716,7 @@ def load_data(dataset, factor, mode):
             data_test = np.array(data_test_combined)
             data_test = np.squeeze(data_test)
             print("data_test combined:", data_test.shape)
-            # input("n")
+            input("n")
 
             """
             data_test_three = []

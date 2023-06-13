@@ -31,7 +31,7 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 
 version = 1
 two_blocks = False
-three_blocks = False # False
+three_blocks = False
 four_blocks = True # True
 five_blocks = False
 six_blocks = False
@@ -200,7 +200,7 @@ class IFNet(nn.Module):
     # @torch.cuda.amp.autocast(True)
     # def forward(self, x, gt_flow, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
     # def forward(self, x, scale=scales, timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
-    def forward(self, x, timestep=0.4): # scale=[4, 2, 1] scale=[1, 1, 1]
+    def forward(self, x, t=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
         # timestep = (x[:, :1].clone() * 0 + 1) * timestep # for arbitrary interpolation
         img0 = x[:, :1] # :3
         img1 = x[:, 1:2] # 3:6
@@ -332,7 +332,7 @@ class IFNet(nn.Module):
 
         for i in range(blocks_range):
             # merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
-            merged[i] = merged[i][0] * mask_list[i] * timestep * 2 + merged[i][1] * (1 - mask_list[i]) * (1 - timestep) * 2
+            merged[i] = merged[i][0] * mask_list[i] * (t * 2) + merged[i][1] * (1 - mask_list[i]) * ((1 - t) * 2)
             # merged[i] = merged[i][0] * mask_list[i] * timestep + merged[i][1] * (1 - mask_list[i]) * (1 - timestep)
             merged[i] = merged[i][:,:,:gt.shape[2],:gt.shape[3]]
             
