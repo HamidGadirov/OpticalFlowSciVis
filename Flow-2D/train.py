@@ -151,7 +151,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         else:
             if dataset == "lbs2d":
                 # data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std = load_data(dataset, factor, mode)
-                data_test, dens_min, dens_max, dens_mean, dens_std = load_data(dataset, factor, mode)
+                data_test, data_test_non_overlap, dens_min, dens_max, dens_mean, dens_std = load_data(dataset, factor, mode)
             else:
                 data_test, data_test_non_overlap = load_data(dataset, factor, mode)
             shuffle = False
@@ -1097,11 +1097,11 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow3e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 47.87 EPE: 0.0138
     # model_name = "flownet_l1_flow1e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
     # model_name = "flownet_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
-    # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 49.42 0.0130 52.84 0.0129 53.24 0.0128
+    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 49.42 0.0130 52.84 0.0129 53.24 0.0128
     # 4Blocks: 53.24 0.0128
     model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # ++ 50.32 0.0129
-    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. 50ep: 45.99 0.0132
-    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma7e-1_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
+    # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. 50ep: 45.99 0.0132
+    # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma7e-1_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
     # model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 120ep: 57.52 EPE: 0.0130
     # 5Blocks: full test: 48.43 0.0122
     # model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # PSNR: 46.33 EPE: 0.0121
@@ -1218,7 +1218,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.49 0.016
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-5_v1_256_drop50K_lr6e-4.pkl" # param s. 34.35 0.027
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-7_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.25 0.0243
-    model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # +++ 40.486 0.008576
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # +++ 40.486 0.008576
     # why cannot reproduce??? 35.639 0.01947 why??? 39.151 0.009917 interesting...
     # model_name = "flownet_4Blocks_lapl_dist5e-4_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.04 0.023
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl"
@@ -1640,40 +1640,20 @@ if __name__ == "__main__":
 
         # # 300-600 subset works
         # TODO for a member of DD
-        # dist_matrix = calculate_dist_matrix(original_data_gt, interpol_data)
-        # print(dist_matrix.shape)
-        # print(dist_matrix)
-        # """
-        input("dist_m")
         dist_m = True
         if dist_m:
-            n_timesteps = data_test.shape[0]
-            print(n_timesteps)
-            dist_matrix = np.zeros((n_timesteps, n_timesteps))
-            # lpips_model = lpips.LPIPS(net='alex').cuda() # vgg
-            for i in tqdm.tqdm(range(n_timesteps)):
-                for j in range(i + 1, n_timesteps):
-                    dist = 0.0
-                    interpolated = []
+            model = Model(args.local_rank)
+            start_time = time.time()
+            dist_matrix = calculate_dist_matrix(data_test, model, device)
+            end_time = time.time()
 
-                    # create cat(I0, In), get orig_gt(I1...In-1)
-                    data_test_i, data_test_j, concat_in_between = create_cat(data_test, i, j)
+            execution_time = end_time - start_time
+            print("Execution time:", execution_time, "seconds")
 
-                    # interpolte in between (run inference(I0, In))
-                    factor = j - i
-                    for j in range(1, factor):
-                        interpol_step = float(j) / factor
-                        print(interpol_step)
-                        merged, flow, mask = model.inference(data_test_i, data_test_j, t=interpol_step)
-                        merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
-                        print(merged_last.shape)
-                        interpolated.append(merged_last.transpose((1,2,0)))
+            print(dist_matrix.shape)
+            print(dist_matrix)
 
-                    # calc error
-                    dist += calculate_psnr(concat_in_between, interpolated) 
-
-                    dist_matrix[i, j] = dist
-            # """
+            np.savetxt('dist_matrix.txt', dist_matrix, fmt='%f')
 
         """
         # arbitrary interpol: factor = n

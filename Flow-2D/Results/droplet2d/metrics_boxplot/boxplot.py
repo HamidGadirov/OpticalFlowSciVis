@@ -37,20 +37,27 @@ ax1.set_xlabel('Method')
 ax1.set_ylabel('PSNR')
 
 # Create the first boxplot for PSNR
-bp1 = ax1.boxplot([psnr_LREST, psnr_RIFE, psnr_base_linear], positions=[1, 2, 3], widths=0.3)
+bp1 = ax1.boxplot([psnr_LREST, psnr_RIFE, psnr_base_linear], positions=[1, 2, 3], widths=0.25, patch_artist=True,
+                  flierprops={'marker': 'd'}, whis=1.5)
 
 # Create a second y-axis
 ax2 = ax1.twinx()
 ax2.set_ylabel('LPIPS')
 
 # Create the second boxplot for LPIPS
-bp2 = ax2.boxplot([lpips_LREST, lpips_RIFE, lpips_base_linear], positions=[1.2, 2.2, 3.2], widths=0.3)
+bp2 = ax2.boxplot([lpips_LREST, lpips_RIFE, lpips_base_linear], positions=[1.2, 2.2, 3.2], widths=0.25, patch_artist=True,
+                  flierprops={'marker': 'd'}, whis=3)
 
 # Customize the appearance of the boxplots
 for box in bp1['boxes']:
     box.set(color='blue', linewidth=1)
+    box.set_facecolor('lightblue')
+# for box in bp2['boxes']:
+#     box.set(color='magenta', linewidth=1)
+#     box.set_facecolor('lightpink')
 for box in bp2['boxes']:
     box.set(color='green', linewidth=1)
+    box.set_facecolor('lightgreen')
 
 # Set the labels for the x-axis
 ax1.set_xticks([1.1, 2.1, 3.1])

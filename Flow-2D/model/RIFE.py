@@ -67,15 +67,17 @@ class Model(nn.Module):
     # def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
     # def inference(self, img0, img1, gt_flow, TTA=False, timestep=0.5):
     def inference(self, img0, img1, TTA=False, t=0.5):
-        print("in RIFE, inference")
+        # print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
         imgs = torch.cat((img0, img1), 1)
+        # print(imgs.shape)
+        # input("imgs")
         flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, t=t)
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, gt_flow, scale_list, timestep=timestep)
         # flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
-        print("back to RIFE from IFNet")
+        # print("back to RIFE from IFNet")
         if TTA == False:
 
             # return merged[2], flow, mask # get the flow too
@@ -437,11 +439,11 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.001 # 5e-4 # 0.001 # 0.01
-        lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
-        lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
+        lambda_distill = 0 # 0.001 # 5e-4 # 0.001 # 0.01
+        lambda_reg = 0 # 1e-8 # droplet # 1e-6 best on rectangle
+        lambda_photo = 0 # 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0.2 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter

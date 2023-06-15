@@ -655,7 +655,7 @@ def load_data(dataset, factor, mode):
                 # data_test = data[2700:5400] # 34.26
                 # data_test = data[350:2700] # 35.12
                 # data_test = data[350:950] # 29.98
-                data_test = data[350:650] # 35.12
+                data_test = data[450:480] # 35.12
                 # data_test = data[:350] # 31.07
                 # data_test = data[1500:2100] # 30.57
                 # data_test = data[2400:2700] # 28.07
@@ -770,6 +770,6 @@ def load_data(dataset, factor, mode):
 
         if dataset == "lbs2d":
             # return data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std
-            return data_test, dens_min, dens_max, dens_mean, dens_std
+            return data_test, data_test_non_overlap, dens_min, dens_max, dens_mean, dens_std
         else:
             return data_test, data_test_non_overlap

@@ -98,6 +98,8 @@ def calculate_avg_psnr(original_data_gt, interpol_data):
     psnr = 20 * np.log10(max_pixel_value) - 10 * np.log10(mse)
 
     # print("psnr:", psnr)
+    print(psnr.shape)
+    # input("psnr")
     # Save the PSNR scores to a pickle file
     filename = "psnr_for_boxplot.pkl"
     with open(filename, 'wb') as f:
@@ -176,6 +178,15 @@ def calculate_avg_lpips(original_data_gt, interpol_data, batch_size=16):
 def calculate_avg_epe(flow_gt, flow_pred):
     # return torch.norm(flow_pred - flow_gt, p=2, dim=1).mean()
     error = np.sqrt(np.sum((flow_pred - flow_gt) ** 2, axis=1))
+
+    print(error.shape)
+    input("error")
+    # Save the EPE scores to a pickle file
+    filename = "epe_for_boxplot.pkl"
+    with open(filename, 'wb') as f:
+        pickle.dump(error, f)
+    # input("psnr saved")
+
     mean_error = np.mean(error)
     print('avg EPE: {:.4f}'.format(mean_error))
     return mean_error
