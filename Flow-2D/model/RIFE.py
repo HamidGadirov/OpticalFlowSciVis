@@ -437,7 +437,7 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.001 # 0.1 # without is bad # 0.01 best
+        lambda_distill = 0.001 # 5e-4 # 0.001 # 0.01
         lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
         lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
         lambda_smooth = 0 # 1e-8 not important

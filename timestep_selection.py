@@ -33,6 +33,18 @@ def calculate_dist_matrix(original_data_gt, interpolated_data):
             dist_matrix[i, j] = dist
     return dist_matrix # upper triangular
 
+def create_cat(data_test, i, j):
+    # n = j - i
+    concat_in_between = [np.expand_dims(d, axis=0) for _, d in enumerate(data_test[i+1:j])]
+    concat_in_between = np.concatenate(concat_in_between, axis=0)
+    # ensure same number of dimensions
+    data_test_i = np.expand_dims(data_test[i], axis=0)
+    data_test_j = np.expand_dims(data_test[j], axis=0)
+    # print(np.array(concat_in_between).shape)
+    # print(np.array(data_test_i).shape)
+    # print(np.array(data_test_i_n).shape)
+    return data_test_i, data_test_j, concat_in_between
+
 
 
 

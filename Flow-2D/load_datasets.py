@@ -574,7 +574,7 @@ def load_data(dataset, factor, mode):
             # print("data to combined_data_train:", combined_data_train.shape)
             return combined_data_train, combined_data_val
             # return data_train, data_val
-        else:
+        else: # inference
             if "rectangle2d" in filename:
                 data_test = data[2685:3000] # div to 3, 5, 9 and 7
             if "lbs2d" in filename:
@@ -651,9 +651,11 @@ def load_data(dataset, factor, mode):
             elif "droplet2d" in filename:
                 # data_test = data[:5000] # 35.02
                 # data_test = data[:3000] # 36.82
-                data_test = data[:2700] # 36.81
+                # data_test = data[:2700] # 36.81
+                # data_test = data[2700:5400] # 34.26
                 # data_test = data[350:2700] # 35.12
                 # data_test = data[350:950] # 29.98
+                data_test = data[350:650] # 35.12
                 # data_test = data[:350] # 31.07
                 # data_test = data[1500:2100] # 30.57
                 # data_test = data[2400:2700] # 28.07
@@ -716,7 +718,7 @@ def load_data(dataset, factor, mode):
             data_test = np.array(data_test_combined)
             data_test = np.squeeze(data_test)
             print("data_test combined:", data_test.shape)
-            input("n")
+            # input("n")
 
             """
             data_test_three = []

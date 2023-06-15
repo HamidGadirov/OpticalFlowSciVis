@@ -366,7 +366,10 @@ def calculate_diff(original_data, interpol_data, dataset, factor, dir_res):
             # diffs.append(cv2.absdiff(np.int32(original_data[i]), np.int32(interpol_data[i])))
             # diffs.append(cv2.absdiff(np.float32(original_data[i]), np.float32(interpol_data[i])))
             # diffs.append(cv2.absdiff(original_data[i], interpol_data[i])) # absdiff will lose sign
-            diffs.append(original_data[i] - interpol_data[i])
+            if dataset == "droplet2d":
+                diffs.append(np.abs(original_data[i] - interpol_data[i]))
+            else:
+                diffs.append(original_data[i] - interpol_data[i])
             # print("original_data mean and std:", np.mean(original_data[i]), np.std(original_data[i]))
             # print("interpol_data mean and std:", np.mean(interpol_data[i]), np.std(interpol_data[i]))
 

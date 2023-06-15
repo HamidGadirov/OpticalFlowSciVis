@@ -46,4 +46,33 @@ def warp(tenInput, tenFlow): # img0, flow[:, :3]
     # return torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)
     return grid_s
 
+def warp_3d(tenInput, tenFlow):
+    k = (str(tenFlow.device), str(tenFlow.size()))
+    if k not in backwarp_tenGrid:
+        grid_shape = (tenFlow.shape[2], tenFlow.shape[3], tenFlow.shape[4])
+        tenHorizontal = torch.linspace(-1.0, 1.0, grid_shape[2], device=tenFlow.device).view(
+            1, 1, 1, 1, grid_shape[2]).expand(tenFlow.shape[0], -1, grid_shape[1], grid_shape[2], -1)
+        tenVertical = torch.linspace(-1.0, 1.0, grid_shape[1], device=tenFlow.device).view(
+            1, 1, 1, grid_shape[1], 1).expand(tenFlow.shape[0], -1, -1, grid_shape[2], -1)
+        tenDepth = torch.linspace(-1.0, 1.0, grid_shape[0], device=tenFlow.device).view(
+            1, 1, grid_shape[0], 1, 1).expand(tenFlow.shape[0], -1, -1, grid_shape[2], grid_shape[2])
+
+        backwarp_tenGrid[k] = torch.cat(
+            [tenHorizontal, tenVertical, tenDepth], 1).to(tenFlow.device)
+
+    tenFlow = torch.cat([tenFlow[:, 0:1, :, :, :] / ((tenInput.shape[4] - 1.0) / 2.0),
+                         tenFlow[:, 1:2, :, :, :] / ((tenInput.shape[3] - 1.0) / 2.0),
+                         tenFlow[:, 2:3, :, :, :] / ((tenInput.shape[2] - 1.0) / 2.0)], 1)
+
+    g = (backwarp_tenGrid[k] + tenFlow).permute(0, 2, 3, 4, 1)
+
+    if tenInput.dtype == torch.float16:
+        grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g.half(), mode='trilinear', padding_mode='border', align_corners=True)
+    else:
+        grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='trilinear', padding_mode='border', align_corners=True)
+
+    return grid_s
+
+
+
 

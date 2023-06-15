@@ -1,6 +1,7 @@
 # ssh -Y hamid@129.125.75.167
 # conda activate gpu
 # python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=lbs2d --mode=train
+# (gpu) python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=droplet2d --mode=trai --factor=2
 
 # rsync -avz -e 'ssh' hamid@129.125.75.167:~/Desktop/OpticalFlow/RIFE/train_log/ /Users/hamidgadirov/Desktop/OpticalFlow/RIFE/train_log/
 
@@ -25,6 +26,7 @@ import inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
+import tqdm
 
 from model.RIFE import Model
 from dataset import *
@@ -34,8 +36,8 @@ from torch.utils.data.distributed import DistributedSampler
 
 from load_datasets import load_data
 from metrics import calculate_diff, calculate_avg_epe
-from metrics import calculate_avg_psnr, calculate_avg_ssim, calculate_avg_lpips
-from timestep_selection import calculate_dist_matrix
+from metrics import calculate_avg_psnr, calculate_avg_ssim, calculate_avg_lpips, calculate_psnr
+from timestep_selection import calculate_dist_matrix, create_cat
 from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_ind_flow, visualize_series, visualize_series_flow, visualize_large, \
     visualize_seq_dens, visualize_seq_flow
 from baseline_interpol import *
@@ -381,6 +383,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             I1 = imgs[:, 1:2]
 
             # arbitrary interpol
+            # """
             print(f"inference for {factor}x interpolation")
             for j in range(1, factor):
                 interpol_step = float(j) / factor
@@ -389,25 +392,25 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
                 print(merged_last.shape)
 
-                fig, axs = plt.subplots(nrows=4, ncols=4, figsize=(10, 10))
-                axs = axs.flatten()
-                # Iterate over the images and plot them on the subplots
-                for i in range(16):
-                    # Remove the single channel dimension if it exists (assuming grayscale images)
-                    image = merged_last[i].squeeze()
-                    
-                    # Plot the image on the corresponding subplot
-                    axs[i].imshow(image, cmap='gray')
-                    axs[i].axis('off')
+                # fig, axs = plt.subplots(nrows=4, ncols=4, figsize=(10, 10))
+                # axs = axs.flatten()
+                # # Iterate over the images and plot them on the subplots
+                # for i in range(16):
+                #     # Remove the single channel dimension if it exists (assuming grayscale images)
+                #     image = merged_last[i].squeeze()
 
-                # Adjust the spacing between the subplots
-                plt.tight_layout()
+                #     # Plot the image on the corresponding subplot
+                #     axs[i].imshow(image, cmap='gray')
+                #     axs[i].axis('off')
 
-                # Show the plot
-                plt.show()
-                fig.savefig("droplets.png", dpi = 300)
+                # # Adjust the spacing between the subplots
+                # plt.tight_layout()
 
-                input("x")
+                # # Show the plot
+                # plt.show()
+                # # fig.savefig("droplets.png", dpi = 300)
+                # # input("x")
+
                 for b in range(data_gpu.shape[0]):
                     interpol_data.append(merged_last[b].transpose((1,2,0)))
 
@@ -418,7 +421,8 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 mask_last = np.asarray(mask[-1].detach().cpu().numpy())
                 for b in range(data_gpu.shape[0]):
                     mask_combined.extend(mask_last[b])
-            # input("inf")
+            # """
+
             """
             if factor == 2: # # img0, img1, gt
                 # t = 0.5
@@ -448,17 +452,20 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 for b in range(data_gpu.shape[0]):
                     mask_combined.extend(mask_last[b])
             elif factor == 4: # img0, img1, gt0, gt1, gt2
+                I0 = I0.to(device)
+                I1 = I1.to(device)
                 middle, flow_middle, mask_middle = model.inference(I0, I1) # get the flow too
                 middle = middle[-1]
-                print(I1.shape, middle.shape)
+                # print(I1.shape, middle.shape)
+                middle = middle.to(device)
                 middle_left, flow_left, mask_left = model.inference(I0, middle) # get the flow too
                 middle_right, flow_right, mask_right = model.inference(middle, I1) # get the flow too
 
                 middle = middle.detach().cpu().numpy()
                 middle_left = middle_left[-1].detach().cpu().numpy()
                 middle_right = middle_right[-1].detach().cpu().numpy()
-                print("middle:", middle.shape)
-                print("middle_left:", middle_left.shape)
+                # print("middle:", middle.shape)
+                # print("middle_left:", middle_left.shape)/
 
                 flow_left = flow_left[-1].detach().cpu().numpy()[:, 0:4, :, :].squeeze()
                 flow_middle = flow_middle[-1].detach().cpu().numpy()[:, 0:4, :, :].squeeze()
@@ -490,10 +497,10 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             batch_size = 16 # what was used for inference
             try:
                 for fb in range(0, interpol_data.shape[0], (factor - 1) * batch_size): # 0 32 64 ...
-                    print("fb", fb)
+                    # print("fb", fb)
                     for b in range(batch_size): # 0 1; 0 1; ...
                         for k in range(fb, fb + (factor - 1) * batch_size, batch_size): # 0 16; 32 64; ... 
-                            print("k+b:", k + b)
+                            # print("k+b:", k + b)
                             interpol_data_new.append(interpol_data[k + b])
             except:
                 print("reordered")
@@ -559,7 +566,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # else:
         #     original_data = data_test
         # print("Data is in range %f to %f" % (np.min(original_data), np.max(original_data)))
-        input("x")
+        # input("x")
         
         if dataset == "lbs2d":
             # statistics = {'flow_x_mean': flow_x_mean, 'flow_y_mean': flow_y_mean, 'flow_x_std': flow_x_std, 'flow_y_std': flow_y_std}
@@ -1211,7 +1218,12 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.49 0.016
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-5_v1_256_drop50K_lr6e-4.pkl" # param s. 34.35 0.027
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-7_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.25 0.0243
-    model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl"
+    model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # +++ 40.486 0.008576
+    # why cannot reproduce??? 35.639 0.01947 why??? 39.151 0.009917 interesting...
+    # model_name = "flownet_4Blocks_lapl_dist5e-4_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.04 0.023
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl"
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v3.pkl" # 3h 50ep: 36.33 0.01747
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v4.pkl" # 35.48 0.0226
     # TODO: param s.: dist5e-3 + dist2e-2 + no Lapl + reg1e-7 + reg1e-9 + photo1e-5 + photo1e-7 +
     # TODO: num_blocks +- eqRes +- refine +
 
@@ -1355,7 +1367,7 @@ if __name__ == "__main__":
         flow_original_interpol = np.array(flow_original_interpol)
         print("flow_original_interpol:", flow_original_interpol.shape)
         flow_gt = flow_original_interpol
-        input("n")
+        # input("n")
         
         """
         if args.exp == 1:
@@ -1583,7 +1595,7 @@ if __name__ == "__main__":
         # title = "Flow_pred_ind_600"
         # visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
 
-        # """
+        """
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         if args.factor == 2:
             visualize_large(data_original_interpol, interpol_data, diffs,
@@ -1597,7 +1609,7 @@ if __name__ == "__main__":
             title = "Flow_gt_pred_diff"
             visualize_seq_flow(flow_gt, flow, u_diff, v_diff,
                     factor, dataset, dir_model, title=title, show=False, save=True)
-        # """
+        """
         
         # input("metrics")
         del model
@@ -1631,6 +1643,37 @@ if __name__ == "__main__":
         # dist_matrix = calculate_dist_matrix(original_data_gt, interpol_data)
         # print(dist_matrix.shape)
         # print(dist_matrix)
+        # """
+        input("dist_m")
+        dist_m = True
+        if dist_m:
+            n_timesteps = data_test.shape[0]
+            print(n_timesteps)
+            dist_matrix = np.zeros((n_timesteps, n_timesteps))
+            # lpips_model = lpips.LPIPS(net='alex').cuda() # vgg
+            for i in tqdm.tqdm(range(n_timesteps)):
+                for j in range(i + 1, n_timesteps):
+                    dist = 0.0
+                    interpolated = []
+
+                    # create cat(I0, In), get orig_gt(I1...In-1)
+                    data_test_i, data_test_j, concat_in_between = create_cat(data_test, i, j)
+
+                    # interpolte in between (run inference(I0, In))
+                    factor = j - i
+                    for j in range(1, factor):
+                        interpol_step = float(j) / factor
+                        print(interpol_step)
+                        merged, flow, mask = model.inference(data_test_i, data_test_j, t=interpol_step)
+                        merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
+                        print(merged_last.shape)
+                        interpolated.append(merged_last.transpose((1,2,0)))
+
+                    # calc error
+                    dist += calculate_psnr(concat_in_between, interpolated) 
+
+                    dist_matrix[i, j] = dist
+            # """
 
         """
         # arbitrary interpol: factor = n
@@ -1649,6 +1692,17 @@ if __name__ == "__main__":
             # data_test, interpol_data, flow, flow_original, mask, statistics = train(model, args.dataset, args.factor, model_name, args.mode, args.local_rank)
         print(combined_for_interpol.shape)
         print(gt_for_interpol_error.shape)
+
+        for k in range(i + 1, j):
+            interp = interpolated_data[k]
+            orig = original_data_gt[k]
+            dist += calculate_psnr(orig, interp) # 25h on SVCG, 9h on Habrok
+            # orig = np.expand_dims(orig, axis=0)
+            # interp = np.expand_dims(interp, axis=0)
+            # orig_tensor = torch.from_numpy(orig).float()
+            # interp_tensor = torch.from_numpy(interp).float()
+            # dist += lpips_model(orig_tensor.cuda(), interp_tensor.cuda()) # very long
+
         """
 
 # print("Dataset:", dataset)

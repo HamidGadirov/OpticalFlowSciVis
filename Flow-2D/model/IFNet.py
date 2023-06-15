@@ -133,7 +133,7 @@ class IFBlock(nn.Module):
             else:
                 tmp = self.deconvblock(x) # added
                 # print("deconvblock:", tmp.shape)
-            flow = tmp[:, :4] # * scale * 2 # ??? -> orig; distill jump
+            flow = tmp[:, :4] # * scale * 2 # scale according to resize -> orig; distill jump
             mask = tmp[:, 4:5]
         if version == 2:
             x = self.convblock0(x) + x
@@ -276,8 +276,12 @@ class IFNet(nn.Module):
             mask_list.append(torch.sigmoid(mask))
             flow_list.append(flow)
             # sup_flow_list.append(sup_flow)
-            warped_img0 = warp(img0, flow[:, :2]) # Ft->0
-            warped_img1 = warp(img1, flow[:, 2:4]) # Ft->1
+            # arb interpol
+            # warped_img0 = warp(img0, flow[:, :2]) # Ft->0
+            # warped_img1 = warp(img1, flow[:, 2:4]) # Ft->1
+            warped_img0 = warp(img0, flow[:, :2] * t * 2) # Ft->0
+            warped_img1 = warp(img1, flow[:, 2:4] * (1 - t) * 2) # Ft->1
+
             # experiment: use GT flow instead of pred for interpolation, results improve ??
             # print("gt_flow:", gt_flow.shape)
             # warped_img0 = warp(img0, -gt_flow) # Ft->0
@@ -331,9 +335,8 @@ class IFNet(nn.Module):
             merged_teacher = None
 
         for i in range(blocks_range):
-            # merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
-            merged[i] = merged[i][0] * mask_list[i] * (t * 2) + merged[i][1] * (1 - mask_list[i]) * ((1 - t) * 2)
-            # merged[i] = merged[i][0] * mask_list[i] * timestep + merged[i][1] * (1 - mask_list[i]) * (1 - timestep)
+            merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
+            # merged[i] = merged[i][0] * mask_list[i] * (t * 2) + merged[i][1] * (1 - mask_list[i]) * ((1 - t) * 2)
             merged[i] = merged[i][:,:,:gt.shape[2],:gt.shape[3]]
             
             if gt.shape[1] == 1: # 3
