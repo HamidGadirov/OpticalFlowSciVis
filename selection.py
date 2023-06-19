@@ -8,13 +8,13 @@ sys.path.insert(0, os.path.abspath(HOME+'/dev/autovis/bone/code'))
 import select_bone as sel
 
 
-nTimeSteps=135
-distsFName=f'{HOME}/Desktop/dist_matrix_135.txt'
+nTimeSteps=150
+distsFName=f'{HOME}/Desktop/dist_matrix_150.txt'
 
 with open(distsFName) as f:
     lines = [line.rstrip().split(' ') for line in f]
     print(len(lines), len(lines[0]))
-    dists=[-float(e) for l in lines for e in l]
+    dists=[float(e) for l in lines for e in l]
 
 
 #dists=[e if e>0 else -1000000000. for e in dists]
@@ -55,3 +55,8 @@ for k in range(2,17):
 
 
     print(f'UNIFORM k={k} v={v} | selection: {selection}')
+
+    selections.append(selection)
+
+
+print('selections', selections)
