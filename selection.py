@@ -3,9 +3,9 @@ HOME=str(Path.home())
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath(HOME+'/dev/autovis/bone/code'))
+sys.path.insert(0, os.path.abspath(HOME+'/dev/helper/helper_timesel'))
 
-import select_bone as sel
+import helper_timesel as sel
 
 
 nTimeSteps=150
@@ -25,7 +25,7 @@ def d(b0, b1):
 
 selections=[]
 for k in range(2,17):
-    selection,v=sel.select_dynProg(k, dists, nTimeSteps)
+    selection,v=sel.select_dynProg_max(k, dists, nTimeSteps)
     selections.append((selection,v))
 
 #print(f'selections {selections}')
