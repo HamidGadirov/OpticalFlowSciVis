@@ -133,7 +133,7 @@ class IFBlock(nn.Module):
             else:
                 tmp = self.deconvblock(x) # added
                 # print("deconvblock:", tmp.shape)
-            flow = tmp[:, :4] # * scale * 2 # scale according to resize -> orig; distill jump
+            flow = tmp[:, :4] # * scale * 2 # scale according to resize -> orig; distill jump # TODO
             mask = tmp[:, 4:5]
         if version == 2:
             x = self.convblock0(x) + x
@@ -277,10 +277,12 @@ class IFNet(nn.Module):
             flow_list.append(flow)
             # sup_flow_list.append(sup_flow)
             # arb interpol
-            # warped_img0 = warp(img0, flow[:, :2]) # Ft->0
-            # warped_img1 = warp(img1, flow[:, 2:4]) # Ft->1
-            warped_img0 = warp(img0, flow[:, :2] * t * 2) # Ft->0
-            warped_img1 = warp(img1, flow[:, 2:4] * (1 - t) * 2) # Ft->1
+            # warped_img0 = warp(img0, flow[:, :2]) # Ft->0 t=0.5
+            # warped_img1 = warp(img1, flow[:, 2:4]) # Ft->1 t=0.5
+            warped_img0 = warp(img0, flow[:, :2] * t) # Ft->0 +
+            warped_img1 = warp(img1, flow[:, 2:4] * (1 - t)) # Ft->1 +
+            # warped_img0 = warp(img0, flow[:, :2] * (1 - t)) # Ft->0 -
+            # warped_img1 = warp(img1, flow[:, 2:4] * t) # Ft->1 -
 
             # experiment: use GT flow instead of pred for interpolation, results improve ??
             # print("gt_flow:", gt_flow.shape)
@@ -336,7 +338,7 @@ class IFNet(nn.Module):
 
         for i in range(blocks_range):
             merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
-            # merged[i] = merged[i][0] * mask_list[i] * (t * 2) + merged[i][1] * (1 - mask_list[i]) * ((1 - t) * 2)
+            # merged[i] = merged[i][0] * mask_list[i] * (1 - t) + merged[i][1] * (1 - mask_list[i]) * t
             merged[i] = merged[i][:,:,:gt.shape[2],:gt.shape[3]]
             
             if gt.shape[1] == 1: # 3

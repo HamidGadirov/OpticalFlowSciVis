@@ -71,8 +71,6 @@ class Model(nn.Module):
         # print(self.flownet) # IFNet summary
         # input("x")
         imgs = torch.cat((img0, img1), 1)
-        # print(imgs.shape)
-        # input("imgs")
         flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, t=t)
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, gt_flow, scale_list, timestep=timestep)
@@ -203,16 +201,10 @@ class Model(nn.Module):
             loss_flow = 0.
 
             # num_blocks = 4
+            # gamma_coeff = 0.9 # 0.8 0.7
             # for i in range(num_blocks):
-            #     gamma = 0.7 ** i
+            #     gamma = gamma_coeff ** i
             #     loss_flow += (flow[num_blocks - i - 1][:, 2:4] - gt_flow).abs().mean() * gamma
-            # loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
-
-            # four blocks
-            # loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.512
-            # loss_flow += (flow[1][:, 2:4] - gt_flow).abs().mean() * 0.64
-            # loss_flow += (flow[2][:, 2:4] - gt_flow).abs().mean() * 0.8
-            # loss_flow += (flow[3][:, 2:4] - gt_flow).abs().mean() * 1.
             # loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
 
             """
@@ -395,7 +387,7 @@ class Model(nn.Module):
 
             return warped_frame
 
-        # """
+        """
         # Photometric loss
         # computed as the difference between the first image and the backward/inverse warped second image
         # in this case: can combine img1, img2 (pred); img2 (pred), img3
@@ -415,7 +407,7 @@ class Model(nn.Module):
         # warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2]) # 3 blocks
         warped_frame2 = backwrd_warp(flow[-1][:, :2, ...], merged[-1])
         loss_photo += photometric_loss(warped_frame2, frame3)
-        loss_photo /= 2
+        loss_photo /= 2.
         # block_losses = []
         # num_blocks = len(flow) # 3 blocks
         # gamma = 0.8 # idea from RAFT
@@ -433,17 +425,17 @@ class Model(nn.Module):
         # loss_photo = total_loss_photo
         # print(loss_photo)
         # input("x")
-        # """
-        # loss_photo = torch.tensor(0.)
+        """
+        loss_photo = torch.tensor(0.)
         """ end Photometric consistency """
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0 # 0.001 # 5e-4 # 0.001 # 0.01
-        lambda_reg = 0 # 1e-8 # droplet # 1e-6 best on rectangle
-        lambda_photo = 0 # 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
+        lambda_distill = 0.01 # 5e-4 # 0.001 # 0.01
+        lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
+        lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0.2 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter

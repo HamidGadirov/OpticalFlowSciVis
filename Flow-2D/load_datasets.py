@@ -1,6 +1,6 @@
 from curses.textpad import rectangle
 # from turtle import shape
-from matplotlib.pyplot import axes, title
+import matplotlib.pyplot as plt
 from dataset import *
 import os
 import cv2
@@ -30,6 +30,12 @@ from utils import plot_distribution
 # check patching -
 # FluidSimML: downsample to 256x256? +
 # try some optimization (TensorRT, ONNX) -
+
+def brightness_normalization(data):
+    for i in range(data.shape[0]):
+        data[i] = (data[i] - data[i].mean()) / data[i].std()
+    print("All samples were normalized individually!")
+    return data
 
 def load_data(dataset, factor, mode):
     combined_data_train = []
@@ -76,7 +82,10 @@ def load_data(dataset, factor, mode):
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble10.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/Spare_members/lbs2d_skip3_ensemble21.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble16m_f32.pkl"
-            filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21m_f32.pkl"
+            if mode == "train":
+                filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21m_f32.pkl"
+            else:
+                filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_test_f32.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_Cy1r1t1.pkl"
         
         if dataset == "droplet2d":
@@ -210,6 +219,8 @@ def load_data(dataset, factor, mode):
             print("data type:", data.dtype) # droplet2d was in float64 ???
             data = np.float32(data)
             print("data type:", data.dtype)
+            # if dataset == "droplet2d":
+            #     data = brightness_normalization(data)
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
             data = (data - np.min(data)) / (np.max(data) - np.min(data))
             print("Normalized to mean 0 and std 1!")
@@ -364,30 +375,22 @@ def load_data(dataset, factor, mode):
 
             if dataset != "rectangle2d":
                 # prepare data for training - use only each third frame while shifting the sampling; this is important!!
+                # print("use 2nd while shifting the sampling")
                 print("use 3rd while shifting the sampling")
-                # data_train_ = []
-                # data_val_ = []
-                # for shift in range(3):
-                #     for i in range(shift, data_train.shape[0], 3): # 10
-                #         data_train_.append(data_train[i])
-                #     for i in range(shift, data_val.shape[0], 3): 
-                #         data_val_.append(data_val[i])
-                # data_train = data_train_
-                # data_val = data_val_
-                # data_train = np.asarray(data_train)
-                # data_val = np.asarray(data_val)
+                # print("use 5th while shifting the sampling")
 
-                data_train_new = data_train[::3] # array is more efficient than list in case of large
-                data_val_new = data_val[::3]
-                for shift in range(1, 3):
-                    data_train_new = np.vstack([data_train_new, data_train[shift::3]])
-                    data_val_new = np.vstack([data_val_new, data_val[shift::3]])
+                step = 3
+                data_train_new = data_train[::step] # array is more efficient than list for large data
+                data_val_new = data_val[::step]
+                for shift in range(1, step): # should be 0
+                    data_train_new = np.vstack([data_train_new, data_train[shift::step]])
+                    data_val_new = np.vstack([data_val_new, data_val[shift::step]])
                 data_train = data_train_new
                 data_val = data_val_new
 
                 print(data_train.shape)
                 print(data_val.shape)
-                # input("3rd")
+                # input("skip")
                 del data_train_new, data_val_new
                 # input("del")
 
@@ -596,8 +599,10 @@ def load_data(dataset, factor, mode):
                 # data_test = data[15000:18000] # ens10
                 # data_test = data[16605:18000] # ens10
                 # data_test = data[18000:21000] # ens16
-                data_test = data[21000:24000] # ens21
+                # data_test = data[21000:24000] # ens21 Cy1r1t1
                 # data_test = data[22607:24000] # ens21 22605
+                data_test = data[:3000] # ens21 Cy1r1t1 test file
+                # data_test = data[1607:3000]
 
                 # data_test = data[30100:30400] # data[30000:33000] 
                 # data_test = data[40100:40400]
@@ -653,9 +658,9 @@ def load_data(dataset, factor, mode):
                 # data_test = data[:3000] # 36.82
                 # data_test = data[:2700] # 36.81
                 # data_test = data[2700:5400] # 34.26
-                # data_test = data[350:2700] # 35.12
+                data_test = data[335:2700] # 35.12
                 # data_test = data[350:950] # 29.98
-                data_test = data[450:480] # 35.12
+                # data_test = data[335:535] # 335:470
                 # data_test = data[:350] # 31.07
                 # data_test = data[1500:2100] # 30.57
                 # data_test = data[2400:2700] # 28.07
@@ -675,18 +680,41 @@ def load_data(dataset, factor, mode):
                 data_test = data[820:964]
 
             print(data_test.shape)
+            data_test_no_skip = data_test.squeeze()
+
+            # fig, axs = plt.subplots(nrows=13, ncols=13, figsize=(10, 10))
+            # axs = axs.flatten()
+            # vmin = data_test.min()
+            # vmax = data_test.max()
+
+            # for i in range(data_test.shape[0]):
+            #     try:
+            #         image = data_test[i].squeeze()
+            #         axs[i].imshow(image, cmap='gray', vmin=vmin, vmax=vmax)
+            #         axs[i].axis('off')
+            #         axs[i].set_title(str(i))  # Add label as the title
+            #     except:
+            #         break
+
+            # # Adjust the spacing between the subplots
+            # plt.tight_layout()
+            # # Save the plot to a file
+            # fig.savefig("droplets_brightNorm.png", dpi=300)
+
             # input("x")
 
             # if dataset != "rectangle2d" or dataset != "lbs2d":
+            """
             if dataset != "rectangle2d": # droplet2d
                 # prepare data for training - use only each third frame while shifting the sampling
                 print("3rd, test time")
                 data_test_ = []
                 for shift in range(3):
-                    for i in range(shift, data_test.shape[0], 3): # 10
+                    for i in range(shift, data_test.shape[0], 3): # 3 10
                         data_test_.append(data_test[i])
                 data_test = data_test_
                 data_test = np.asarray(data_test)
+            """
 
             print(data_test.shape)
             data_test_non_overlap = np.squeeze(data_test)
@@ -770,6 +798,6 @@ def load_data(dataset, factor, mode):
 
         if dataset == "lbs2d":
             # return data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std
-            return data_test, data_test_non_overlap, dens_min, dens_max, dens_mean, dens_std
+            return data_test, data_test_non_overlap, data_test_no_skip, dens_min, dens_max, dens_mean, dens_std
         else:
-            return data_test, data_test_non_overlap
+            return data_test, data_test_non_overlap, data_test_no_skip

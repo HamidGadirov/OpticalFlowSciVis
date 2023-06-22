@@ -50,6 +50,12 @@ for filename in filenames:
 		# plot_distribution(data_x[:, 2], dir_model, name=pkl_filename[:-4]+"_dist_flow_y.png", save=True)
 		print(len(data))
 
+# pkl_filename = "lbs2d_skip3_Cy1r1t1" + ".pkl" 
+# pkl_file = open(pkl_filename, 'rb')
+# data = pickle.load(pkl_file)
+# pkl_file.close
+# print(data.shape)
+
 # input("x")
 data = np.array(data)
 # data = np.float16(data)
@@ -59,11 +65,13 @@ input("x")
 
 # pkl_filename = "lbs2d_skip3_ensemble16m_f32" + ".pkl" 
 # pkl_filename = "lbs2d_skip3_ensemble10" + ".pkl" 
-pkl_filename = "lbs2d_skip3_ensemble21m_f32" + ".pkl" 
+pkl_filename = "lbs2d_skip3_ensemble21m_f32" + ".pkl" # train
+# pkl_filename = "lbs2d_skip3_test_f32" + ".pkl" # test
 pkl_file = open(pkl_filename, 'wb')
 pickle.dump(data, pkl_file, protocol=4)
 pkl_file.close
 print("Pkl file created")
+input("x")
 input("x")
 # """
 

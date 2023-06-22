@@ -179,26 +179,43 @@ def calculate_avg_epe(flow_gt, flow_pred):
     # return torch.norm(flow_pred - flow_gt, p=2, dim=1).mean()
     error = np.sqrt(np.sum((flow_pred - flow_gt) ** 2, axis=1))
 
-    print(error.shape)
-    input("error")
+    # print(error.shape)
+    # input("error")
     # Save the EPE scores to a pickle file
+    epe = np.mean(error, axis=(1, 2))
+    print(epe.shape)
     filename = "epe_for_boxplot.pkl"
     with open(filename, 'wb') as f:
-        pickle.dump(error, f)
-    # input("psnr saved")
+        pickle.dump(epe, f)
+    # input("epe saved")
 
     mean_error = np.mean(error)
     print('avg EPE: {:.4f}'.format(mean_error))
     return mean_error
 
-def calculate_psnr(orig, interp):
-    # Calculate the squared error between the two arrays
-    mse = np.mean(np.square(orig - interp))
+def calculate_sum_psnr(orig, interp):
+    # Normalize to [0, 1]
+    orig = (orig - orig.min()) / (orig.max() - orig.min())
+    interp = (interp - interp.min()) / (interp.max() - interp.min())
+
     # Calculate the maximum possible pixel value
     max_pixel_value = 1.0
-    # Calculate the PSNR in dB
-    psnr = 20 * np.log10(max_pixel_value) - 10 * np.log10(mse)
-    return psnr
+
+    sum_psnr = 0.0
+    # Calculate the PSNR for each element and accumulate the sum
+    for i in range(orig.shape[0]):
+        # Calculate the squared error between the corresponding elements
+        mse = np.mean(np.square(orig[i] - interp[i]))
+
+        # Calculate the PSNR for the current element
+        psnr = 20 * np.log10(max_pixel_value) - 10 * np.log10(mse)
+        # print(i, psnr)
+        # input("x")
+
+        # Accumulate the PSNR value to the sum
+        sum_psnr += psnr
+
+    return sum_psnr
 
 def calculate_lpips(orig, interp):
     # Add channel dimension to the input arrays

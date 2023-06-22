@@ -83,6 +83,17 @@ def get_learning_rate(step):
     # mul = np.cos((step) / (args.epoch * args.step_per_epoch) * math.pi) * 0.5 + 0.5
     # return (1e-4 - 1e-5) * mul + 1e-5
 
+    # return 1e-6 # worse
+    # return 2e-7 # no
+    # return 2e-6 # no
+    # mul = step / 2000.
+    # return 3e-4 * mul
+    # return 3e-5
+    # return 3e-6
+    # return 3e-3
+    # mul = np.cos((step) / (args.epoch * args.step_per_epoch) * math.pi) * 0.5 + 0.5
+    # return (1e-4 - 1e-5) * mul + 1e-5
+
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
     rgb_map = np.ones((h, w, 3)).astype(np.float32)
@@ -151,9 +162,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         else:
             if dataset == "lbs2d":
                 # data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std = load_data(dataset, factor, mode)
-                data_test, data_test_non_overlap, dens_min, dens_max, dens_mean, dens_std = load_data(dataset, factor, mode)
+                data_test, data_test_non_overlap, data_test_no_skip, dens_min, dens_max, dens_mean, dens_std = load_data(dataset, factor, mode)
             else:
-                data_test, data_test_non_overlap = load_data(dataset, factor, mode)
+                data_test, data_test_non_overlap, data_test_no_skip = load_data(dataset, factor, mode)
             shuffle = False
             # if dataset == "droplet2d": 
             #     shuffle = True
@@ -322,8 +333,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         interpol_data = []
         flow_combined = []
         mask_combined = []
-        flow_gt_combined = []
+        # flow_gt_combined = []
         # data_test_combined = []
+        print(f"inference for {factor}x interpolation")
         for i, data in enumerate(data_test):
             # print("test len:", len(data_gpu))
             # print("data:", data.shape)
@@ -359,19 +371,19 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             # input("data")
             imgs = data_gpu[:, :2]
             gt = data_gpu[:, 2:3]
-            print(imgs.shape)
-            print(gt.shape)
+            # print(imgs.shape)
+            # print(gt.shape)
             # gt = data_gpu
 
             if dataset == "pipedcylinder2d"  or dataset == "cylinder2d" or dataset == "FluidSimML2d" \
                 or dataset == "rectangle2d" or dataset == "lbs2d":
-                flow_gt = data_gpu[:,:,1:3] # only flow in x and y
-                # input(flow_gt.shape)
-                flow_gt_array = np.asarray(flow_gt.detach().cpu().numpy())
-                for b in range(data_gpu.shape[0]):
-                    flow_gt_combined.append(flow_gt_array[b, 0])
-                    flow_gt_combined.append(flow_gt_array[b, 2])
-                    flow_gt_combined.append(flow_gt_array[b, 1])
+                # flow_gt = data_gpu[:,:,1:3] # only flow in x and y
+                # # input(flow_gt.shape)
+                # flow_gt_array = np.asarray(flow_gt.detach().cpu().numpy())
+                # for b in range(data_gpu.shape[0]):
+                #     flow_gt_combined.append(flow_gt_array[b, 0])
+                #     flow_gt_combined.append(flow_gt_array[b, 2])
+                #     flow_gt_combined.append(flow_gt_array[b, 1])
 
                 imgs = imgs[:, :, 0]
                 gt = gt[:, :, 0]
@@ -383,111 +395,109 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             I1 = imgs[:, 1:2]
 
             # arbitrary interpol
-            # """
-            print(f"inference for {factor}x interpolation")
-            for j in range(1, factor):
-                interpol_step = float(j) / factor
-                print(interpol_step)
-                merged, flow, mask = model.inference(I0, I1, t=interpol_step)
-                merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
-                print(merged_last.shape)
+            arbitrary_interpol = True
+            if arbitrary_interpol:
+                for j in range(1, factor):
+                    interpol_step = float(j) / factor
+                    # print(interpol_step)
+                    merged, flow, mask = model.inference(I0, I1, t=interpol_step)
+                    merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
+                    # print(merged_last.shape)
 
-                # fig, axs = plt.subplots(nrows=4, ncols=4, figsize=(10, 10))
-                # axs = axs.flatten()
-                # # Iterate over the images and plot them on the subplots
-                # for i in range(16):
-                #     # Remove the single channel dimension if it exists (assuming grayscale images)
-                #     image = merged_last[i].squeeze()
+                    # fig, axs = plt.subplots(nrows=4, ncols=4, figsize=(10, 10))
+                    # axs = axs.flatten()
+                    # # Iterate over the images and plot them on the subplots
+                    # for i in range(16):
+                    #     # Remove the single channel dimension if it exists (assuming grayscale images)
+                    #     image = merged_last[i].squeeze()
 
-                #     # Plot the image on the corresponding subplot
-                #     axs[i].imshow(image, cmap='gray')
-                #     axs[i].axis('off')
+                    #     # Plot the image on the corresponding subplot
+                    #     axs[i].imshow(image, cmap='gray')
+                    #     axs[i].axis('off')
 
-                # # Adjust the spacing between the subplots
-                # plt.tight_layout()
+                    # # Adjust the spacing between the subplots
+                    # plt.tight_layout()
 
-                # # Show the plot
-                # plt.show()
-                # # fig.savefig("droplets.png", dpi = 300)
-                # # input("x")
+                    # # Show the plot
+                    # plt.show()
+                    # # fig.savefig("droplets.png", dpi = 300)
+                    # # input("x")
 
-                for b in range(data_gpu.shape[0]):
-                    interpol_data.append(merged_last[b].transpose((1,2,0)))
+                    for b in range(data_gpu.shape[0]):
+                        interpol_data.append(merged_last[b].transpose((1,2,0)))
 
-                flow_last = np.asarray(flow[-1].detach().cpu().numpy())
-                for b in range(data_gpu.shape[0]):
-                    flow_combined.append(flow_last[b])
+                    flow_last = np.asarray(flow[-1].detach().cpu().numpy())
+                    for b in range(data_gpu.shape[0]):
+                        flow_combined.append(flow_last[b])
 
-                mask_last = np.asarray(mask[-1].detach().cpu().numpy())
-                for b in range(data_gpu.shape[0]):
-                    mask_combined.extend(mask_last[b])
-            # """
+                    mask_last = np.asarray(mask[-1].detach().cpu().numpy())
+                    for b in range(data_gpu.shape[0]):
+                        mask_combined.extend(mask_last[b])
+            else:
+                if factor == 2: # # img0, img1, gt
+                    # t = 0.5
+                    # merged, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
+                    # merged, flow, mask = model.inference(I0, I1, np.squeeze(data_gpu[:, 2:3, 1:3]), scale_list) # get the flow too
+                    # merged, flow, mask = model.inference(I0, I1, np.squeeze(data_gpu[:, 2:3, 1:3]))
+                    merged, flow, mask = model.inference(I0, I1)
+                    # merged, flow, mask = model.inference(I0, I1, t)
+                    merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
+                    # print(merged_last.shape)
+                    # input("x")
+                    # interpol_data.extend(middle.transpose((0,2,3,1))) # append
+                    for b in range(data_gpu.shape[0]):
+                        interpol_data.append(merged_last[b].transpose((1,2,0)))
+                    # input("x")
+                    flow_last = np.asarray(flow[-1].detach().cpu().numpy())
+                    for b in range(data_gpu.shape[0]):
+                        flow_combined.append(flow_last[b])
+                    # print(flow_l.shape)
+                    # input("x")
+                    # flow_array_ = flow[2].detach().cpu().numpy()
+                    # flow_combined.extend(flow_l[:,0:4,:,:].squeeze())
+                    # flow_combined.extend(flow_m[:,0:4,:,:].squeeze())
+                    # flow_combined.extend(flow_r[:,0:4,:,:].squeeze()) # 0:4 because in x and y for Ft->0 and Ft->1 intermediate flows
+                    # print(flow.shape)
+                    mask_last = np.asarray(mask[-1].detach().cpu().numpy())
+                    for b in range(data_gpu.shape[0]):
+                        mask_combined.extend(mask_last[b])
+                elif factor == 4: # img0, img1, gt0, gt1, gt2
+                    I0 = I0.to(device)
+                    I1 = I1.to(device)
+                    middle, flow_middle, mask_middle = model.inference(I0, I1) # get the flow too
+                    middle = middle[-1]
+                    # print(I1.shape, middle.shape)
+                    middle = middle.to(device)
+                    middle_left, flow_left, mask_left = model.inference(I0, middle) # get the flow too
+                    middle_right, flow_right, mask_right = model.inference(middle, I1) # get the flow too
 
-            """
-            if factor == 2: # # img0, img1, gt
-                # t = 0.5
-                # merged, flow, mask = model.inference(I0, I1, scale_list) # get the flow too
-                # merged, flow, mask = model.inference(I0, I1, np.squeeze(data_gpu[:, 2:3, 1:3]), scale_list) # get the flow too
-                # merged, flow, mask = model.inference(I0, I1, np.squeeze(data_gpu[:, 2:3, 1:3]))
-                merged, flow, mask = model.inference(I0, I1)
-                # merged, flow, mask = model.inference(I0, I1, t)
-                merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
-                # print(merged_last.shape)
-                # input("x")
-                # interpol_data.extend(middle.transpose((0,2,3,1))) # append
-                for b in range(data_gpu.shape[0]):
-                    interpol_data.append(merged_last[b].transpose((1,2,0)))
-                # input("x")
-                flow_last = np.asarray(flow[-1].detach().cpu().numpy())
-                for b in range(data_gpu.shape[0]):
-                    flow_combined.append(flow_last[b])
-                # print(flow_l.shape)
-                # input("x")
-                # flow_array_ = flow[2].detach().cpu().numpy()
-                # flow_combined.extend(flow_l[:,0:4,:,:].squeeze())
-                # flow_combined.extend(flow_m[:,0:4,:,:].squeeze())
-                # flow_combined.extend(flow_r[:,0:4,:,:].squeeze()) # 0:4 because in x and y for Ft->0 and Ft->1 intermediate flows
-                # print(flow.shape)
-                mask_last = np.asarray(mask[-1].detach().cpu().numpy())
-                for b in range(data_gpu.shape[0]):
-                    mask_combined.extend(mask_last[b])
-            elif factor == 4: # img0, img1, gt0, gt1, gt2
-                I0 = I0.to(device)
-                I1 = I1.to(device)
-                middle, flow_middle, mask_middle = model.inference(I0, I1) # get the flow too
-                middle = middle[-1]
-                # print(I1.shape, middle.shape)
-                middle = middle.to(device)
-                middle_left, flow_left, mask_left = model.inference(I0, middle) # get the flow too
-                middle_right, flow_right, mask_right = model.inference(middle, I1) # get the flow too
+                    middle = middle.detach().cpu().numpy()
+                    middle_left = middle_left[-1].detach().cpu().numpy()
+                    middle_right = middle_right[-1].detach().cpu().numpy()
+                    # print("middle:", middle.shape)
+                    # print("middle_left:", middle_left.shape)/
 
-                middle = middle.detach().cpu().numpy()
-                middle_left = middle_left[-1].detach().cpu().numpy()
-                middle_right = middle_right[-1].detach().cpu().numpy()
-                # print("middle:", middle.shape)
-                # print("middle_left:", middle_left.shape)/
+                    flow_left = flow_left[-1].detach().cpu().numpy()[:, 0:4, :, :].squeeze()
+                    flow_middle = flow_middle[-1].detach().cpu().numpy()[:, 0:4, :, :].squeeze()
+                    flow_right = flow_right[-1].detach().cpu().numpy()[:, 0:4, :, :].squeeze()
 
-                flow_left = flow_left[-1].detach().cpu().numpy()[:, 0:4, :, :].squeeze()
-                flow_middle = flow_middle[-1].detach().cpu().numpy()[:, 0:4, :, :].squeeze()
-                flow_right = flow_right[-1].detach().cpu().numpy()[:, 0:4, :, :].squeeze()
+                    mask_middle = mask_middle[-1].detach().cpu().numpy()
+                    mask_left = mask_left[-1].detach().cpu().numpy()
+                    mask_right = mask_right[-1].detach().cpu().numpy()
+                    # print("mask:", mask.shape)
 
-                mask_middle = mask_middle[-1].detach().cpu().numpy()
-                mask_left = mask_left[-1].detach().cpu().numpy()
-                mask_right = mask_right[-1].detach().cpu().numpy()
-                # print("mask:", mask.shape)
+                    for b in range(data_gpu.shape[0]):
+                        interpol_data.extend([middle_left[b].transpose((1, 2, 0)),
+                                            middle[b].transpose((1, 2, 0)),
+                                            middle_right[b].transpose((1, 2, 0))])
+                        
+                        flow_combined.extend([flow_left[b], flow_middle[b], flow_right[b]])
+                        mask_combined.extend([mask_left[b], mask_middle[b], mask_right[b]])
 
-                for b in range(data_gpu.shape[0]):
-                    interpol_data.extend([middle_left[b].transpose((1, 2, 0)),
-                                        middle[b].transpose((1, 2, 0)),
-                                        middle_right[b].transpose((1, 2, 0))])
-                    
-                    flow_combined.extend([flow_left[b], flow_middle[b], flow_right[b]])
-                    mask_combined.extend([mask_left[b], mask_middle[b], mask_right[b]])
+                    print(flow_middle.shape)
+                    # input("factor2") 
 
-                print(flow_middle.shape)
-                # input("factor2") 
-                """
-
+        print(f"inference for {factor}x interpolation completed!")
         interpol_data = np.squeeze(np.array(interpol_data))
         print("interpolated:", interpol_data.shape)
 
@@ -514,7 +524,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # Vector field quiver plot
         flow_combined = np.array(flow_combined)
         mask_combined = np.squeeze(np.array(mask_combined))
-        flow_gt_combined = np.array(flow_gt_combined)
+        # flow_gt_combined = np.array(flow_gt_combined)
         print("Flow:", flow_combined.shape)
         # print(interpol_data.dtype)
         flow_u = flow_combined[:, 2, ...]
@@ -573,7 +583,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             statistics = {'dens_min': dens_min, 'dens_max': dens_max, 'dens_mean': dens_mean, 'dens_std': dens_std}
         else:
             statistics = {'flow_x_mean': 0, 'flow_y_mean': 0, 'flow_x_std': 0, 'flow_y_std': 0}
-        return data_test_non_overlap, interpol_data, flow_combined, flow_gt_combined, mask_combined, statistics
+        # return data_test_non_overlap, data_test_no_skip, interpol_data, flow_combined, flow_gt_combined, mask_combined, statistics
+        return data_test_non_overlap, data_test_no_skip, interpol_data, flow_combined, mask_combined, statistics
+
     
 def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early_stopper): #, writer_val):
     print("Evaluate")
@@ -757,7 +769,7 @@ if __name__ == "__main__":
     if args.dataset == "vimeo2d" and args.mode == "train":
         args.batch_size = 55
     if args.dataset == "droplet2d":
-        args.batch_size = 40
+        args.batch_size = 64 # 40
     if args.dataset == "rectangle2d":
         args.batch_size = 100 # 200
     if args.dataset == "lbs2d":
@@ -1071,7 +1083,7 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # all time best; epe: 0.017
     # model_name = "flownet_lapl_v1_240_lbs_skip3_combi_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.06
     model_name = "flownet_lapl_v1_240_lbs_skip3_ens10_ScaleAllVel10_lr3e-4_RIFE.pkl" # test RIFE: good interpol, very bad flow; EPE: 0.12
-    # PSNR: 48.52 SSIM: 0.999 LPIPS: 0.001 EPE: 0.1800
+    # PSNR: 48.52 SSIM: 0.999 LPIPS: 0.001 EPE: 0.1800; PSNR: 48.988 EPE: 0.1767
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_100ep.pkl" # not bad, but 300ep better
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens16_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # not nenough memory
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ens10_3rdShift_DensNormScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # best + epe: 0.017
@@ -1097,18 +1109,20 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow3e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 47.87 EPE: 0.0138
     # model_name = "flownet_l1_flow1e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
     # model_name = "flownet_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
-    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 49.42 0.0130 52.84 0.0129 53.24 0.0128
+    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 53.24 0.0128 53.184 0.0132
     # 4Blocks: 53.24 0.0128
-    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # ++ 50.32 0.0129
+    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # 49.84 0.0134
     # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. 50ep: 45.99 0.0132
-    # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma7e-1_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
+    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma7e-1_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 47.02 0.0133
+    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma9e-1_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
     # model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 120ep: 57.52 EPE: 0.0130
-    # 5Blocks: full test: 48.43 0.0122
+    # 5Blocks: full test: 48.22 0.0125
     # model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # PSNR: 46.33 EPE: 0.0121
     # model_name = "flownet_6Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" 
     # 6Blocks: second half of test set: 61 0.014; full test: PSNR: 46.021 EPE: 0.0124
+    # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip5_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # 52.11 0.0346
     # TODO: param s.: flow3e-1 + flow1e-1 + no L1 +
-    # TODO: num_blocks +- gamma1 - gamma 0.6 - refine -
+    # TODO: num_blocks +- gamma0.9 - gamma 0.7 + refine -
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1211,21 +1225,29 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop50K_eqRes_deconv_lr6e-4.pkl" # distill jump -
     # model_name = "flownet_4Blocks_l1_reg1e-8_photo1e-6_v1_256_drop50K_eqRes_deconv_lr6e-4.pkl" # PSNR: 31.003 0.0469 
     model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # ++ 36.814 0.0169
+    # using all instead of 3rd at test time: 37.78 0.0127
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_flowscale.pkl" # * scale * 2 distill jump -
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_interpol_t.pkl" 
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t.pkl"
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t_v2.pkl"
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.49 0.016
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # 50ep: 36.836 0.0177
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-5_v1_256_drop50K_lr6e-4.pkl" # param s. 34.35 0.027
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-7_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.25 0.0243
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # +++ 40.486 0.008576
-    # why cannot reproduce??? 35.639 0.01947 why??? 39.151 0.009917 interesting...
+    # why cannot reproduce??? 35.639 0.01947 why??? 39.151 0.009917 interesting... 36.06 0.0162
     # model_name = "flownet_4Blocks_lapl_dist5e-4_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.04 0.023
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl"
-    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v3.pkl" # 3h 50ep: 36.33 0.01747
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v3.pkl" # 3h 50ep: 36.33 0.0175
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v4.pkl" # 35.48 0.0226
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip5_lr6e-4.pkl" # 33.54 0.0259
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip2_lr6e-4.pkl" # 37.37 0.0154
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # 37.70 0.0136 skip2
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_lr6e-4.pkl" # 80ep: 36.99 0.0146
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNorm_lr6e-4.pkl" # ?
     # TODO: param s.: dist5e-3 + dist2e-2 + no Lapl + reg1e-7 + reg1e-9 + photo1e-5 + photo1e-7 +
     # TODO: num_blocks +- eqRes +- refine +
+    # TODO: brightness normalization -
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"
@@ -1332,7 +1354,8 @@ if __name__ == "__main__":
         # input("x")
         print("Saving at:", dir_model)
 
-        data_test, interpol_data, flow, flow_test, mask, statistics = train(model, args.dataset, args.factor, model_name, args.mode, args.local_rank)
+        # data_test, data_test_no_skip, interpol_data, flow, flow_test, mask, statistics = train(model, args.dataset, args.factor, model_name, args.mode, args.local_rank)
+        data_test, data_test_no_skip, interpol_data, flow, mask, statistics = train(model, args.dataset, args.factor, model_name, args.mode, args.local_rank)
         # data_test is data_test_non_overlap
         print("data_test:", data_test.shape)
         print("interpol_data:", interpol_data.shape)
@@ -1340,7 +1363,15 @@ if __name__ == "__main__":
         print("mask:", mask.shape)
         # input("inf")
         # original_data = data_test[:, 2, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
-        data_test = data_test[:, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
+        # print(data_test.shape, interpol_data.shape, flow.shape)
+        # input("shape")
+        # data_test = data_test[:, :, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
+        if dataset == "lbs2d":
+            flow_test = data_test[:, 1:] # flow
+            data_test = data_test[:, 0] # density
+        else:
+            data_test = data_test[:, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
+            flow_test = np.zeros((data_test.shape[0], data_test.shape[1], data_test.shape[2]), dtype=np.float32)
         print("data_test:", data_test.shape)
         print("flow_test:", flow_test.shape)
         # print(type(data_test))
@@ -1390,7 +1421,6 @@ if __name__ == "__main__":
             # original_data_gt - only GT densities, original_data - all timesteps from orig. dens.
             original_data_gt = [d for i, d in enumerate(original_data) if i % 2 != 0]
             original_data_gt = np.array(original_data_gt)
-            
 
             print("flow_original:", flow_original.shape)
             flow_gt = [f for i, f in enumerate(flow_original) if i % 2 != 0]
@@ -1423,6 +1453,7 @@ if __name__ == "__main__":
         flow = flow[:, 2:4, ...]
 
         data_original_interpol = data_original_interpol[:interpol_data.shape[0]]
+        flow_gt = flow_gt[:flow.shape[0]]
 
         print("######")
         print("data_test:", data_test.shape) 
@@ -1443,7 +1474,7 @@ if __name__ == "__main__":
         avg_lpips = calculate_avg_lpips(data_original_interpol, lin_interpol)
         # Droplets: linear: PSNR: 32.21 LPIPS: 0.0356; nearest: PSNR: 30.76 LPIPS: 0.0373
         # LBS: linear: PSNR: 44.88; nearest: PSNR: 47.99
-        input("x")
+        input("baseline")
         #####
         """
 
@@ -1466,8 +1497,8 @@ if __name__ == "__main__":
             # interpol_data = interpol_data * statistics['dens_max'] 
 
             # data[:, 0] = (data[:, 0] - data[:, 0].mean()) / data[:, 0].std() # it is important!
-            # original_data = original_data * statistics['dens_std'] + statistics['dens_mean']
-            # original_data_gt = original_data_gt * statistics['dens_std'] + statistics['dens_mean']
+            data_original = data_original * statistics['dens_std'] + statistics['dens_mean']
+            data_original_interpol = data_original_interpol * statistics['dens_std'] + statistics['dens_mean']
             interpol_data = interpol_data * statistics['dens_std'] + statistics['dens_mean']
 
             # print("Density range %f to %f" % (np.min(original_data), np.max(original_data)))
@@ -1595,7 +1626,7 @@ if __name__ == "__main__":
         # title = "Flow_pred_ind_600"
         # visualize_ind_flow(flow[600], max_flow_gt, dir_model, title=title, show=False, save=True)
 
-        """
+        # """
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         if args.factor == 2:
             visualize_large(data_original_interpol, interpol_data, diffs,
@@ -1609,11 +1640,11 @@ if __name__ == "__main__":
             title = "Flow_gt_pred_diff"
             visualize_seq_flow(flow_gt, flow, u_diff, v_diff,
                     factor, dataset, dir_model, title=title, show=False, save=True)
-        """
+        # """
         
         # input("metrics")
-        del model
-        torch.cuda.empty_cache()
+        # del model
+        # torch.cuda.empty_cache()
         # input("metrics")
         # Desnity metrics
         # print("original data is in range %f to %f" % (np.min(original_data_gt), np.max(original_data_gt)))
@@ -1638,52 +1669,57 @@ if __name__ == "__main__":
             if dataset != "vimeo2d" and dataset != "droplet2d":
                 f.write('EPE: {:.5f}\n'.format(avg_epe))
 
+        data_test = data_test_no_skip
+        # fig, axs = plt.subplots(nrows=12, ncols=12, figsize=(10, 10))
+        # axs = axs.flatten()
+        # for i in range(data_test.shape[0]):
+        #     try:
+        #         image = data_test[i].squeeze()
+        #         axs[i].imshow(image, cmap='gray')
+        #         axs[i].axis('off')
+        #         axs[i].set_title(str(i))  # Add label as the title
+        #     except:
+        #         break
+        # # Adjust the spacing between the subplots
+        # plt.tight_layout()
+        # # Save the plot to a file
+        # fig.savefig("droplets.png", dpi=300)
+        # # input("x")
+
         # # 300-600 subset works
         # TODO for a member of DD
-        dist_m = True
+        dist_m = False
+        print(data_test.shape)
         if dist_m:
-            model = Model(args.local_rank)
+            # model = Model(args.local_rank)
+            # try:
+            #     model.load_model(model_name, log_path)
+            #     # print("Loaded RIFE model:", model_name)
+            #     # print(model) # RIFE is not a neural net
+            # except:
+            #     print("No weights found, training from scratch.")
+            #     print("model name:", model_name)
             start_time = time.time()
             dist_matrix = calculate_dist_matrix(data_test, model, device)
             end_time = time.time()
-
             execution_time = end_time - start_time
             print("Execution time:", execution_time, "seconds")
-
             print(dist_matrix.shape)
             print(dist_matrix)
-
             np.savetxt('dist_matrix.txt', dist_matrix, fmt='%f')
 
-        """
-        # arbitrary interpol: factor = n
-        print("arbitrary interpolation")
-        combined_for_interpol = []
-        gt_for_interpol_error = []
-        n = 5
-        for i in range(0, data_test.shape[0], n):
-            # got concatenated and gt_for_interpol_error
-            if i % n == 0:
-                combined_for_interpol.append(data_test[i]) 
-            else:
-                gt_for_interpol_error.append(data_test[i]) 
+            # Mirror the values across the diagonal
+            dist_matrix_full = dist_matrix + dist_matrix.T - np.diag(np.diag(dist_matrix))
 
-            # get interpolation from LREST:
-            # data_test, interpol_data, flow, flow_original, mask, statistics = train(model, args.dataset, args.factor, model_name, args.mode, args.local_rank)
-        print(combined_for_interpol.shape)
-        print(gt_for_interpol_error.shape)
-
-        for k in range(i + 1, j):
-            interp = interpolated_data[k]
-            orig = original_data_gt[k]
-            dist += calculate_psnr(orig, interp) # 25h on SVCG, 9h on Habrok
-            # orig = np.expand_dims(orig, axis=0)
-            # interp = np.expand_dims(interp, axis=0)
-            # orig_tensor = torch.from_numpy(orig).float()
-            # interp_tensor = torch.from_numpy(interp).float()
-            # dist += lpips_model(orig_tensor.cuda(), interp_tensor.cuda()) # very long
-
-        """
+            # Plot the heatmap
+            plt.figure(figsize=(8, 8))
+            plt.imshow(dist_matrix_full, cmap='viridis', interpolation='nearest')
+            plt.colorbar()
+            plt.title('Distance Matrix')
+            plt.xlabel('Timestep')
+            plt.ylabel('Timestep')
+            # plt.show()
+            plt.savefig("dist_matrix.png", dpi=300) 
 
 # print("Dataset:", dataset)
 
