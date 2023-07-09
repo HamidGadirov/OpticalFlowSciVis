@@ -398,7 +398,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             arbitrary_interpol = True
             if arbitrary_interpol:
                 for j in range(1, factor):
-                    interpol_step = float(j) / factor
+                    interpol_step = float(j) / factor # t
                     # print(interpol_step)
                     merged, flow, mask = model.inference(I0, I1, t=interpol_step)
                     merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
@@ -738,7 +738,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1051,7 +1051,7 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble21_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-6.pkl" # very slowly inc -
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble21_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr1e-6.pkl" # not decreasing -
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_ensemble21_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr3e-6.pkl" # no -
-    # # thi is not working, what is the problem ???
+    # # this is not working, what is the problem ???
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_AMP_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # 16 amp is the problem!
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_AMP32_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # exploded at 25ep -
     # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip3_combi_noAMP_ScaleAllVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # SAME - autocast was still in IFNet
@@ -1111,18 +1111,23 @@ if __name__ == "__main__":
     # model_name = "flownet_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
     model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 53.24 0.0128 53.184 0.0132
     # 4Blocks: 53.24 0.0128
-    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # 49.84 0.0134
+    # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # 49.84 0.0134
+    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v3.pkl" # * 2 * t PSNR: 52.04 0.036 -
+    # avg PSNR: 50.726 avg EPE: 0.0132
+    # TODO: problem with diff deltas ???
+    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_2rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl"
     # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. 50ep: 45.99 0.0132
-    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma7e-1_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 47.02 0.0133
-    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma9e-1_RIFE_eqRes_deconv_lr6e-4.pkl" # param s.
+    # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma7e-1_RIFE_eqRes_deconv_lr6e-4.pkl" # param s. PSNR: 47.02 0.0133
+    # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma9e-1_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # 52.913 0.037
     # model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # ++ 120ep: 57.52 EPE: 0.0130
     # 5Blocks: full test: 48.22 0.0125
     # model_name = "flownet_5Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4_v2.pkl" # PSNR: 46.33 EPE: 0.0121
     # model_name = "flownet_6Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" 
     # 6Blocks: second half of test set: 61 0.014; full test: PSNR: 46.021 EPE: 0.0124
     # model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip5_ens21_3rdShift_DensNormScaleVel10_gamma_RIFE_eqRes_deconv_lr6e-4.pkl" # 52.11 0.0346
+    model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma85_RIFE_eqRes_deconv_lr6e-4.pkl"
     # TODO: param s.: flow3e-1 + flow1e-1 + no L1 +
-    # TODO: num_blocks +- gamma0.9 - gamma 0.7 + refine -
+    # TODO: num_blocks +- gamma0.9 + gamma 0.7 + refine -
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1167,7 +1172,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_reg1e-7_photo1e-5_v1_256_drop50K_lr3e-4.pkl" # l1: good interpol, some flow, loss unstable +
     ##############
     # model_name = "flownet_lapl_dist_v1_256_drop50K_lr3e-4_RIFEbaseline.pkl" # RIFE Baseline: good interpol and good flow + PSNR: 35.35 LPIPS: 0.026
-    # Baseline: PSNR: 34.5642 LPIPS: 0.0299
+    # Baseline: PSNR: 34.5642 LPIPS: 0.0299 2x: 38.665 0.0139 3x: 37.43 0.0183 4x: 36.47 0.0248 8x: 32.67 0.0448; 16x: 28.88 0.0799
     # model_name = "flownet_l1_dist_reg1e-8_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" worse than baeline: flow worse -
     # model_name = "flownet_l1_dist_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # worse than baeline: distill exploded -
     # model_name = "flownet_l1_photo1e-5_v1_256_drop50K_eqRes_deconv_lr1e-4.pkl" # similar to baseline: distill is not important
@@ -1224,30 +1229,51 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_l1_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_eqRes_deconv_lr6e-4.pkl" # distill jump -
     # model_name = "flownet_4Blocks_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop50K_eqRes_deconv_lr6e-4.pkl" # distill jump -
     # model_name = "flownet_4Blocks_l1_reg1e-8_photo1e-6_v1_256_drop50K_eqRes_deconv_lr6e-4.pkl" # PSNR: 31.003 0.0469 
-    model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # ++ 36.814 0.0169
-    # using all instead of 3rd at test time: 37.78 0.0127
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # ++ 36.814 0.0169
+    # using all instead of 3rd at test time: 37.78 0.0127; fix arb interpol *t: 39.89 0.0122
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_flowscale.pkl" # * scale * 2 distill jump -
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_interpol_t.pkl" 
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t.pkl"
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t_v2.pkl"
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.49 0.016
-    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # 50ep: 36.836 0.0177
+    model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # +++ 50ep: 36.836 0.0177; 40.34 0.0119
+    # 2x: 40.34 0.0119; 3x: 39.18 0.0154; 4x: 38.45 0.0178; 8x: 34.45 0.0362; 16x 29.85 0.0729
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v3.pkl" # flow=tmp[:, :4]*scale*2, then use *t avg PSNR: 36.03 0.0171
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v4.pkl" # flow=tmp[:, :4]*2, then use *t 36.857 0.0146
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v5.pkl" # 85 ep: 36.87 0.0171 300ep: 34.66 0.0151
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v6.pkl" # 34.75 0.0178
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v7.pkl" # no *t # no
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-5_v1_256_drop50K_lr6e-4.pkl" # param s. 34.35 0.027
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-7_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.25 0.0243
-    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # +++ 40.486 0.008576
-    # why cannot reproduce??? 35.639 0.01947 why??? 39.151 0.009917 interesting... 36.06 0.0162
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # ++ 40.486 0.008576
+    # why cannot reproduce??? 35.639 0.01947 why??? 39.151 0.009917 interesting... 36.06 0.0162; 38.97 0.0126
     # model_name = "flownet_4Blocks_lapl_dist5e-4_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.04 0.023
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl"
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v3.pkl" # 3h 50ep: 36.33 0.0175
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v4.pkl" # 35.48 0.0226
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v5.pkl" # * 2 * t 35.54 0.0155
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip5_lr6e-4.pkl" # 33.54 0.0259
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip2_lr6e-4.pkl" # 37.37 0.0154
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # 37.70 0.0136 skip2
-    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_lr6e-4.pkl" # 80ep: 36.99 0.0146
-    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNorm_lr6e-4.pkl" # ?
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_lr6e-4.pkl" # ++ 80ep: 39.64 0.0117
+    # 3x: 38.58 0.0157; 4x: 37.85 0.0205
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNorm_lr6e-4.pkl" # ? worse...
+    # model_name = "flownet_4Blocks_lapl_dist3e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNormScale_lr6e-4.pkl" # 34 0.014
+    # model_name = "flownet_4Blocks_lapl_dist3e-3_reg1e-8_photo1e-6_rev_v1_256_drop50K_skip3_brightNormScale_lr6e-4.pkl" # 18 0.044
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-7_photo1e-6_v1_256_drop50K_skip3_brightNormScale_lr6e-4.pkl" # 34 0.015
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNormScale_lr6e-4.pkl" # 34.49 0.015
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNorm_threshold_lr6e-4.pkl" # 29 0.041
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_nearestWarp_v1_256_drop50K_lr6e-4.pkl" # 28.44 0.09
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_timestep.pkl"
+    # model_name = "flownet_4Blocks_4conv_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 34.9 0.022
+    # model_name = "flownet_4Blocks_6conv_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 34.5 0.024
+    # model_name = "flownet_4Blocks_12conv_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 35.38 0.018
+    # model_name = "flownet_4Blocks_0mean1std_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 35.77 0.0165
+    # model_name = "flownet_4Blocks_12conv_0mean1std_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 36.3 0.0175
+    # model_name = "flownet_4Blocks_16conv_0mean1std_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 36.6 0.0166
     # TODO: param s.: dist5e-3 + dist2e-2 + no Lapl + reg1e-7 + reg1e-9 + photo1e-5 + photo1e-7 +
     # TODO: num_blocks +- eqRes +- refine +
-    # TODO: brightness normalization -
+    # TODO: brightness normalization +-
 
     """ pipedcylinder2d """
     # model_name = "flownet_lapl_3rd_c_piped.pkl"
@@ -1361,6 +1387,7 @@ if __name__ == "__main__":
         print("interpol_data:", interpol_data.shape)
         print("flow:", flow.shape)
         print("mask:", mask.shape)
+        print("mask range: %f to %f" % (np.min(mask), np.max(mask)))
         # input("inf")
         # original_data = data_test[:, 2, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
         # print(data_test.shape, interpol_data.shape, flow.shape)

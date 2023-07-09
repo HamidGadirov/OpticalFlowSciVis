@@ -200,12 +200,12 @@ class Model(nn.Module):
 
             loss_flow = 0.
 
-            # num_blocks = 4
-            # gamma_coeff = 0.9 # 0.8 0.7
-            # for i in range(num_blocks):
-            #     gamma = gamma_coeff ** i
-            #     loss_flow += (flow[num_blocks - i - 1][:, 2:4] - gt_flow).abs().mean() * gamma
-            # loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
+            num_blocks = 4
+            gamma_coeff = 0.85 # 0.9 0.7
+            for i in range(num_blocks):
+                gamma = gamma_coeff ** i
+                loss_flow += (flow[num_blocks - i - 1][:, 2:4] - gt_flow).abs().mean() * gamma
+            loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
 
             """
             loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
@@ -219,7 +219,7 @@ class Model(nn.Module):
             # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             # loss_flow /= 2.
             ###
-            loss_flow = torch.tensor(0.)
+            # loss_flow = torch.tensor(0.)
 
             """
             # test: flow magn of diff vec loss: no improvements
@@ -371,9 +371,10 @@ class Model(nn.Module):
             # frame is img2
             # b, _, h, w = flow.shape
             b, c, h, w = flow.size()
-            frame = F.interpolate(frame, size=(h, w), mode='bilinear', align_corners=True)
+            # frame = F.interpolate(frame, size=(h, w), mode='bilinear', align_corners=True)
             flow = torch.transpose(flow, 1, 2)
             flow = torch.transpose(flow, 2, 3)
+            # b, h, w, c
 
             # print(flow.size(), generate_grid(b, h, w, flow.device).size())
             # input("x")
@@ -382,19 +383,21 @@ class Model(nn.Module):
             # print("grid:", grid.size())
 
             factor = torch.FloatTensor([[[[2 / w, 2 / h]]]]).to(flow.device)
-            grid = grid * factor - 1
+            grid = grid * factor - 1 # to range of -1 to 1, 
+            # coordinates align properly with the input image when performing sampling
             warped_frame = F.grid_sample(frame, grid)
 
             return warped_frame
 
-        """
+        # """
         # Photometric loss
         # computed as the difference between the first image and the backward/inverse warped second image
         # in this case: can combine img1, img2 (pred); img2 (pred), img3
         # loss, bce_loss, smooth_loss = criterion(pred_flows, wraped_imgs, imgs[:, :3, :, :])
         def photometric_loss(wraped, frame1):
             h, w = wraped.shape[2:]
-            frame1 = F.interpolate(frame1, (h, w), mode='bilinear', align_corners=False)
+            frame1 = F.interpolate(frame1, (h, w), mode='bilinear', align_corners=False) 
+            # frame1 = F.interpolate(frame1, (h, w), mode='nearest') 
             p_loss = charbonnier(wraped - frame1)
             p_loss = torch.sum(p_loss, dim=1) # / 3 this is for channels
             return torch.sum(p_loss) / frame1.size(0)
@@ -402,10 +405,12 @@ class Model(nn.Module):
         frame1 = img0
         # warped_frame2 = backwrd_warp(flow[2][:, 2:4, ...], merged[2]) # 3 blocks
         warped_frame2 = backwrd_warp(flow[-1][:, 2:4, ...], merged[-1])
+        # warped_frame2 = backwrd_warp(flow[-1][:, 0:2, ...], merged[-1]) # -
         loss_photo = photometric_loss(warped_frame2, frame1)
         frame3 = img1
         # warped_frame2 = backwrd_warp(flow[2][:, :2, ...], merged[2]) # 3 blocks
         warped_frame2 = backwrd_warp(flow[-1][:, :2, ...], merged[-1])
+        # warped_frame2 = backwrd_warp(flow[-1][:, 2:4, ...], merged[-1]) # -
         loss_photo += photometric_loss(warped_frame2, frame3)
         loss_photo /= 2.
         # block_losses = []
@@ -425,13 +430,13 @@ class Model(nn.Module):
         # loss_photo = total_loss_photo
         # print(loss_photo)
         # input("x")
-        """
-        loss_photo = torch.tensor(0.)
+        # """
+        # loss_photo = torch.tensor(0.)
         """ end Photometric consistency """
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.01 # 5e-4 # 0.001 # 0.01
+        lambda_distill = 5e-3 # 0.01 # 5e-4 # 0.001 # 0.01
         lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
         lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
         lambda_smooth = 0 # 1e-8 not important

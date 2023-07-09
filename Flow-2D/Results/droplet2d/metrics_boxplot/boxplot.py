@@ -52,12 +52,12 @@ bp2 = ax2.boxplot([lpips_LREST, lpips_RIFE, lpips_base_linear], positions=[1.2, 
 for box in bp1['boxes']:
     box.set(color='blue', linewidth=1)
     box.set_facecolor('lightblue')
-# for box in bp2['boxes']:
-#     box.set(color='magenta', linewidth=1)
-#     box.set_facecolor('lightpink')
 for box in bp2['boxes']:
-    box.set(color='green', linewidth=1)
-    box.set_facecolor('lightgreen')
+    box.set(color='purple', linewidth=1)
+    box.set_facecolor('mediumpurple')
+# for box in bp2['boxes']:
+#     box.set(color='green', linewidth=1)
+#     box.set_facecolor('lightgreen')
 
 # Set the labels for the x-axis
 ax1.set_xticks([1.1, 2.1, 3.1])

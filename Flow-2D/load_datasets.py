@@ -34,6 +34,7 @@ from utils import plot_distribution
 def brightness_normalization(data):
     for i in range(data.shape[0]):
         data[i] = (data[i] - data[i].mean()) / data[i].std()
+        # data[i] = cv2.normalize(data[i], data[i], 0., 1., cv2.NORM_MINMAX)
     print("All samples were normalized individually!")
     return data
 
@@ -221,15 +222,23 @@ def load_data(dataset, factor, mode):
             print("data type:", data.dtype)
             # if dataset == "droplet2d":
             #     data = brightness_normalization(data)
-            print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            data = (data - np.min(data)) / (np.max(data) - np.min(data))
+            # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
+            # data = (data - np.min(data)) / (np.max(data) - np.min(data))
+            data = (data - data.mean()) / data.std()
             print("Normalized to mean 0 and std 1!")
             # data = data * 255.0
             # data = data.astype(int)
             data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
             print("Scaled to [0, 1] range!")
+            # threshold = 0.5
+            # thresholded_data = np.empty_like(data)
+            # # Apply thresholding to each image in the array
+            # for i in range(data.shape[0]):
+            #     thresholded_data[i] = np.where(data[i] > threshold, 1, data[i])
+            # data = thresholded_data
             # print(data)
             print("Data is in range %f to %f" % (np.min(data), np.max(data)))
+            # print("Data0 is in range %f to %f" % (np.min(data[0]), np.max(data[0])))
             # input("x")
         if dataset == "pipedcylinder2d" or dataset == "cylinder2d" or dataset == "FluidSimML2d":
             pkl_file = open(flow_fln, 'rb')
@@ -378,11 +387,10 @@ def load_data(dataset, factor, mode):
                 # print("use 2nd while shifting the sampling")
                 print("use 3rd while shifting the sampling")
                 # print("use 5th while shifting the sampling")
-
                 step = 3
                 data_train_new = data_train[::step] # array is more efficient than list for large data
                 data_val_new = data_val[::step]
-                for shift in range(1, step): # should be 0
+                for shift in range(0, step): # should be 0
                     data_train_new = np.vstack([data_train_new, data_train[shift::step]])
                     data_val_new = np.vstack([data_val_new, data_val[shift::step]])
                 data_train = data_train_new
@@ -656,9 +664,9 @@ def load_data(dataset, factor, mode):
             elif "droplet2d" in filename:
                 # data_test = data[:5000] # 35.02
                 # data_test = data[:3000] # 36.82
-                # data_test = data[:2700] # 36.81
+                data_test = data[:2700] # 36.81
                 # data_test = data[2700:5400] # 34.26
-                data_test = data[335:2700] # 35.12
+                # data_test = data[0:2700] # 35.12
                 # data_test = data[350:950] # 29.98
                 # data_test = data[335:535] # 335:470
                 # data_test = data[:350] # 31.07
@@ -682,24 +690,24 @@ def load_data(dataset, factor, mode):
             print(data_test.shape)
             data_test_no_skip = data_test.squeeze()
 
-            # fig, axs = plt.subplots(nrows=13, ncols=13, figsize=(10, 10))
-            # axs = axs.flatten()
-            # vmin = data_test.min()
-            # vmax = data_test.max()
+            fig, axs = plt.subplots(nrows=13, ncols=13, figsize=(10, 10))
+            axs = axs.flatten()
+            vmin = data_test.min()
+            vmax = data_test.max()
 
-            # for i in range(data_test.shape[0]):
-            #     try:
-            #         image = data_test[i].squeeze()
-            #         axs[i].imshow(image, cmap='gray', vmin=vmin, vmax=vmax)
-            #         axs[i].axis('off')
-            #         axs[i].set_title(str(i))  # Add label as the title
-            #     except:
-            #         break
+            for i in range(data_test.shape[0]):
+                try:
+                    image = data_test[i].squeeze()
+                    axs[i].imshow(image, cmap='gray', vmin=vmin, vmax=vmax)
+                    axs[i].axis('off')
+                    axs[i].set_title(str(i))  # Add label as the title
+                except:
+                    break
 
-            # # Adjust the spacing between the subplots
-            # plt.tight_layout()
-            # # Save the plot to a file
-            # fig.savefig("droplets_brightNorm.png", dpi=300)
+            # Adjust the spacing between the subplots
+            plt.tight_layout()
+            # Save the plot to a file
+            fig.savefig("droplets_brightNorm.png", dpi=300)
 
             # input("x")
 

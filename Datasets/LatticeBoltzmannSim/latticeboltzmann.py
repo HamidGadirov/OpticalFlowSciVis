@@ -104,10 +104,11 @@ def main():
 		# print("ux uy at 50 200", ux[50][200], uy[50][200])
 		# print("ux uy at 70 300", ux[70][300], uy[70][300])
 		# print("ux uy mean grid", np.mean(ux), np.mean(uy))
-		# print("rho mean grid", np.mean(rho), np.mean(rho))
-		# print("rho at 30 100", rho[30][100])
-		# print("rho at 50 200", rho[50][200])
-		# print("rho at 70 300", rho[70][300])
+		print(it)
+		print("rho mean grid", np.mean(rho))
+		print("rho at 30 100", rho[30][100])
+		print("rho at 50 200", rho[50][200])
+		print("rho at 70 300", rho[70][300])
 
 		
 		# Apply Collision
