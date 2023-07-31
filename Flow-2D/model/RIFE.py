@@ -66,12 +66,14 @@ class Model(nn.Module):
 
     # def inference(self, img0, img1, gt_flow, scale_list=[4, 2, 1], TTA=False, timestep=0.5): # 4, 2, 1 # [1, 1, 1]
     # def inference(self, img0, img1, gt_flow, TTA=False, timestep=0.5):
-    def inference(self, img0, img1, TTA=False, t=0.5):
+    def inference(self, img0, img1, t_mask, TTA=False): # t=0.5
         # print("in RIFE, inference")
         # print(self.flownet) # IFNet summary
         # input("x")
         imgs = torch.cat((img0, img1), 1)
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, t=t)
+        gt = img0.clone() * 0 # no GT during inference
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
+
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, gt_flow, scale_list, timestep=timestep)
         # flow, sup_flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
@@ -85,7 +87,8 @@ class Model(nn.Module):
             flow2, mask2, merged2, flow_teacher2, merged_teacher2, loss_distill2 = self.flownet(imgs.flip(2).flip(3), scale_list, timestep=timestep)
             return (merged[2] + merged2[2].flip(2).flip(3)) / 2
 
-    def update(self, imgs, gt, dataset, learning_rate=0, mul=1, training=True, flow_gt=None):
+    # def update(self, imgs, gt, dataset, learning_rate=0, mul=1, training=True, flow_gt=None):
+    def update(self, imgs, gt, t_mask, dataset, learning_rate=0, mul=1, training=True, flow_gt=None):
         for param_group in self.optimG.param_groups:
             param_group['lr'] = learning_rate
 
@@ -142,7 +145,8 @@ class Model(nn.Module):
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1]) # 1 1 1 is worse
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1))
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1))
+        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         # mask = mask[2] # only gt (pred) durig training
         mask = mask[-1] # n blocks
@@ -436,7 +440,7 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 5e-3 # 0.01 # 5e-4 # 0.001 # 0.01
+        lambda_distill = 0 # 0.01 # 5e-3 # 0.001 # 0.01
         lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
         lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
         lambda_smooth = 0 # 1e-8 not important

@@ -82,15 +82,25 @@ def load_data(dataset, factor, mode):
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ens7.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble10.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/Spare_members/lbs2d_skip3_ensemble21.pkl"
-            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble16m_f32.pkl"
-            if mode == "train":
-                filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21m_f32.pkl"
-            else:
-                filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_test_f32.pkl"
+            filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble16m_f32.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_Cy1r1t1.pkl"
         
         if dataset == "droplet2d":
-            filename += "drop2D/droplet2d.pkl" if mode == "train" else "drop2D/droplet2d_test.pkl"
+            random_triplets = True
+            # filename += "drop2D/droplet2d.pkl" if mode == "train" else "drop2D/droplet2d_test.pkl" # old
+            if mode == "train":
+                if random_triplets:
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w15_30K.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w10_30K_train.pkl"
+                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w5_30K_train.pkl"
+                    # filename = "../../../DataSSD/Experiments/Droplet/droplet2d_triplets.pkl"
+            else:
+                if random_triplets:
+                    filename += "drop2D/droplet2d_test.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w20_test.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w10_3K_test.pkl"
+                    # "../../../DataSSD/Experiments/Droplet/droplet2d_triplets_test.pkl"
+            
         elif dataset == "pipedcylinder2d":
             filename += "pipedcylinder2d.pkl"
             flow_fln = "../Datasets/pipedcylinder2d_flow.pkl"
@@ -287,9 +297,14 @@ def load_data(dataset, factor, mode):
         # print("data in RGB:", data.shape)
 
         # data = np.float32(data)
-        data = np.moveaxis(data, -1, 1)
-        print("data in grayscale:", data.shape)
+        # print("data in grayscale:", data.shape)
+        # data = np.moveaxis(data, -1, 1)
+        # print("data in grayscale:", data.shape)
+
+        data = np.squeeze(data)
         # input("x")
+        # data in grayscale: (54198, 160, 224, 1)
+        # data in grayscale: (54198, 1, 160, 224)
 
         if mode == "train":
             # print("a train subset of the member is selected")
@@ -361,8 +376,13 @@ def load_data(dataset, factor, mode):
                 # input("data del")
             if "droplet2d" in filename:
                 # data = np.float16(data)
-                data_train = data[2700:51300] # 46800 15120
-                data_val = data[51300:54000] # 18000 54000
+                # data_train = data[2700:51300] # 46800 15120
+                # data_val = data[51300:54000] # 18000 54000
+                if random_triplets:
+                    # data_train = data[:47000]
+                    # data_val = data[47000:50000]
+                    data_train = data[:27000]
+                    data_val = data[27000:30000]
             if "pipedcylinder2d" in filename or "cylinder2d" in filename: # 1501 in total
                 data_train = data[:540] # 1080 div to 27 and 5
                 data_train = np.append(data_train, data[-540:], axis=0)
@@ -382,7 +402,7 @@ def load_data(dataset, factor, mode):
                 data_train = data[100:820] 
                 data_val = data[820:964]
 
-            if dataset != "rectangle2d":
+            if dataset != "rectangle2d" and dataset != "droplet2d":
                 # prepare data for training - use only each third frame while shifting the sampling; this is important!!
                 # print("use 2nd while shifting the sampling")
                 print("use 3rd while shifting the sampling")
@@ -448,143 +468,144 @@ def load_data(dataset, factor, mode):
             #     data_train = data_train[:, np.newaxis, ...]
             #     data_val = data_val[:, np.newaxis, ...]
 
-            data_train_three = []
-            data_val_three = []
-            if factor == 2: # img0, img1, gt
-                if dataset == "rectangle2d__":
-                    range_list = [3, 5, 7, 9]
-                    repeat = 1
-                    # range_max = random.choice(range_list)
-                    for n in range(len(range_list)):
-                        range_max = range_list[n]
-                        # for shift in range(range_max): # no need, too much data then
-                        for shift in range(repeat):
-                            for i in range(0 + shift, data_train.shape[0] - range_max, range_max): 
-                                data_train_three.append(np.concatenate((data_train[i], 
-                                    data_train[i + range_max-1], data_train[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
-                            for i in range(0 + shift, data_val.shape[0] - range_max, range_max): 
-                                data_val_three.append(np.concatenate((data_val[i], 
-                                    data_val[i + range_max-1], data_val[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
-                            # print(range_max, repeat) # np.array(data_train_three).shape)
-                        # repeat += 1
-                    data_train = np.array(data_train_three)
-                    print("data_train in three:", data_train.shape)
-                    data_val = np.array(data_val_three)
-                    print("data_val in three:", data_val.shape)
+            if dataset != "droplet2d":
+                data_train_three = []
+                data_val_three = []
+                if factor == 2: # img0, img1, gt
+                    if dataset == "rectangle2d__":
+                        range_list = [3, 5, 7, 9]
+                        repeat = 1
+                        # range_max = random.choice(range_list)
+                        for n in range(len(range_list)):
+                            range_max = range_list[n]
+                            # for shift in range(range_max): # no need, too much data then
+                            for shift in range(repeat):
+                                for i in range(0 + shift, data_train.shape[0] - range_max, range_max): 
+                                    data_train_three.append(np.concatenate((data_train[i], 
+                                        data_train[i + range_max-1], data_train[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                                for i in range(0 + shift, data_val.shape[0] - range_max, range_max): 
+                                    data_val_three.append(np.concatenate((data_val[i], 
+                                        data_val[i + range_max-1], data_val[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                                # print(range_max, repeat) # np.array(data_train_three).shape)
+                            # repeat += 1
+                        data_train = np.array(data_train_three)
+                        print("data_train in three:", data_train.shape)
+                        data_val = np.array(data_val_three)
+                        print("data_val in three:", data_val.shape)
 
-                    # # visualize
-                    # factor = 2
-                    # dir_res = "Results"
-                    # dir_res = os.path.join(dir_res, dataset)
-                    # dir_res = os.path.join(dir_res, str(factor) + "x")
-                    # print("Saving at:", dir_res)
-                    # title = title = "train_threeseq_aug_range"
-                    # print(data_train.shape)
-                    # data_train_vis = data_train[14000:14100, :, 0, ...]
-                    # data_train_vis_unthree = []
-                    # for i in range(data_train_vis.shape[0]):
-                    #     data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
-                    # data_train_vis_unthree = np.array(data_train_vis_unthree)
-                    # print(data_train_vis_unthree.shape)
-                    # # input("x")
-                    # visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
-                    # input("3579")
-                else:
-                    # prepare img0, gt, img1 (2x interpolation)
-                    print("prepare img0, gt, img1 (2x interpolation)")
-                    # TODO: shift by 2 each iter +
-                    for i in range(0, data_train.shape[0], 2): 
-                        try:
-                            data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
-                        except:
-                            print("data_train_three ready")
-                    data_train = np.array(data_train_three)
-                    print("data_train in three:", data_train.shape)
-                    for i in range(0, data_val.shape[0], 2): 
-                        try:
-                            data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
-                        except:
-                            print("data_val_three ready")
-                    data_val = np.array(data_val_three)
-                    print("data_val in three:", data_val.shape)
+                        # # visualize
+                        # factor = 2
+                        # dir_res = "Results"
+                        # dir_res = os.path.join(dir_res, dataset)
+                        # dir_res = os.path.join(dir_res, str(factor) + "x")
+                        # print("Saving at:", dir_res)
+                        # title = title = "train_threeseq_aug_range"
+                        # print(data_train.shape)
+                        # data_train_vis = data_train[14000:14100, :, 0, ...]
+                        # data_train_vis_unthree = []
+                        # for i in range(data_train_vis.shape[0]):
+                        #     data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
+                        # data_train_vis_unthree = np.array(data_train_vis_unthree)
+                        # print(data_train_vis_unthree.shape)
+                        # # input("x")
+                        # visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
+                        # input("3579")
+                    else:
+                        # prepare img0, gt, img1 (2x interpolation)
+                        print("prepare img0, gt, img1 (2x interpolation)")
+                        # TODO: shift by 2 each iter +
+                        for i in range(0, data_train.shape[0], 2): 
+                            try:
+                                data_train_three.append(np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)) # img0, img1, gt
+                            except:
+                                print("data_train_three ready")
+                        data_train = np.array(data_train_three)
+                        print("data_train in three:", data_train.shape)
+                        for i in range(0, data_val.shape[0], 2): 
+                            try:
+                                data_val_three.append(np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)) # img0, img1, gt
+                            except:
+                                print("data_val_three ready")
+                        data_val = np.array(data_val_three)
+                        print("data_val in three:", data_val.shape)
 
-                    # # on the fly with less memory
-                    # for i in range(0, data_train.shape[0]-2, 2):
-                    #     data_train[i] = np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)
-                    # data_train = data_train[:data_train.shape[0]:3]
-                    # print("data_train in three:", data_train.shape)
+                        # # on the fly with less memory
+                        # for i in range(0, data_train.shape[0]-2, 2):
+                        #     data_train[i] = np.concatenate((data_train[i], data_train[i+2], data_train[i+1]), axis=0)
+                        # data_train = data_train[:data_train.shape[0]:3]
+                        # print("data_train in three:", data_train.shape)
 
-                    # for i in range(0, data_val.shape[0]-2, 2):
-                    #     data_val[i] = np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)
-                    # data_val = data_val[:data_val.shape[0]:3]
-                    # print("data_val in three:", data_val.shape)
+                        # for i in range(0, data_val.shape[0]-2, 2):
+                        #     data_val[i] = np.concatenate((data_val[i], data_val[i+2], data_val[i+1]), axis=0)
+                        # data_val = data_val[:data_val.shape[0]:3]
+                        # print("data_val in three:", data_val.shape)
 
-                    # input("data_train data_train in three")
+                        # input("data_train data_train in three")
 
-                    # # visualize
-                    # factor = 2
-                    # dir_res = "Results"
-                    # dir_res = os.path.join(dir_res, dataset)
-                    # dir_res = os.path.join(dir_res, str(factor) + "x")
-                    # print("Saving at:", dir_res)
-                    # title = title = "train_threeseq_aug_range"
-                    # print(data_train.shape)
-                    # data_train_vis = data_train[:100, :, 0, ...]
-                    # data_train_vis_unthree = []
-                    # for i in range(data_train_vis.shape[0]):
-                    #     data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
-                    # data_train_vis_unthree = np.array(data_train_vis_unthree)
-                    # print(data_train_vis_unthree.shape)
-                    # # input("x")
-                    # visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
+                        # # visualize
+                        # factor = 2
+                        # dir_res = "Results"
+                        # dir_res = os.path.join(dir_res, dataset)
+                        # dir_res = os.path.join(dir_res, str(factor) + "x")
+                        # print("Saving at:", dir_res)
+                        # title = title = "train_threeseq_aug_range"
+                        # print(data_train.shape)
+                        # data_train_vis = data_train[:100, :, 0, ...]
+                        # data_train_vis_unthree = []
+                        # for i in range(data_train_vis.shape[0]):
+                        #     data_train_vis_unthree.append(np.concatenate((data_train_vis[i, 0], data_train_vis[i, 2], data_train_vis[i, 1]), axis=0))
+                        # data_train_vis_unthree = np.array(data_train_vis_unthree)
+                        # print(data_train_vis_unthree.shape)
+                        # # input("x")
+                        # visualize_series(data_train_vis_unthree, factor, dataset, dir_res, title=title, show=False, save=True)
+                        # input("x")
                     # input("x")
-                # input("x")
-            elif factor == 4:
-                print("4x interpolation") 
-                for i in range(0, data_train.shape[0], 5): 
-                    data_train_three.append(np.concatenate((data_train[i], data_train[i+4],
-                        data_train[i+1], data_train[i+2], data_train[i+3]), axis=0)) # img0, img1, gt0, gt1, gt2
-                data_train = np.array(data_train_three)
-                print("data_train in three:", data_train.shape)
-                for i in range(0, data_val.shape[0], 5): 
-                    data_val_three.append(np.concatenate((data_val[i], data_val[i+4],
-                        data_val[i+1], data_val[i+2], data_val[i+3]), axis=0)) # img0, img1, gt0, gt1, gt2
-                data_val = np.array(data_val_three)
-                print("data_val in three:", data_val.shape)
-                # input("x")
-            elif factor == 8:
-                print("8x interpolation") # img0, img1, gt0, gt1, gt2, gt3, gt4, gt5, gt6
-                for i in range(0, data_train.shape[0], 9):
-                    # print(i)
-                    data_train_three.append(np.concatenate((data_train[i], data_train[i+8],
-                        data_train[i+1], data_train[i+2], data_train[i+3],
-                        data_train[i+4], data_train[i+5], data_train[i+6], data_train[i+7]), axis=0)) 
-                data_train = np.array(data_train_three)
-                print("data_train in three:", data_train.shape)
-                for i in range(0, data_val.shape[0], 9): 
-                    data_val_three.append(np.concatenate((data_val[i], data_val[i+8],
-                        data_val[i+1], data_val[i+2], data_val[i+3],
-                        data_val[i+4], data_val[i+5], data_val[i+6], data_val[i+7]), axis=0)) 
-                data_val = np.array(data_val_three)
-                print("data_val in three:", data_val.shape)
-                # input("x")
+                elif factor == 4:
+                    print("4x interpolation") 
+                    for i in range(0, data_train.shape[0], 5): 
+                        data_train_three.append(np.concatenate((data_train[i], data_train[i+4],
+                            data_train[i+1], data_train[i+2], data_train[i+3]), axis=0)) # img0, img1, gt0, gt1, gt2
+                    data_train = np.array(data_train_three)
+                    print("data_train in three:", data_train.shape)
+                    for i in range(0, data_val.shape[0], 5): 
+                        data_val_three.append(np.concatenate((data_val[i], data_val[i+4],
+                            data_val[i+1], data_val[i+2], data_val[i+3]), axis=0)) # img0, img1, gt0, gt1, gt2
+                    data_val = np.array(data_val_three)
+                    print("data_val in three:", data_val.shape)
+                    # input("x")
+                elif factor == 8:
+                    print("8x interpolation") # img0, img1, gt0, gt1, gt2, gt3, gt4, gt5, gt6
+                    for i in range(0, data_train.shape[0], 9):
+                        # print(i)
+                        data_train_three.append(np.concatenate((data_train[i], data_train[i+8],
+                            data_train[i+1], data_train[i+2], data_train[i+3],
+                            data_train[i+4], data_train[i+5], data_train[i+6], data_train[i+7]), axis=0)) 
+                    data_train = np.array(data_train_three)
+                    print("data_train in three:", data_train.shape)
+                    for i in range(0, data_val.shape[0], 9): 
+                        data_val_three.append(np.concatenate((data_val[i], data_val[i+8],
+                            data_val[i+1], data_val[i+2], data_val[i+3],
+                            data_val[i+4], data_val[i+5], data_val[i+6], data_val[i+7]), axis=0)) 
+                    data_val = np.array(data_val_three)
+                    print("data_val in three:", data_val.shape)
+                    # input("x")
 
-            # data_train = np.float32(data_train)
-            # data_val = np.float32(data_val)
-            # print("Converted back to float32")
+                # data_train = np.float32(data_train)
+                # data_val = np.float32(data_val)
+                # print("Converted back to float32")
 
-            combined_data_train = torch.utils.data.ConcatDataset([combined_data_train, data_train])
-            combined_data_val = torch.utils.data.ConcatDataset([combined_data_val, data_val])
-        
-            # # combined_data_train.extend(data_train.squeeze())
-            # # combined_data_val.extend(data_val.squeeze())
-            # combined_data_train = np.array(combined_data_train)
-            # combined_data_val = np.array(combined_data_val)
-            # print(combined_data_train.shape, combined_data_val.shape)
-            # input("x")
-            # print("data to combined_data_train:", combined_data_train.shape)
-            return combined_data_train, combined_data_val
-            # return data_train, data_val
+                combined_data_train = torch.utils.data.ConcatDataset([combined_data_train, data_train])
+                combined_data_val = torch.utils.data.ConcatDataset([combined_data_val, data_val])
+            
+                # # combined_data_train.extend(data_train.squeeze())
+                # # combined_data_val.extend(data_val.squeeze())
+                # combined_data_train = np.array(combined_data_train)
+                # combined_data_val = np.array(combined_data_val)
+                # print(combined_data_train.shape, combined_data_val.shape)
+                # input("x")
+                # print("data to combined_data_train:", combined_data_train.shape)
+                return combined_data_train, combined_data_val
+            return data_train, data_val
         else: # inference
             if "rectangle2d" in filename:
                 data_test = data[2685:3000] # div to 3, 5, 9 and 7
@@ -664,6 +685,8 @@ def load_data(dataset, factor, mode):
             elif "droplet2d" in filename:
                 # data_test = data[:5000] # 35.02
                 # data_test = data[:3000] # 36.82
+                # if random_triplets:
+                #     data_test = data # random triplets
                 data_test = data[:2700] # 36.81
                 # data_test = data[2700:5400] # 34.26
                 # data_test = data[0:2700] # 35.12
@@ -690,24 +713,24 @@ def load_data(dataset, factor, mode):
             print(data_test.shape)
             data_test_no_skip = data_test.squeeze()
 
-            fig, axs = plt.subplots(nrows=13, ncols=13, figsize=(10, 10))
-            axs = axs.flatten()
-            vmin = data_test.min()
-            vmax = data_test.max()
+            # fig, axs = plt.subplots(nrows=13, ncols=13, figsize=(10, 10))
+            # axs = axs.flatten()
+            # vmin = data_test.min()
+            # vmax = data_test.max()
 
-            for i in range(data_test.shape[0]):
-                try:
-                    image = data_test[i].squeeze()
-                    axs[i].imshow(image, cmap='gray', vmin=vmin, vmax=vmax)
-                    axs[i].axis('off')
-                    axs[i].set_title(str(i))  # Add label as the title
-                except:
-                    break
+            # for i in range(data_test.shape[0]):
+            #     try:
+            #         image = data_test[i].squeeze()
+            #         axs[i].imshow(image, cmap='gray', vmin=vmin, vmax=vmax)
+            #         axs[i].axis('off')
+            #         axs[i].set_title(str(i))  # Add label as the title
+            #     except:
+            #         break
 
-            # Adjust the spacing between the subplots
-            plt.tight_layout()
-            # Save the plot to a file
-            fig.savefig("droplets_brightNorm.png", dpi=300)
+            # # Adjust the spacing between the subplots
+            # plt.tight_layout()
+            # # Save the plot to a file
+            # fig.savefig("droplets_brightNorm.png", dpi=300)
 
             # input("x")
 
@@ -732,77 +755,79 @@ def load_data(dataset, factor, mode):
             # if dataset == "pipedcylinder2d":
             #     data_test = data_test[:, np.newaxis, ...]
 
-            # data_test = np.squeeze(data_test)
-            data_test_combined = []
-            n = factor  # or any desired value for interpolation factor
-            print(f"preparing data for {n}x interpolation")
+            random_triplets = False
+            if random_triplets == False:
+                # data_test = np.squeeze(data_test)
+                data_test_combined = []
+                n = factor  # or any desired value for interpolation factor
+                print(f"preparing data for {n}x interpolation")
 
-            for i in range(0, data_test.shape[0], n):
-                try:
-                    concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
-                    concat_in_between = np.concatenate(concat_in_between, axis=0)
-                    # ensure same number of dimensions
-                    data_test_i = np.expand_dims(data_test[i], axis=0)
-                    data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
-                    # print(np.array(concat_in_between).shape)
-                    # print(np.array(data_test_i).shape)
-                    # print(np.array(data_test_i_n).shape)
-                    data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
-                except:
-                    print("done")
+                for i in range(0, data_test.shape[0], n):
+                    try:
+                        concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
+                        concat_in_between = np.concatenate(concat_in_between, axis=0)
+                        # ensure same number of dimensions
+                        data_test_i = np.expand_dims(data_test[i], axis=0)
+                        data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
+                        # print(np.array(concat_in_between).shape)
+                        # print(np.array(data_test_i).shape)
+                        # print(np.array(data_test_i_n).shape)
+                        data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
+                    except:
+                        print("done")
 
-            data_test = np.array(data_test_combined)
-            data_test = np.squeeze(data_test)
-            print("data_test combined:", data_test.shape)
-            # input("n")
+                data_test = np.array(data_test_combined)
+                data_test = np.squeeze(data_test)
+                print("data_test combined:", data_test.shape)
+                # input("n")
 
-            """
-            data_test_three = []
-            if exp == 1: # img0, img1, gt
-                if dataset == "rectangle2d__":
-                    range_list = [3, 5, 7, 9]
-                    repeat = 1
-                    # range_max = random.choice(range_list)
-                    for n in range(len(range_list)):
-                        range_max = range_list[n]
-                        for shift in range(repeat):
-                            for i in range(0 + shift, data_test.shape[0] - range_max, range_max): 
-                                data_test_three.append(np.concatenate((data_test[i], 
-                                    data_test[i + range_max-1], data_test[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
-                        # repeat += 1
-                    data_test = np.array(data_test_three)
-                    print("data_test in three:", data_test.shape)
-                    # input("x")
-                else:
-                    # TODO: shift by 2 +
-                    for i in range(0, data_test.shape[0], 2): 
+                """
+                data_test_three = []
+                if exp == 1: # img0, img1, gt
+                    if dataset == "rectangle2d__":
+                        range_list = [3, 5, 7, 9]
+                        repeat = 1
+                        # range_max = random.choice(range_list)
+                        for n in range(len(range_list)):
+                            range_max = range_list[n]
+                            for shift in range(repeat):
+                                for i in range(0 + shift, data_test.shape[0] - range_max, range_max): 
+                                    data_test_three.append(np.concatenate((data_test[i], 
+                                        data_test[i + range_max-1], data_test[i + int((range_max-1)/2)]), axis=0)) # img0, img1, gt
+                            # repeat += 1
+                        data_test = np.array(data_test_three)
+                        print("data_test in three:", data_test.shape)
+                        # input("x")
+                    else:
+                        # TODO: shift by 2 +
+                        for i in range(0, data_test.shape[0], 2): 
+                            try:
+                                data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
+                            except:
+                                print("done")
+                        data_test = np.array(data_test_three)
+                        print("data_test in three:", data_test.shape)
+                        # input("x")
+                elif exp == 2:
+                    print("4x interpolation")  # hift by 4, not 5
+                    for i in range(0, data_test.shape[0], 4): 
                         try:
-                            data_test_three.append(np.concatenate((data_test[i], data_test[i+2], data_test[i+1]), axis=0)) # img0, img1, gt
+                            data_test_three.append(np.concatenate((data_test[i], data_test[i+4],
+                            data_test[i+1], data_test[i+2], data_test[i+3]), axis=0)) # img0, img1, gt0, gt1, gt2
                         except:
                             print("done")
                     data_test = np.array(data_test_three)
                     print("data_test in three:", data_test.shape)
-                    # input("x")
-            elif exp == 2:
-                print("4x interpolation")  # hift by 4, not 5
-                for i in range(0, data_test.shape[0], 4): 
-                    try:
-                        data_test_three.append(np.concatenate((data_test[i], data_test[i+4],
-                        data_test[i+1], data_test[i+2], data_test[i+3]), axis=0)) # img0, img1, gt0, gt1, gt2
-                    except:
-                        print("done")
-                data_test = np.array(data_test_three)
-                print("data_test in three:", data_test.shape)
-            elif exp == 3:  
-                print("8x interpolation") # img0, img1, gt0, gt1, gt2, gt3, gt4, gt5, gt6
-                for i in range(0, data_test.shape[0], 8):
-                    # print(i)
-                    data_test_three.append(np.concatenate((data_test[i], data_test[i+8],
-                        data_test[i+1], data_test[i+2], data_test[i+3],
-                        data_test[i+4], data_test[i+5], data_test[i+6], data_test[i+7]), axis=0)) 
-                data_test = np.array(data_test_three)
-                print("data_test in three:", data_test.shape)
-            """
+                elif exp == 3:  
+                    print("8x interpolation") # img0, img1, gt0, gt1, gt2, gt3, gt4, gt5, gt6
+                    for i in range(0, data_test.shape[0], 8):
+                        # print(i)
+                        data_test_three.append(np.concatenate((data_test[i], data_test[i+8],
+                            data_test[i+1], data_test[i+2], data_test[i+3],
+                            data_test[i+4], data_test[i+5], data_test[i+6], data_test[i+7]), axis=0)) 
+                    data_test = np.array(data_test_three)
+                    print("data_test in three:", data_test.shape)
+                """
 
         if dataset == "lbs2d":
             # return data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std

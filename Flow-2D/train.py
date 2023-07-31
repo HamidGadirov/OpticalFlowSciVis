@@ -155,6 +155,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             # input("train loaded")
             val_data = DataLoader(data_val, args.batch_size, pin_memory=True, num_workers=num_workers)
             print("len:", len(val_data))
+            # input("loaded...")
     else: # mode == "test"
         if dataset == "vimeo2d": 
             dataset_test = VimeoDataset('test')
@@ -230,15 +231,23 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 learning_rate = get_learning_rate(step) * args.world_size / 4
                 # save learning_rate to json and plot during inference
                 if factor == 2: # # img0, img1, gt
-                    imgs = data_gpu[:, :2] # :6
-                    gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
+                    # imgs = data_gpu[:, :2] # :6
+                    # gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
+                    # random triplets:
+                    img0 = data_gpu[:, :1]
+                    gt = data_gpu[:, 1:2]
+                    img1 = data_gpu[:, 2:3]
+                    t_mask = data_gpu[:, 3:4]
+                    imgs = torch.cat((img0, img1), dim=1)
+                
                     # print(imgs.dtype)
                     # gt = data_gpu # use flows from im0 and im1
                     # print(imgs.shape)
                     # print(gt.shape)
                     # input("x")
                     # with torch.cuda.amp.autocast(True):
-                    pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
+                    # pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
+                    pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
 
                     # from torchviz import make_dot
                     # make_dot(pred, params=dict(list(model.named_parameters()))).render("flownet2d_torchviz", format="png")
@@ -400,7 +409,8 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 for j in range(1, factor):
                     interpol_step = float(j) / factor # t
                     # print(interpol_step)
-                    merged, flow, mask = model.inference(I0, I1, t=interpol_step)
+                    t_mask = (I0.clone() * 0 + 1) * interpol_step # create mask for arb interpol
+                    merged, flow, mask = model.inference(I0, I1, t_mask)
                     merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
                     # print(merged_last.shape)
 
@@ -596,7 +606,9 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     # psnr_list_teacher = []
     loss_all_list = [0. for i in range(8)] # all loss components 7
     time_stamp = time.time()
+    batches = 0
     for i, data in enumerate(val_data):
+        batches = i
         # data = torch.zeros([16, 9, 150, 450], dtype=torch.float)
         if dataset == "vimeo2d": 
             print("vimeo2d")
@@ -608,11 +620,18 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
         # data_gpu = data_gpu.permute(0, 3, 1, 2)
         # print("data to gpu:", data_gpu.shape)
         # input(i)
-        imgs = data_gpu[:, :2]
-        gt = data_gpu[:, 2:3]
-        # gt = data_gpu
+        # imgs = data_gpu[:, :2]
+        # gt = data_gpu[:, 2:3]
+        # random triplets:
+        img0 = data_gpu[:, :1]
+        gt = data_gpu[:, 1:2]
+        img1 = data_gpu[:, 2:3]
+        t_mask = data_gpu[:, 3:4]
+        imgs = torch.cat((img0, img1), dim=1)
+            
         with torch.no_grad():
-            pred, info = model.update(imgs, gt, dataset, training=False)
+            # pred, info = model.update(imgs, gt, dataset, training=False)
+            pred, info = model.update(imgs, gt, t_mask, dataset, training=False)
             merged_img = info['merged_tea']
         # loss_l1_list.append(info['loss_l1'].cpu().numpy())
         # loss_tea_list.append(info['loss_tea'].cpu().numpy())
@@ -664,7 +683,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     #     # input(model_name)
     #     model.save_model(model_name, log_path, local_rank) 
 
-    loss_all = [x / float(i + 1) for x in loss_all_list] # avg over batches
+    loss_all = [x / float(batches + 1) for x in loss_all_list] # avg over batches
     # input(loss_all)
     validation_loss = loss_all[0] # info['loss_G'].cpu().numpy()
     if early_stopper.early_stop(validation_loss) == 2: 
@@ -738,7 +757,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1237,7 +1256,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t_v2.pkl"
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.49 0.016
     model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # +++ 50ep: 36.836 0.0177; 40.34 0.0119
-    # 2x: 40.34 0.0119; 3x: 39.18 0.0154; 4x: 38.45 0.0178; 8x: 34.45 0.0362; 16x 29.85 0.0729
+    # 2x: 40.34 0.0119; 3x: 39.18 0.0154; 4x: 38.45 0.0178; 8x: 34.45 0.0362; 16x 29.85 0.0729 # * t in the flow
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v3.pkl" # flow=tmp[:, :4]*scale*2, then use *t avg PSNR: 36.03 0.0171
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v4.pkl" # flow=tmp[:, :4]*2, then use *t 36.857 0.0146
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v5.pkl" # 85 ep: 36.87 0.0171 300ep: 34.66 0.0151
@@ -1271,6 +1290,14 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_0mean1std_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 35.77 0.0165
     # model_name = "flownet_4Blocks_12conv_0mean1std_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 36.3 0.0175
     # model_name = "flownet_4Blocks_16conv_0mean1std_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 36.6 0.0166
+    # PSNR: 39.048 0.0147 # * t in the flow # visual problems
+    model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50KrandTripl_lr6e-4.pkl" # very bad
+    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop50KrandTripl_lr6e-4.pkl"
+    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w20_lr6e-4.pkl" # 
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w20_lr6e-4.pkl" # 
+    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w10_lr6e-4.pkl" # no
+    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w5_lr6e-4.pkl" # no, bug somewhere???
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w10_lr6e-4.pkl" # 
     # TODO: param s.: dist5e-3 + dist2e-2 + no Lapl + reg1e-7 + reg1e-9 + photo1e-5 + photo1e-7 +
     # TODO: num_blocks +- eqRes +- refine +
     # TODO: brightness normalization +-
@@ -1478,6 +1505,10 @@ if __name__ == "__main__":
         print("flow_pred:", flow.shape)
         # viz Ft->1 (forward), that is flow[2][:, 2:4]
         flow = flow[:, 2:4, ...]
+
+        random_triplets = False # for test data
+        if random_triplets:
+            data_original_interpol = np.squeeze(data_original_interpol[:, 1:2])
 
         data_original_interpol = data_original_interpol[:interpol_data.shape[0]]
         flow_gt = flow_gt[:flow.shape[0]]

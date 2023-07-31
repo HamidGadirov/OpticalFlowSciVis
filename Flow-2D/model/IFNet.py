@@ -181,16 +181,16 @@ class IFNet(nn.Module):
             self.block1 = IFBlock(5+4, c=192) # 13 c=150 96 192
             self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
 
-        if four_blocks:
-            self.block0 = IFBlock(2, c=256) # 128 256
-            self.block1 = IFBlock(5+4, c=192) # 96 192
-            self.block2 = IFBlock(5+4, c=192) # 96 192
-            self.block3 = IFBlock(5+4, c=128) # 64 128
         # if four_blocks:
-        #     self.block0 = IFBlock(3, c=256) # 128 256
-        #     self.block1 = IFBlock(6+4, c=192) # 96 192
-        #     self.block2 = IFBlock(6+4, c=192) # 96 192
-        #     self.block3 = IFBlock(6+4, c=128) # 64 128
+        #     self.block0 = IFBlock(2, c=256) # 128 256
+        #     self.block1 = IFBlock(5+4, c=192) # 96 192
+        #     self.block2 = IFBlock(5+4, c=192) # 96 192
+        #     self.block3 = IFBlock(5+4, c=128) # 64 128
+        if four_blocks:
+            self.block0 = IFBlock(3, c=256) # 128 256
+            self.block1 = IFBlock(6+4, c=192) # 96 192
+            self.block2 = IFBlock(6+4, c=192) # 96 192
+            self.block3 = IFBlock(6+4, c=128) # 64 128
 
         if five_blocks:
             self.block0 = IFBlock(2, c=256) # 128 256
@@ -207,8 +207,8 @@ class IFNet(nn.Module):
             self.block4 = IFBlock(5+4, c=128)
             self.block5 = IFBlock(5+4, c=128)
 
-        self.block_tea = IFBlock(6+4, c=128) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64 128
-        # self.block_tea = IFBlock(7+4, c=128)
+        # self.block_tea = IFBlock(6+4, c=128) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64 128
+        self.block_tea = IFBlock(7+4, c=128)
         # modified
         if refine:
             self.contextnet = Contextnet()
@@ -217,11 +217,18 @@ class IFNet(nn.Module):
     # @torch.cuda.amp.autocast(True)
     # def forward(self, x, gt_flow, scale=[4, 2, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
     # def forward(self, x, scale=scales, timestep=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
-    def forward(self, x, t=0.5): # scale=[4, 2, 1] scale=[1, 1, 1]
-        t = (x[:, :1].clone() * 0 + 1) * t # for arbitrary interpolation
-        img0 = x[:, :1] # :3
-        img1 = x[:, 1:2] # 3:6
-        gt = x[:, 2:3] # 6:   In inference time, gt is None
+    def forward(self, x): # scale=[4, 2, 1] scale=[1, 1, 1] t=0.5
+        # t = (x[:, :1].clone() * 0 + 1) * t # for arbitrary interpolation
+        # this is already done in data creation
+        # img0 = x[:, :1] # :3
+        # img1 = x[:, 1:2] # 3:6
+        # gt = x[:, 2:3] # 6:   In inference time, gt is None
+
+        img0 = x[:, :1]
+        img1 = x[:, 1:2]
+        gt = x[:, 2:3]
+        t_mask = x[:, 3:4]
+        
         # print("x:", x.shape)
         # print("gt:", gt.shape)
         # input("gt none")
@@ -271,15 +278,16 @@ class IFNet(nn.Module):
                 # gt = gt[:,:,:max_shape_2,:max_shape_3]
                 # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
                 # flow_d, mask_d, sup_flow_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
-                flow_d, mask_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
-                # flow_d, mask_d = stu[i](torch.cat((img0, img1, t, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
+                # flow_d, mask_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
+                flow_d, mask_d = stu[i](torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
                 flow_d = flow_d[:,:,:img0.shape[2],:img0.shape[3]]
                 mask_d = mask_d[:,:,:img0.shape[2],:img0.shape[3]]
                 flow = flow + flow_d
                 mask = mask + mask_d
             else: # block 0
                 # print("cat", torch.cat((img0, img1), 1).shape)
-                flow, mask = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i])
+                # flow, mask = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i])
+                flow, mask = stu[i](torch.cat((img0, img1, t_mask), 1), None, scale=scale[i])
                 # flow, mask = stu[i](torch.cat((img0, img1, t), 1), None, scale=scale[i])
                 # flow, mask, sup_flow = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i])
             # correct shapes
@@ -337,8 +345,8 @@ class IFNet(nn.Module):
             # print("flow:", flow.shape)
 
             # print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
-            flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
-            # flow_d, mask_d = self.block_tea(torch.cat((img0, img1, t, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+            # flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+            flow_d, mask_d = self.block_tea(torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
             # flow_d, mask_d, sup_flow_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
             flow_d = flow_d[:,:,:max_shape_2,:max_shape_3]
             mask_d = mask_d[:,:,:max_shape_2,:max_shape_3]

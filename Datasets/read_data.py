@@ -150,7 +150,7 @@ if dataset == "droplet3d":
         # downsample
         data_down = []
         for i in range(data.shape[0]):
-                data_down.append(downscale_local_mean(data[i,...], (2, 2, 2)))
+                data_down.append(downscale_local_mean(data[i,...], (2, 2, 2))) # downsample by local averaging
         data_down = np.array(data_down)
         print(data_down.shape)
         # print(type(data[0,0,0,0]))
