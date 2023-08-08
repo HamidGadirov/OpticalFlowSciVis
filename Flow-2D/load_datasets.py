@@ -92,7 +92,15 @@ def load_data(dataset, factor, mode):
                 if random_triplets:
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w15_30K.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w10_30K_train.pkl"
-                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w5_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w5_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w1_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w3_fixed_30K_train.pkl"
+                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixedW5fixed2_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F123_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F3_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W5_60K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F2_60K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mix25_W5F2_60K_train.pkl"
                     # filename = "../../../DataSSD/Experiments/Droplet/droplet2d_triplets.pkl"
             else:
                 if random_triplets:
@@ -383,6 +391,8 @@ def load_data(dataset, factor, mode):
                     # data_val = data[47000:50000]
                     data_train = data[:27000]
                     data_val = data[27000:30000]
+                    # data_train = data[:57000]
+                    # data_val = data[57000:]
             if "pipedcylinder2d" in filename or "cylinder2d" in filename: # 1501 in total
                 data_train = data[:540] # 1080 div to 27 and 5
                 data_train = np.append(data_train, data[-540:], axis=0)

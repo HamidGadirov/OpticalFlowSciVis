@@ -29,10 +29,10 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
         # nn.BatchNorm2d(out_planes), # added
     )
 
-version = 1
+version = 2
 two_blocks = False
-three_blocks = False
-four_blocks = True # True
+three_blocks = True
+four_blocks = False # True
 five_blocks = False
 six_blocks = False
 refine = False # True
@@ -177,9 +177,12 @@ class IFNet(nn.Module):
             self.block1 = IFBlock(5+4, c=128) # 64 128
         
         if three_blocks:
-            self.block0 = IFBlock(2, c=256) # 6 c=240 128 256
-            self.block1 = IFBlock(5+4, c=192) # 13 c=150 96 192
-            self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
+            # self.block0 = IFBlock(2, c=256) # 6 c=240 128 256
+            # self.block1 = IFBlock(5+4, c=192) # 13 c=150 96 192
+            # self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=256) # 6 c=240 128 256
+            self.block1 = IFBlock(6+4, c=192) # 13 c=150 96 192
+            self.block2 = IFBlock(6+4, c=128) # 13 c=90 96 64 128
 
         # if four_blocks:
         #     self.block0 = IFBlock(2, c=256) # 128 256
@@ -193,11 +196,16 @@ class IFNet(nn.Module):
             self.block3 = IFBlock(6+4, c=128) # 64 128
 
         if five_blocks:
-            self.block0 = IFBlock(2, c=256) # 128 256
-            self.block1 = IFBlock(5+4, c=192) # 96 192
-            self.block2 = IFBlock(5+4, c=192) # 96 192
-            self.block3 = IFBlock(5+4, c=128) # 64 128
-            self.block4 = IFBlock(5+4, c=128) # 64 128
+            # self.block0 = IFBlock(2, c=256) # 128 256
+            # self.block1 = IFBlock(5+4, c=192) # 96 192
+            # self.block2 = IFBlock(5+4, c=192) # 96 192
+            # self.block3 = IFBlock(5+4, c=128) # 64 128
+            # self.block4 = IFBlock(5+4, c=128) # 64 128
+            self.block0 = IFBlock(3, c=256) # 128 256
+            self.block1 = IFBlock(6+4, c=192) # 96 192
+            self.block2 = IFBlock(6+4, c=192) # 96 192
+            self.block3 = IFBlock(6+4, c=128) # 64 128
+            self.block4 = IFBlock(6+4, c=128) # 64 128
 
         if six_blocks:
             self.block0 = IFBlock(2, c=256)

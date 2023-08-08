@@ -239,6 +239,12 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                     img1 = data_gpu[:, 2:3]
                     t_mask = data_gpu[:, 3:4]
                     imgs = torch.cat((img0, img1), dim=1)
+
+                    # print("gt:", gt)
+                    # print(gt.shape)
+                    # print("t_mask:", t_mask)
+                    # print(t_mask.shape)
+                    # input("data") # correct
                 
                     # print(imgs.dtype)
                     # gt = data_gpu # use flows from im0 and im1
@@ -410,6 +416,8 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                     interpol_step = float(j) / factor # t
                     # print(interpol_step)
                     t_mask = (I0.clone() * 0 + 1) * interpol_step # create mask for arb interpol
+                    # print(t_mask)
+                    # input("t_mask")
                     merged, flow, mask = model.inference(I0, I1, t_mask)
                     merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
                     # print(merged_last.shape)
@@ -543,6 +551,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # if "2d" in dataset:
         #     visualize_series_flow(interpol_data, flow_u, flow_v, dataset, dir_res, title=title, show=False, save=True)
 
+        # """
         if factor == 2:
             loss_path = 'loss.json'
             loss_path = os.path.join(dir_model, loss_path)
@@ -578,6 +587,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 print("learning rate file doesn't exists")
         else:
             print("learning rate file is in 2x dir")
+        # """
 
         # original_data = np.array(data_test_combined)
         # print("original_data:", original_data.shape)
@@ -757,7 +767,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1274,7 +1284,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip5_lr6e-4.pkl" # 33.54 0.0259
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip2_lr6e-4.pkl" # 37.37 0.0154
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # 37.70 0.0136 skip2
-    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_lr6e-4.pkl" # ++ 80ep: 39.64 0.0117
+    model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_lr6e-4.pkl" # ++ 80ep: 39.64 0.0117
     # 3x: 38.58 0.0157; 4x: 37.85 0.0205
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNorm_lr6e-4.pkl" # ? worse...
     # model_name = "flownet_4Blocks_lapl_dist3e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNormScale_lr6e-4.pkl" # 34 0.014
@@ -1291,12 +1301,26 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_12conv_0mean1std_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 36.3 0.0175
     # model_name = "flownet_4Blocks_16conv_0mean1std_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # 36.6 0.0166
     # PSNR: 39.048 0.0147 # * t in the flow # visual problems
-    model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50KrandTripl_lr6e-4.pkl" # very bad
-    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop50KrandTripl_lr6e-4.pkl"
-    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w20_lr6e-4.pkl" # 
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50KrandTripl_lr6e-4.pkl" # very bad
+    # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop50KrandTripl_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w20_lr6e-4.pkl" # 
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w20_lr6e-4.pkl" # 
-    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w10_lr6e-4.pkl" # no
-    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w5_lr6e-4.pkl" # no, bug somewhere???
+    # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w10_lr6e-4.pkl" # no
+    # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w5_lr6e-4.pkl" # no, bug somewhere???
+    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w1_lr6e-4.pkl" # too easy ?
+    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w3_fixed_lr6e-4.pkl" # yes
+    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # 34.7 0.0244
+    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixW5F123_lr6e-4.pkl" # no
+    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixW5F3_lr6e-4.pkl" # no
+    model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_60K_lr6e-4.pkl" # no
+    model_name = "flownet_4Blocks_16conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_60K_lr6e-4.pkl" # no, bad!
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_60K_lr6e-4.pkl" # bad but if increase more?
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # 37.7 0.0227
+    # 3x: 35.43 0.0298 visual problems
+    # TODO: experiment diff architectures: Increased Depth; Residual Connections; Dilated Convolutions
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v2_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixW5F2_60K_lr6e-4.pkl" # no :(
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mix25_W5F2_60K_lr6e-4.pkl" # no
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w10_lr6e-4.pkl" # 
     # TODO: param s.: dist5e-3 + dist2e-2 + no Lapl + reg1e-7 + reg1e-9 + photo1e-5 + photo1e-7 +
     # TODO: num_blocks +- eqRes +- refine +

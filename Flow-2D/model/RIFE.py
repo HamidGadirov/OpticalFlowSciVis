@@ -204,12 +204,12 @@ class Model(nn.Module):
 
             loss_flow = 0.
 
-            num_blocks = 4
-            gamma_coeff = 0.85 # 0.9 0.7
-            for i in range(num_blocks):
-                gamma = gamma_coeff ** i
-                loss_flow += (flow[num_blocks - i - 1][:, 2:4] - gt_flow).abs().mean() * gamma
-            loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
+            # num_blocks = 4
+            # gamma_coeff = 0.8 # 0.9 0.7
+            # for i in range(num_blocks):
+            #     gamma = gamma_coeff ** i
+            #     loss_flow += (flow[num_blocks - i - 1][:, 2:4] - gt_flow).abs().mean() * gamma
+            # loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
 
             """
             loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
@@ -313,7 +313,7 @@ class Model(nn.Module):
         for param_tensor in self.flownet.state_dict():
             # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
             # if "block2" in param_tensor or "block_tea" in param_tensor:
-            if "block3" in param_tensor or "block_tea" in param_tensor: # last block
+            if "block4" in param_tensor or "block_tea" in param_tensor: # last block block3
                 block_params = self.flownet.state_dict()[param_tensor]
                 block_params_norm += torch.norm(block_params, 1)
         # print(block2_params_norm)
@@ -440,7 +440,7 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0 # 0.01 # 5e-3 # 0.001 # 0.01
+        lambda_distill = 0.001 # 0.01 # 5e-3 # 0.001 # 0.01
         lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
         lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
         lambda_smooth = 0 # 1e-8 not important
