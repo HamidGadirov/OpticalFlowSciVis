@@ -1319,6 +1319,14 @@ if __name__ == "__main__":
     # 3x: 35.43 0.0298 visual problems
     # TODO: experiment diff architectures: Increased Depth; Residual Connections; Dilated Convolutions
     model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v2_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl"
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10gauss_lr6e-4.pkl" # s=1.5
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6gaussS05_lr6e-4.pkl" # no
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10gaussS05_lr6e-4.pkl" # no
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5middleT_lr6e-4.pkl"
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W5middleT_lr6e-4.pkl"
+    model_name = "flownet_3Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_fixW2_lr6e-4.pkl"
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v2_256_drop30KrandTripl_W5middleT_lr6e-4.pkl"
+    
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixW5F2_60K_lr6e-4.pkl" # no :(
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mix25_W5F2_60K_lr6e-4.pkl" # no
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w10_lr6e-4.pkl" # 
