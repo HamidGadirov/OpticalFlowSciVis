@@ -82,9 +82,17 @@ def load_data(dataset, factor, mode):
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ens7.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble10.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/Spare_members/lbs2d_skip3_ensemble21.pkl"
-            filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble16m_f32.pkl"
+            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble16m_f32.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_Cy1r1t1.pkl"
-        
+            if mode == "train":
+                # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21m_f32.pkl"
+                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W10middleT_20K_train.pkl"
+                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W10middleT_30K_train.pkl"
+                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W6middleT_40K_train.pkl"
+                filename += "LatticeBoltzmannSim/lbs2d_triplets_W3fix_30K_train.pkl"
+            else:
+                filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_test_f32.pkl"
+
         if dataset == "droplet2d":
             random_triplets = True
             # filename += "drop2D/droplet2d.pkl" if mode == "train" else "drop2D/droplet2d_test.pkl" # old
@@ -102,8 +110,9 @@ def load_data(dataset, factor, mode):
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F2_60K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mix25_W5F2_60K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10gauss_30K_train.pkl"
-                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6gaussS05_30K_train.pkl"
-                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W5middleT_30K_train.pkl"
+                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10gaussS05_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W5middleT_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10middleT_60K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_fixW2_30K_train.pkl"
                     # filename = "../../../DataSSD/Experiments/Droplet/droplet2d_triplets.pkl"
             else:
@@ -122,6 +131,8 @@ def load_data(dataset, factor, mode):
         elif dataset == "FluidSimML2d":
             filename += "FluidSimML/FluidSimML_1000_downs_data.pkl" # FluidSimML_1000
             flow_fln = "../Datasets/FluidSimML/FluidSimML_1000_downs_flow.pkl"
+
+        print("loaded flom:", filename)
 
         # load data
         data = []
@@ -157,7 +168,10 @@ def load_data(dataset, factor, mode):
             # data = np.float16(data)
             # print("Converted to float16")
             # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            if mode == "train":
+                print("Density range %f to %f" % (np.min(data[:, :3, 0]), np.max(data[:, :3, 0]))) # triplets
+            else:
+                print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
             # print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
             # print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
             # print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
@@ -166,17 +180,33 @@ def load_data(dataset, factor, mode):
             # print(np.min(data[:, 0]), np.max(data[:, 0]), data[:, 0].mean(), data[:, 0].std())
             # dens_min = np.min(data[:, 0])
             # dens_max = np.max(data[:, 0])
-            dens_mean = data[:, 0].mean()
-            dens_std = data[:, 0].std()
+            # dens_mean = data[:, 0].mean()
+            # dens_std = data[:, 0].std()
+            if mode == "train":
+                dens_mean = data[:, :3, 0].mean() # triplets
+                dens_std = data[:, :3, 0].std() # triplets
+            else:
+                dens_mean = data[:, 0].mean()
+                dens_std = data[:, 0].std()
             # input("x")
-            data[:, 0] = (data[:, 0] - dens_mean) / dens_std # it is important!
+            if mode == "train":
+                data[:, :3, 0] = (data[:, :3, 0] - dens_mean) / dens_std # it is important! triplets
+            else:
+                data[:, 0] = (data[:, 0] - dens_mean) / dens_std # it is important!
             print("Density normalized to 0 mean and 1 variance!")
-            print(dens_mean, dens_std)
-            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            print("dens_mean, dens_std:", dens_mean, dens_std)
+            if mode == "train":
+                print("Density range %f to %f" % (np.min(data[:, :3, 0]), np.max(data[:, :3, 0]))) # triplets
+            else:
+                print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
 
-            dens_min = np.min(data[:, 0])
-            dens_max = np.max(data[:, 0])
-
+            if mode == "train":
+                dens_min = np.min(data[:, :3, 0])
+                dens_max = np.max(data[:, :3, 0])
+            else:
+                dens_min = np.min(data[:, 0])
+                dens_max = np.max(data[:, 0])
+            
             # data = data * 255.0
             # data = data.astype(int)
             # data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
@@ -199,8 +229,12 @@ def load_data(dataset, factor, mode):
             # model_name = "flownet_l1_flow2e-1_v1_256_lbs_skip5_ScaleDens_gamma_RIFE_eqRes_lr4e-4.pkl"
             # dir_model = os.path.join(dir_res, model_name[:-4])
             # # plot_distribution(data[:, 1:], dir_model, name="dict_flow_gt_before.png", save=True)
-            data[:, 1] = data[:, 1] * 10.
-            data[:, 2] = data[:, 2] * 10.
+            if mode == "train":
+                data[:, :3, 1] = data[:, :3, 1] * 10.
+                data[:, :3, 2] = data[:, :3, 2] * 10.
+            else:
+                data[:, 1] = data[:, 1] * 10.
+                data[:, 2] = data[:, 2] * 10.
             print("Vel scaled to *10")
             # # data[:, 1] = np.log(data[:, 1] + 0.3) # +1 to avoid nan
             # # data[:, 2] = np.log(data[:, 2] + 0.3) # +1 to avoid nan
@@ -228,7 +262,7 @@ def load_data(dataset, factor, mode):
             # input("norm")
 
             # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+            # print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
             # print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
             # print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
             # print("Density mean std", np.mean(data[:, 0]), np.std(data[:, 0]))
@@ -245,13 +279,18 @@ def load_data(dataset, factor, mode):
             # if dataset == "droplet2d":
             #     data = brightness_normalization(data)
             # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            # data = (data - np.min(data)) / (np.max(data) - np.min(data))
-            data = (data - data.mean()) / data.std()
-            print("Normalized to mean 0 and std 1!")
+            if mode == "train":
+                data[:, :3] = (data[:, :3] - data[:, :3].mean()) / data[:, :3].std()
+            else:
+                data = (data - np.min(data)) / (np.max(data) - np.min(data))
+            print("Density normalized to mean 0 and std 1!")
             # data = data * 255.0
             # data = data.astype(int)
-            data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
-            print("Scaled to [0, 1] range!")
+            if mode == "train":
+                data[:, :3] = cv2.normalize(data[:, :3], data[:, :3], 0., 1., cv2.NORM_MINMAX)
+            else:
+                data = cv2.normalize(data, data, 0., 1., cv2.NORM_MINMAX)
+            print("Density scaled to [0, 1] range!")
             # threshold = 0.5
             # thresholded_data = np.empty_like(data)
             # # Apply thresholding to each image in the array
@@ -350,9 +389,14 @@ def load_data(dataset, factor, mode):
 
                 # """
                 # ens21
-                data_train = data[:21000]
-                data_train = np.append(data_train, data[24000:60000], axis=0)
+                # data_train = data[:21000]
+                # data_train = np.append(data_train, data[24000:60000], axis=0)
                 # """
+
+                # random triplets
+                # data_train = data[:18000]
+                data_train = data[:27000]
+                # data_train = data[:37000]
          
                 # data_train = data[3000:18000] # ens7
                 # data_train = np.append(data_train, data[21000:30000], axis=0)
@@ -376,7 +420,12 @@ def load_data(dataset, factor, mode):
                 # data_val = data[30000:33000] # ens16
                 # data_val = data[18000:21000] # ens7
                 # data_val = data[3000:6000] # ens10
-                data_val = data[60000:63000] # ens21
+                # data_val = data[60000:63000] # ens21
+                
+                # random triplets
+                # data_val = data[18000:]
+                data_val = data[27000:]
+                # data_val = data[37000:]
 
                 # data_val = data[3000:3210]
                 # data_val = np.append(data_val, data[5000:5210], axis=0)
@@ -416,7 +465,8 @@ def load_data(dataset, factor, mode):
                 data_train = data[100:820] 
                 data_val = data[820:964]
 
-            if dataset != "rectangle2d" and dataset != "droplet2d":
+            # if dataset != "rectangle2d":
+            if dataset != "rectangle2d" and dataset != "droplet2d" and dataset != "lbs2d":
                 # prepare data for training - use only each third frame while shifting the sampling; this is important!!
                 # print("use 2nd while shifting the sampling")
                 print("use 3rd while shifting the sampling")
@@ -482,7 +532,8 @@ def load_data(dataset, factor, mode):
             #     data_train = data_train[:, np.newaxis, ...]
             #     data_val = data_val[:, np.newaxis, ...]
 
-            if dataset != "droplet2d":
+            # if dataset != "droplet2d":
+            if dataset != "droplet2d" and dataset != "lbs2d":
                 data_train_three = []
                 data_val_three = []
                 if factor == 2: # img0, img1, gt
@@ -646,6 +697,7 @@ def load_data(dataset, factor, mode):
                 # data_test = data[22607:24000] # ens21 22605
                 data_test = data[:3000] # ens21 Cy1r1t1 test file
                 # data_test = data[1607:3000]
+                # TODO: use Cy1r1t1 test file directly
 
                 # data_test = data[30100:30400] # data[30000:33000] 
                 # data_test = data[40100:40400]
@@ -701,7 +753,8 @@ def load_data(dataset, factor, mode):
                 # data_test = data[:3000] # 36.82
                 # if random_triplets:
                 #     data_test = data # random triplets
-                data_test = data[:2700] # 36.81
+                # data_test = data[:2700] # 36.81
+                data_test = data[350:2700] #
                 # data_test = data[2700:5400] # 34.26
                 # data_test = data[0:2700] # 35.12
                 # data_test = data[350:950] # 29.98

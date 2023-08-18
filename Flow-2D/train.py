@@ -54,21 +54,23 @@ log_path = 'train_log'
 def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000.
+        # return 6e-6 * mul
         # return 6e-5 * mul
         # return 1e-4 * mul
         # return 3e-4 * mul # # orig
         # return 4e-4 * mul
-        return 6e-4 * mul
+        return 6e-4 * mul # my
         # return 8e-4 * mul
         # return 1e-3 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
-        # return (6e-5 - 6e-6) * mul + 6e-6
+        # return (6e-6 - 6e-8) * mul + 6e-8
+        # return (6e-5 - 6e-7) * mul + 6e-7
         # return (1e-4 - 1e-5) * mul + 1e-5
         # return (3e-4 - 3e-6) * mul + 3e-6
         # return (3e-4 - 3e-5) * mul + 3e-5 # orig
         # return (4e-4 - 4e-6) * mul + 4e-6
-        return (6e-4 - 6e-6) * mul + 6e-6
+        return (6e-4 - 6e-6) * mul + 6e-6 # my
         # return (6e-4 - 6e-5) * mul + 6e-5
         # return (8e-4 - 8e-6) * mul + 8e-6
         # return (1e-3 - 1e-5) * mul + 1e-5
@@ -233,6 +235,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 if factor == 2: # # img0, img1, gt
                     # imgs = data_gpu[:, :2] # :6
                     # gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
+
                     # random triplets:
                     img0 = data_gpu[:, :1]
                     gt = data_gpu[:, 1:2]
@@ -1157,6 +1160,18 @@ if __name__ == "__main__":
     model_name = "flownet_4Blocks_l1_flow2e-1_v1_256_lbs_skip3_ens21_3rdShift_DensNormScaleVel10_gamma85_RIFE_eqRes_deconv_lr6e-4.pkl"
     # TODO: param s.: flow3e-1 + flow1e-1 + no L1 +
     # TODO: num_blocks +- gamma0.9 + gamma 0.7 + refine -
+    
+    # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W10middleT_20K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W10middleT_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6middleT_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6middleT_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-5.pkl"
+    # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6middleT_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-6.pkl"
+    model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6middleT_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_bugfix.pkl"
+
+    # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs_triplets_W3fix_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs_triplets_W3fix_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-6.pkl" #
+    # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs_triplets_W3fix_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_bugfix.pkl" # 2x: 29.98 0.059
+
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1265,7 +1280,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t.pkl"
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t_v2.pkl"
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.49 0.016
-    model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # +++ 50ep: 36.836 0.0177; 40.34 0.0119
+    # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # +++ 50ep: 36.836 0.0177; 40.34 0.0119
     # 2x: 40.34 0.0119; 3x: 39.18 0.0154; 4x: 38.45 0.0178; 8x: 34.45 0.0362; 16x 29.85 0.0729 # * t in the flow
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v3.pkl" # flow=tmp[:, :4]*scale*2, then use *t avg PSNR: 36.03 0.0171
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v4.pkl" # flow=tmp[:, :4]*2, then use *t 36.857 0.0146
@@ -1284,7 +1299,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip5_lr6e-4.pkl" # 33.54 0.0259
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip2_lr6e-4.pkl" # 37.37 0.0154
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # 37.70 0.0136 skip2
-    model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_lr6e-4.pkl" # ++ 80ep: 39.64 0.0117
+    # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_lr6e-4.pkl" # ++ 80ep: 39.64 0.0117
     # 3x: 38.58 0.0157; 4x: 37.85 0.0205
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNorm_lr6e-4.pkl" # ? worse...
     # model_name = "flownet_4Blocks_lapl_dist3e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNormScale_lr6e-4.pkl" # 34 0.014
@@ -1307,26 +1322,75 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w20_lr6e-4.pkl" # 
     # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w10_lr6e-4.pkl" # no
     # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w5_lr6e-4.pkl" # no, bug somewhere???
-    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w1_lr6e-4.pkl" # too easy ?
-    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w3_fixed_lr6e-4.pkl" # yes
-    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # 34.7 0.0244
-    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixW5F123_lr6e-4.pkl" # no
-    model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixW5F3_lr6e-4.pkl" # no
-    model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_60K_lr6e-4.pkl" # no
-    model_name = "flownet_4Blocks_16conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_60K_lr6e-4.pkl" # no, bad!
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_60K_lr6e-4.pkl" # bad but if increase more?
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # 37.7 0.0227
+
+    # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w1_lr6e-4.pkl" # too easy ?
+    # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w3_fixed_lr6e-4.pkl" # flow 32.7 0.031
+    # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # 34.7 0.0244
+    # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixW5F123_lr6e-4.pkl" # no
+    # model_name = "flownet_4Blocks_lapl_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixW5F3_lr6e-4.pkl" # no
+    # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_60K_lr6e-4.pkl" # no
+    # model_name = "flownet_4Blocks_16conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_60K_lr6e-4.pkl" # no, bad!
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_60K_lr6e-4.pkl" # bad but if increase more?
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # no flow 37.7 0.0227
     # 3x: 35.43 0.0298 visual problems
     # TODO: experiment diff architectures: Increased Depth; Residual Connections; Dilated Convolutions
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v2_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl"
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10gauss_lr6e-4.pkl" # s=1.5
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v2_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # no flow 34.42 0.024
+
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10gauss_lr6e-4.pkl" # no s=1.5
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6gaussS05_lr6e-4.pkl" # no
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10gaussS05_lr6e-4.pkl" # no
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5middleT_lr6e-4.pkl"
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W5middleT_lr6e-4.pkl"
-    model_name = "flownet_3Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_fixW2_lr6e-4.pkl"
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v2_256_drop30KrandTripl_W5middleT_lr6e-4.pkl"
-    
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5middleT_lr6e-4.pkl" # PSNR: 31.31 0.0352
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W5middleT_lr6e-4.pkl" # PSNR: 34.29 0.0236
+    # model_name = "flownet_3Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_fixW2_lr6e-4.pkl" # no flow PSNR: 34.16 0.0409
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v2_256_drop30KrandTripl_W5middleT_lr6e-4.pkl" # bad flow 29.8 0.0496
+
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W10middleT_lr6e-4.pkl" # flow 31.18 0.0335
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_dilate2_drop30KrandTripl_W5middleT_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_convSt1_drop30KrandTripl_W5middleT_lr6e-4.pkl" # no flow 35.09 0.034
+    # model_name = "flownet_3Blocks_lapl_dist1e-2_reg1e-7_photo2e-6_v1_256_convSt1_drop30KrandTripl_W5middleT_lr6e-4.pkl" # no flow
+    # model_name = "flownet_3Blocks_lapl_dist5e-2_reg1e-7_photo1e-5_v1_256_convSt1_drop30KrandTripl_W5middleT_lr6e-4.pkl" # no flow
+    # model_name = "flownet_3Blocks_lapl_dist5e-2_reg1e-8_photo1e-3_v1_256_drop30KrandTripl_W5middleT_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_lapl_dist5e-2_reg1e-8_photo1e-2_v1_256_drop30KrandTripl_W5middleT_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_lapl_dist1e-2_reg1e-8_photo1e-1_v1_256_drop30KrandTripl_W5middleT_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_lapl_dist1e-2_reg1e-8_photo1e-4_v1_256_drop30KrandTripl_W5middleT_lr6e-4.pkl"
+
+    # model_name = "flownet_3Blocks_6conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # 35.12 0.018
+    # 3x: 32.08 0.025; 5x: 31.03 0.034
+    # model_name = "flownet_3Blocks_6conv_lapl_dist1e-2_reg1e-8_photo1e-5_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl"
+
+    # model_name = "flownet_3Blocks_4conv_lapl_dist1e-2_reg1e-7_photo2e-6_v1_256_convSt1_drop30KrandTripl_W5middleT_lr6e-4.pkl" # no flow 33.55 0.029
+    # TODO: experiment with t=0.5, without t_mask, but randoim boundaries - backup option
+
+    # bugfix
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W10middleT_lr6e-4_bugfix.pkl" # 37.84 0.0103
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10gaussS05_lr6e-4_bugfix.pkl" # 34 0.016
+    # bugfixed versions:
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 38.25 0.013
+    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_convSt1_drop30KrandTripl_W10gaussS05_lr6e-4.pkl" # PSNR: 29 0.029
+
+    # import torch
+    # import torch.nn as nn
+
+    # def calc_output_size(input_size, kernel_size, padding, stride):
+    #     return ((input_size - kernel_size + 2 * padding) // stride) + 1
+
+    # # Assuming input tensor size is 224x224
+    # input_size = 224
+    # in_planes = 3  # Number of input channels
+    # c = 64  # Number of channels
+
+    # # List of convolution configurations
+    # conv_layers = [
+    #     (in_planes, c//2, 3, 2, 1),
+    #     (c//2, c, 3, 2, 1)
+    # ]
+
+    # for conv_config in conv_layers:
+    #     in_planes, out_planes, kernel_size, stride, padding = conv_config
+    #     output_size = calc_output_size(input_size, kernel_size, padding, stride)
+    #     print("Output size:", output_size)
+    #     input_size = output_size  # Update input size for the next iteration
+
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixW5F2_60K_lr6e-4.pkl" # no :(
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mix25_W5F2_60K_lr6e-4.pkl" # no
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_w10_lr6e-4.pkl" # 

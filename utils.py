@@ -529,7 +529,8 @@ def visualize_large(original_data, interpol_data, diffs,
                 ax.set_title(ax_title, fontsize=7)
         if int((i-1)/columns) == 1 and round(index - 1) % 2 == 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
-            img = interpol_data[round((index - 1) / 2)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)
+            # img = interpol_data[round((index - 1) / 2)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)
+            img = interpol_data[round(index - 1)]
             if dataset == "lbs2d":
                 plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
                 # plt.imshow(img, vmin=interpol_data.std()-interpol_data.mean(), vmax=data_to_vis.max())

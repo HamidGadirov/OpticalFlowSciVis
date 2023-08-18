@@ -108,6 +108,8 @@ class Model(nn.Module):
             # print(img0_data.shape, img1_flow.shape)
             # input("x")
             # img0_flow_uv = imgs[:, :2] # (b_s, 3, 3, 450, 150)
+            # print("t_mask", t_mask.shape)
+            t_mask = t_mask[:, 0, :1]
 
             # using density:
             img0 = img0_data
@@ -202,9 +204,8 @@ class Model(nn.Module):
             # i_loss = (flow_preds[i] - flow_gt).abs()
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
 
-            loss_flow = 0.
-
-            # num_blocks = 4
+            # loss_flow = 0.
+            # num_blocks = 3
             # gamma_coeff = 0.8 # 0.9 0.7
             # for i in range(num_blocks):
             #     gamma = gamma_coeff ** i
@@ -223,7 +224,7 @@ class Model(nn.Module):
             # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             # loss_flow /= 2.
             ###
-            # loss_flow = torch.tensor(0.)
+            loss_flow = torch.tensor(0.)
 
             """
             # test: flow magn of diff vec loss: no improvements
@@ -313,7 +314,7 @@ class Model(nn.Module):
         for param_tensor in self.flownet.state_dict():
             # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
             # if "block2" in param_tensor or "block_tea" in param_tensor:
-            if "block4" in param_tensor or "block_tea" in param_tensor: # last block block3
+            if "block2" in param_tensor or "block_tea" in param_tensor: # last block block3
                 block_params = self.flownet.state_dict()[param_tensor]
                 block_params_norm += torch.norm(block_params, 1)
         # print(block2_params_norm)
@@ -440,9 +441,9 @@ class Model(nn.Module):
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.001 # 0.01 # 5e-3 # 0.001 # 0.01
+        lambda_distill = 0.001 # 5e-3 # 0.001 # 0.01
         lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
-        lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
+        lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6  increase!
         lambda_smooth = 0 # 1e-8 not important
         lambda_flow = 0 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study

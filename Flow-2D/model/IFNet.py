@@ -21,7 +21,7 @@ def deconv(in_planes, out_planes, kernel_size=4, stride=2, padding=1):
     )
 
 def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
-# def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=2):
+# def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=2, dilation=2):
 # def conv(in_planes, out_planes, kernel_size=5, stride=1, padding=2, dilation=1):
     return nn.Sequential(
         nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride,
@@ -30,7 +30,7 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
         # nn.BatchNorm2d(out_planes), # added
     )
 
-version = 2
+version = 1
 two_blocks = False
 three_blocks = True
 four_blocks = False # True
@@ -46,6 +46,8 @@ class IFBlock(nn.Module):
         self.conv0 = nn.Sequential(
             conv(in_planes, c//2, 3, 2, 1),
             conv(c//2, c, 3, 2, 1),
+            # conv(c//2, c, 3, 1, 1), # stride = 1 changed, no improvement
+
             # conv(in_planes, c//2, 5, 2, 2),
             # conv(c//2, c, 5, 2, 2),
             )
@@ -75,6 +77,8 @@ class IFBlock(nn.Module):
                 self.deconvblock = nn.Sequential(
                     deconv(c, c//2, 4, 2, 1),
                     deconv(c//2, 5, 4, 2, 1),
+                    # deconv(c//2, 5, 4, 1, 1), # stride = 1 changed, no improvement
+
                     # deconv(c, c//2, 5, 2, 2),
                     # deconv(c//2, 5, 5, 2, 2),
                 )
@@ -116,7 +120,6 @@ class IFBlock(nn.Module):
 
     def forward(self, x, flow, scale):
         if scale != 1:
-            # here was error
             # print("before interpolate, ", x.shape)
             # print(type(x))
             # x = x.type(torch.float32)
@@ -289,6 +292,7 @@ class IFNet(nn.Module):
                 # flow_d, mask_d, sup_flow_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
                 # flow_d, mask_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
                 flow_d, mask_d = stu[i](torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
+                # print(flow_d.shape, mask_d.shape)
                 flow_d = flow_d[:,:,:img0.shape[2],:img0.shape[3]]
                 mask_d = mask_d[:,:,:img0.shape[2],:img0.shape[3]]
                 flow = flow + flow_d
