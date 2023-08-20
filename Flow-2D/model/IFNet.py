@@ -37,7 +37,7 @@ four_blocks = False # True
 five_blocks = False
 six_blocks = False
 refine = False # True
-use_deconv = False # True
+use_deconv = True # True
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -55,12 +55,15 @@ class IFBlock(nn.Module):
             self.convblock = nn.Sequential(
                 conv(c, c),
                 conv(c, c),
+                # conv(c, c),
+                conv(c, c, 3, 2, 1), # test
                 conv(c, c),
                 conv(c, c),
+                # conv(c, c),
+                deconv(c, c, 3, 2, 1), # test
                 conv(c, c),
                 conv(c, c),
-                conv(c, c),
-                conv(c, c), # 8 conv
+                # conv(c, c), # 8 conv
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
@@ -133,7 +136,11 @@ class IFBlock(nn.Module):
         # print("conv0:", x.shape) # torch.Size([25, 192, 25, 100]) lbs
         if version == 1:
             # print("convblock:", self.convblock(x).shape)
-            x = self.convblock(x) + x # according to ECCV version, for shortcut
+            # print("convblock0 in", x.shape)
+            # x = self.convblock(x) + x # according to ECCV version, for shortcut
+            convblock_out = self.convblock(x)
+            convblock_out = convblock_out[:,:,:x.shape[2],:x.shape[3]]
+            x = convblock_out + x
             # print("convblock + x:", x.shape)
             # input("x")
             if use_deconv == False:
@@ -151,6 +158,8 @@ class IFBlock(nn.Module):
             flow = tmp[:, :4] # best
             mask = tmp[:, 4:5]
         if version == 2:
+            # print("convblock0 in", x.shape)
+            # print("convblock0 out", self.convblock0(x).shape)
             x = self.convblock0(x) + x
             x = self.convblock1(x) + x
             x = self.convblock2(x) + x

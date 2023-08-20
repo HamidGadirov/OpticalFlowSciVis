@@ -204,13 +204,13 @@ class Model(nn.Module):
             # i_loss = (flow_preds[i] - flow_gt).abs()
             # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
 
-            # loss_flow = 0.
-            # num_blocks = 3
-            # gamma_coeff = 0.8 # 0.9 0.7
-            # for i in range(num_blocks):
-            #     gamma = gamma_coeff ** i
-            #     loss_flow += (flow[num_blocks - i - 1][:, 2:4] - gt_flow).abs().mean() * gamma
-            # loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
+            loss_flow = 0.
+            num_blocks = 3
+            gamma_coeff = 0.8 # 0.9 0.7
+            for i in range(num_blocks):
+                gamma = gamma_coeff ** i
+                loss_flow += (flow[num_blocks - i - 1][:, 2:4] - gt_flow).abs().mean() * gamma
+            loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
 
             """
             loss_flow += (flow[0][:, 2:4] - gt_flow).abs().mean() * 0.64
@@ -224,7 +224,7 @@ class Model(nn.Module):
             # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
             # loss_flow /= 2.
             ###
-            loss_flow = torch.tensor(0.)
+            # loss_flow = torch.tensor(0.)
 
             """
             # test: flow magn of diff vec loss: no improvements
@@ -272,7 +272,7 @@ class Model(nn.Module):
         # print(merged[2].shape, gt.shape)
         # loss_l1 = (self.lap(merged[2], gt)).mean() # laplacian
         # loss_l1 = (self.lap(merged[4], gt)).mean() # laplacian 5 blocks
-        loss_l1 = (self.lap(merged[-1], gt)).mean() # laplacian
+        # loss_l1 = (self.lap(merged[-1], gt)).mean() # laplacian
 
         # L1 for all blocks (with gamma):
         # loss_l1 = 0.
@@ -280,11 +280,11 @@ class Model(nn.Module):
         # loss_l1 += torch.nn.functional.l1_loss(merged[1], gt) * 0.8
         # loss_l1 += torch.nn.functional.l1_loss(merged[2], gt) * 1.
         # loss_l1 = torch.nn.functional.l1_loss(merged[2], gt) # l1
-        # loss_l1 = torch.nn.functional.l1_loss(merged[-1], gt) # l1
+        loss_l1 = torch.nn.functional.l1_loss(merged[-1], gt) # l1
         # print("L1 loss")
         # print(merged[2].shape, gt.shape)
-        loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
-        # loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1
+        # loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
+        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1
         # print(merged_teacher.shape, gt.shape)
         # sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
 
@@ -309,7 +309,7 @@ class Model(nn.Module):
         # print("Model's state_dict:")
 
         """ L1 regularization """
-        # """
+        """
         block_params_norm = 0.
         for param_tensor in self.flownet.state_dict():
             # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
@@ -320,8 +320,8 @@ class Model(nn.Module):
         # print(block2_params_norm)
         # input("x")
         l1_reg = block_params_norm
-        # """
-        # l1_reg = torch.tensor(0.)
+        """
+        l1_reg = torch.tensor(0.)
 
         def charbonnier(x, alpha=0.25, epsilon=1.e-9): # for photo or smooth loss
             return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
@@ -394,7 +394,7 @@ class Model(nn.Module):
 
             return warped_frame
 
-        # """
+        """
         # Photometric loss
         # computed as the difference between the first image and the backward/inverse warped second image
         # in this case: can combine img1, img2 (pred); img2 (pred), img3
@@ -435,17 +435,17 @@ class Model(nn.Module):
         # loss_photo = total_loss_photo
         # print(loss_photo)
         # input("x")
-        # """
-        # loss_photo = torch.tensor(0.)
+        """
+        loss_photo = torch.tensor(0.)
         """ end Photometric consistency """
 
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
-        lambda_distill = 0.001 # 5e-3 # 0.001 # 0.01
-        lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
-        lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6  increase!
+        lambda_distill = 0 # 0.01 # 5e-3 # 0.001 # 0.01
+        lambda_reg = 0 # 1e-8 # droplet # 1e-6 best on rectangle
+        lambda_photo = 0 # 1e-5 # 2 3 4 5 # 1e-5 best 1e-6  increase!
         lambda_smooth = 0 # 1e-8 not important
-        lambda_flow = 0 # 0.01 0.2 1; 0.5 best on rectangle
+        lambda_flow = 0.2 # 0.01 0.2 1; 0.5 best on rectangle
         # automatic parameter study
         # keep simple loss: 3 parameters
         # change in interpol func - additional parameter

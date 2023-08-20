@@ -11,7 +11,7 @@ import random
 # Assuming you have an array of images called "data" with shape (60000, H, W)
 num_members = 20
 member_size = 3000
-num_triplets = 30000 # 60000
+num_triplets = 40000 # 60000
 
 # load data
 # filename = "../../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble21.pkl"
@@ -51,10 +51,15 @@ with Bar("Loading the data...", max=num_triplets) as bar:
             # k = t - rand_w
             # l = t + rand_w
 
-            window = 3
+            window = 6
             t = np.random.randint(window, member_size - window - 1)
-            k = t - window
-            l = t + window
+            t = t * member_idx # rand select member
+            # Randomly select k and l within the window around t
+            k = np.random.randint(max(0, t - window), t)
+            l = np.random.randint(t + 1, min(member_idx * member_size, t + window + 1))
+            
+            # k = t - window
+            # l = t + window
 
             # k, t, l = k * member_idx, t * member_idx, l * member_idx
             print(" ", k, t, l)
@@ -79,7 +84,8 @@ print(triplet_data.dtype)
 # print(triplet_data.dtype)
 # Save the triplets as a pickle file
 # filename = 'lbs2d_triplets_W6middleT_40K_train.pkl'
-filename = 'lbs2d_triplets_W3fix_30K_train.pkl'
+# filename = 'lbs2d_triplets_W3fix_30K_train.pkl' # there was a bug
+filename = 'lbs2d_triplets_W6_40K_train.pkl'
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 print('Saved!')

@@ -805,7 +805,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle2d":
         args.batch_size = 100 # 200
     if args.dataset == "lbs2d":
-        args.batch_size = 40 # 20 40 55 120
+        args.batch_size = 64 # 20 40 55 120
     if args.dataset == "FluidSimML2d":
         args.batch_size = 64
     if args.dataset == "pipedcylinder2d" or args.dataset == "cylinder2d":
@@ -1166,12 +1166,15 @@ if __name__ == "__main__":
     # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6middleT_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6middleT_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-5.pkl"
     # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6middleT_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-6.pkl"
-    model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6middleT_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_bugfix.pkl"
+    model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6middleT_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_bugfix.pkl" # 2x: 49.83 0.0126
 
     # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs_triplets_W3fix_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs_triplets_W3fix_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-6.pkl" #
     # model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs_triplets_W3fix_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_bugfix.pkl" # 2x: 29.98 0.059
 
+    model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W10_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 130ep: 50.31 0.019
+    model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 200ep: 49.47 0.0117
+    model_name = "flownet_3Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W10_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1356,17 +1359,22 @@ if __name__ == "__main__":
 
     # model_name = "flownet_3Blocks_6conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # 35.12 0.018
     # 3x: 32.08 0.025; 5x: 31.03 0.034
-    # model_name = "flownet_3Blocks_6conv_lapl_dist1e-2_reg1e-8_photo1e-5_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_6conv_lapl_dist1e-2_reg1e-8_photo1e-5_v1_256_drop30KrandTripl_mixedW5fixed2_lr6e-4.pkl" # 
 
     # model_name = "flownet_3Blocks_4conv_lapl_dist1e-2_reg1e-7_photo2e-6_v1_256_convSt1_drop30KrandTripl_W5middleT_lr6e-4.pkl" # no flow 33.55 0.029
     # TODO: experiment with t=0.5, without t_mask, but randoim boundaries - backup option
 
     # bugfix
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W10middleT_lr6e-4_bugfix.pkl" # 37.84 0.0103
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10gaussS05_lr6e-4_bugfix.pkl" # 34 0.016
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W10middleT_lr6e-4_bugfix.pkl" # 37.84 0.0103
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10gaussS05_lr6e-4_bugfix.pkl" # 34 0.016
     # bugfixed versions:
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 38.25 0.013
-    model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_convSt1_drop30KrandTripl_W10gaussS05_lr6e-4.pkl" # PSNR: 29 0.029
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 38.25 0.013
+    # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_convSt1_drop30KrandTripl_W10gaussS05_lr6e-4.pkl" # PSNR: 29 0.029
+    # model_name = "flownet_3Blocks_6conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 38.53 0.016
+    # model_name = "flownet_3Blocks_10conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # PSNR: 32.43 0.032
+    # model_name = "flownet_3Blocks_2convDown2convUp2conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # no photo PSNR: 34.54 0.0137
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 38.41 0.0123
+    # model_name = "flownet_3Blocks_2convDown2convUp2conv_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl"
 
     # import torch
     # import torch.nn as nn
