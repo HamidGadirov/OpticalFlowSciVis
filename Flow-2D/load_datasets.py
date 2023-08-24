@@ -90,8 +90,8 @@ def load_data(dataset, factor, mode):
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W10middleT_30K_train.pkl"
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W6middleT_40K_train.pkl"
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W3fix_30K_train.pkl"
-                filename += "LatticeBoltzmannSim/lbs2d_triplets_W10_30K_train.pkl"
-                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W6_40K_train.pkl"
+                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W10_30K_train.pkl"
+                filename += "LatticeBoltzmannSim/lbs2d_triplets_W6_40K_train.pkl"
             else:
                 filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_test_f32.pkl"
 
@@ -101,7 +101,7 @@ def load_data(dataset, factor, mode):
             if mode == "train":
                 if random_triplets:
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w15_30K.pkl"
-                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w10_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w10_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w5_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w1_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w3_fixed_30K_train.pkl"
@@ -109,6 +109,8 @@ def load_data(dataset, factor, mode):
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F123_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F3_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W5_60K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_60K_train.pkl"
+                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F2_60K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mix25_W5F2_60K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10gauss_30K_train.pkl"
@@ -397,8 +399,8 @@ def load_data(dataset, factor, mode):
 
                 # random triplets
                 # data_train = data[:18000]
-                data_train = data[:27000]
-                # data_train = data[:37000]
+                # data_train = data[:27000]
+                data_train = data[:37000]
          
                 # data_train = data[3000:18000] # ens7
                 # data_train = np.append(data_train, data[21000:30000], axis=0)
@@ -426,8 +428,8 @@ def load_data(dataset, factor, mode):
                 
                 # random triplets
                 # data_val = data[18000:]
-                data_val = data[27000:]
-                # data_val = data[37000:]
+                # data_val = data[27000:]
+                data_val = data[37000:]
 
                 # data_val = data[3000:3210]
                 # data_val = np.append(data_val, data[5000:5210], axis=0)
@@ -442,12 +444,12 @@ def load_data(dataset, factor, mode):
                 # data_train = data[2700:51300] # 46800 15120
                 # data_val = data[51300:54000] # 18000 54000
                 if random_triplets:
-                    # data_train = data[:47000]
-                    # data_val = data[47000:50000]
-                    data_train = data[:27000]
-                    data_val = data[27000:30000]
-                    # data_train = data[:57000]
-                    # data_val = data[57000:]
+                    if "30K" in filename:
+                        data_train = data[:27000]
+                        data_val = data[27000:30000]
+                    elif "60K" in filename:
+                        data_train = data[:57000]
+                        data_val = data[57000:]
             if "pipedcylinder2d" in filename or "cylinder2d" in filename: # 1501 in total
                 data_train = data[:540] # 1080 div to 27 and 5
                 data_train = np.append(data_train, data[-540:], axis=0)
@@ -755,8 +757,8 @@ def load_data(dataset, factor, mode):
                 # data_test = data[:3000] # 36.82
                 # if random_triplets:
                 #     data_test = data # random triplets
-                # data_test = data[:2700] # 36.81
-                data_test = data[350:2700] #
+                data_test = data[:2700] # 36.81
+                # data_test = data[350:2700] #
                 # data_test = data[2700:5400] # 34.26
                 # data_test = data[0:2700] # 35.12
                 # data_test = data[350:950] # 29.98
@@ -818,7 +820,7 @@ def load_data(dataset, factor, mode):
 
             print(data_test.shape)
             data_test_non_overlap = np.squeeze(data_test)
-            print(data_test_non_overlap.shape)
+            print("data_test_non_overlap:", data_test_non_overlap.shape)
             # input("data_test_non_overlap")
 
             # if dataset == "pipedcylinder2d":

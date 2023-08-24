@@ -184,6 +184,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     # model_name += ".pkl"
 
     # model.load_model(model_name, log_path)
+    # flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl
+    # flownet_4Blocks_3convDown3convUp3conv_lapl_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl                                                                                                   
+
     try:
         model.load_model(model_name, log_path)
         # print("Loaded RIFE model:", model_name)
@@ -768,7 +771,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 if __name__ == "__main__":    
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=300, type=int) # 300 500 1000
+    parser.add_argument('--epoch', default=200, type=int) # 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
     parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -801,7 +804,7 @@ if __name__ == "__main__":
     if args.dataset == "vimeo2d" and args.mode == "train":
         args.batch_size = 55
     if args.dataset == "droplet2d":
-        args.batch_size = 64 # 40
+        args.batch_size = 44 # 40 64
     if args.dataset == "rectangle2d":
         args.batch_size = 100 # 200
     if args.dataset == "lbs2d":
@@ -1174,7 +1177,10 @@ if __name__ == "__main__":
 
     model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W10_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 130ep: 50.31 0.019
     model_name = "flownet_3Blocks_l1_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 200ep: 49.47 0.0117
-    model_name = "flownet_3Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W10_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    model_name = "flownet_3Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W10_30K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 140ep: 50.33 EPE: 0.0167
+    model_name = "flownet_3Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 80ep: 49.27 0.0112
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # +++ 80 ep: droplet?
+    # 2x: 51.61 0.0082; 3x: 57.28 0.0104; 4x: 49.14 0.0122; 5x: 51.35 0.0141; 8x: 48.76 0.0197; 16x: 43.80 0.0398; 32x: 40.10 0.0564
 
     """ vimeo2d """
     # model_name = "flownet_lapl_dist_v2_128_vimeo.pkl" # very good interpol, ? good flow
@@ -1283,8 +1289,10 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t.pkl"
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_no_interpol_t_v2.pkl"
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4.pkl" # param s. 35.49 0.016
+
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # +++ 50ep: 36.836 0.0177; 40.34 0.0119
     # 2x: 40.34 0.0119; 3x: 39.18 0.0154; 4x: 38.45 0.0178; 8x: 34.45 0.0362; 16x 29.85 0.0729 # * t in the flow
+
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v3.pkl" # flow=tmp[:, :4]*scale*2, then use *t avg PSNR: 36.03 0.0171
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v4.pkl" # flow=tmp[:, :4]*2, then use *t 36.857 0.0146
     # model_name = "flownet_4Blocks_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v5.pkl" # 85 ep: 36.87 0.0171 300ep: 34.66 0.0151
@@ -1303,7 +1311,8 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip2_lr6e-4.pkl" # 37.37 0.0154
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_lr6e-4_v2.pkl" # 37.70 0.0136 skip2
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_lr6e-4.pkl" # ++ 80ep: 39.64 0.0117
-    # 3x: 38.58 0.0157; 4x: 37.85 0.0205
+    # 3x: 38.58 0.0157; 4x: 37.85 0.0205; ... arb interpol: 5x: 33.22 0.0419; 8x: 31.23 0.0581
+    # visual problems!
     # model_name = "flownet_4Blocks_lapl_dist1e-2_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNorm_lr6e-4.pkl" # ? worse...
     # model_name = "flownet_4Blocks_lapl_dist3e-3_reg1e-8_photo1e-6_v1_256_drop50K_skip3_brightNormScale_lr6e-4.pkl" # 34 0.014
     # model_name = "flownet_4Blocks_lapl_dist3e-3_reg1e-8_photo1e-6_rev_v1_256_drop50K_skip3_brightNormScale_lr6e-4.pkl" # 18 0.044
@@ -1366,16 +1375,40 @@ if __name__ == "__main__":
 
     # bugfix
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W10middleT_lr6e-4_bugfix.pkl" # 37.84 0.0103
+    # 2x: 38.63 0.0190; 5x: 33.61 0.0391; 8x: 31.44 0.0557
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10gaussS05_lr6e-4_bugfix.pkl" # 34 0.016
     # bugfixed versions:
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 38.25 0.013
+    # 2x: 38.64 0.0187 5x: 33.60 0.0389; 8x: 31.43 0.0555
     # model_name = "flownet_3Blocks_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_convSt1_drop30KrandTripl_W10gaussS05_lr6e-4.pkl" # PSNR: 29 0.029
     # model_name = "flownet_3Blocks_6conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 38.53 0.016
     # model_name = "flownet_3Blocks_10conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # PSNR: 32.43 0.032
     # model_name = "flownet_3Blocks_2convDown2convUp2conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # no photo PSNR: 34.54 0.0137
-    # model_name = "flownet_3Blocks_3convDown3convUp3conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 38.41 0.0123
-    # model_name = "flownet_3Blocks_2convDown2convUp2conv_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl"
 
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # ++ use_deconv=False
+    # 2x: 39.74 0.0144; 5x: 35.76 0.0298; 8x: 33.46 0.0401
+    # model_name = "flownet_3Blocks_2convDown2convUp2conv_lapl_dist5e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # no, distill too high
+    # model_name = "flownet_3Blocks_2convDown2convUp2conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4_v2.pkl" #
+    # 2x: 39.13 0.0153; 5x: 35.40 0.0292; 8x: 33.13 0.0409
+    # model_name = "flownet_3Blocks_1convDown1convUp1conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 34.64 0.022
+    # model_name = "flownet_4Blocks_2convDown2convUp2conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # use_deconv=True !!!
+    # 2x: 39.78 0.0131; 3x: 37.94 0.0211; 5x: 35.84 0.0301; 8x: 33.62 0.0388 ++
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_lapl_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W10_lr6e-4.pkl" # 
+    # 2x: 39.66 0.0139; 3x: 37.98 0.0205; 5x: 35.60 0.0306; 8x: 33.287 0.0408
+    model_name = "flownet_4Blocks_2convDown2convUp2conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W5_deconv_lr6e-4.pkl" # W6
+    # 2x: 40.84 0.015; 3x: 38.99 0.022; 5x: 36.63 0.030 16x: 30.77 0.061
+    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-3_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W6_deconv_lr6e-4.pkl"
+    # 2x: 40.34 0.011; 3x: 38.52 0.020; 4x: 37.37 0.025; 5x: 36.40 0.030; 8x: 34.20 0.037; 16x: 30.72 0.060
+    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist5e-4_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W6_deconv_lr6e-4.pkl" # flowScale2
+    # 2x:
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4.pkl" # flowScale2
+    # 2x: 41.12 0.0109; 3x: 39.09 0.0167; 4x: 37.65 0.023; 5x: 36.60 0.029; 8x: 34.22 0.038; 16x: 30.84 0.060
+
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_lr6e-4.pkl"
+    # 2x: 39.46 0.0166; 5x: 35.78 0.032; 8x: 33.54 0.039
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_lapl_dist1e-3_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_lr6e-4_flowScale2.pkl" # 80ep
+    # 2x: 39.78 0.016; 5x: 35.71 0.032; 8x: 33.35 0.041
+    
     # import torch
     # import torch.nn as nn
 
@@ -1552,10 +1585,10 @@ if __name__ == "__main__":
         data_original_interpol = np.array(data_original_interpol)
         print("data_original_interpol:", data_original_interpol.shape)
         print(type(data_original_interpol))
-        flow_original_interpol = [f for i, f in enumerate(flow_test) if i % n == 0]
-        flow_original_interpol = np.array(flow_original_interpol)
-        print("flow_original_interpol:", flow_original_interpol.shape)
-        flow_gt = flow_original_interpol
+        flow_original_pred = [f for i, f in enumerate(flow_test) if i % n != 0]
+        flow_original_pred = np.array(flow_original_pred)
+        print("flow_original_pred:", flow_original_pred.shape)
+        # flow_gt = flow_original_interpol
         # input("n")
         
         """
@@ -1615,14 +1648,15 @@ if __name__ == "__main__":
             data_original_interpol = np.squeeze(data_original_interpol[:, 1:2])
 
         data_original_interpol = data_original_interpol[:interpol_data.shape[0]]
-        flow_gt = flow_gt[:flow.shape[0]]
+        flow_original_pred = flow_original_pred[:flow.shape[0]]
 
         print("######")
         print("data_test:", data_test.shape) 
         print("data_original:", data_original.shape) # I0, I1 for interpol
         print("data_original_interpol:", data_original_interpol.shape) # gt for interpol comparison
         print("interpol_data:", interpol_data.shape)
-        print("flow_gt:", flow_gt.shape)
+        print("flow_original:", flow_original.shape)
+        print("flow_original_pred:", flow_original_pred.shape)
         print("flow pred & mask:", flow.shape, mask.shape)
         # input("n")
 
@@ -1642,7 +1676,9 @@ if __name__ == "__main__":
 
         if "lbs2d" in dataset: # denormalize
             # print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
-            flow_gt = flow_gt / 10.
+            # flow_gt = flow_gt / 10.
+            flow_original = flow_original / 10.
+            flow_original_pred = flow_original_pred / 10.
             flow = flow / 10.
             print("Vel rescaled to /10")
             # flow_gt = np.exp(flow_gt) - 0.3
@@ -1707,9 +1743,15 @@ if __name__ == "__main__":
 
         if dataset != "vimeo2d" and dataset != "droplet2d":
             print("GT flow available")
-            flow_gt = flow_gt[:, :, :flow.shape[2], :flow.shape[3]]
-            u_gt = flow_gt[:, 0, ...]
-            v_gt = flow_gt[:, 1, ...]
+            # flow_gt = flow_gt[:, :, :flow.shape[2], :flow.shape[3]]
+            flow_original_pred = flow_original_pred[:, :, :flow.shape[2], :flow.shape[3]]
+
+            print("flow original pred is in range %f to %f" % (np.min(flow_original_pred), np.max(flow_original_pred)))
+            print("flow pred is in range %f to %f" % (np.min(flow), np.max(flow)))
+            # input("x")
+
+            u_gt = flow_original_pred[:, 0, ...]
+            v_gt = flow_original_pred[:, 1, ...]
             norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt)
             u = flow[:, 0, ...]
             v = flow[:, 1, ...] 
@@ -1755,13 +1797,13 @@ if __name__ == "__main__":
             print("no GT flow available")
             # diffs = np.zeros((original_data.shape[0], original_data.shape[1], original_data.shape[2]), dtype=np.float32)
             diffs_flow = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2]), dtype=np.float32)
-            flow_gt = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
+            flow_original_pred = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
             # u_diff = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
             # v_diff = np.zeros((flow.shape[0], flow.shape[1], flow.shape[2], flow.shape[3]), dtype=np.float32)
             u_diff = np.zeros((flow.shape[0], flow.shape[2], flow.shape[3]), dtype=np.float32)
             v_diff = np.zeros((flow.shape[0], flow.shape[2], flow.shape[3]), dtype=np.float32)
 
-        print("Flow gt mean and std:", np.mean(flow_gt), np.std(flow_gt))
+        print("Flow original pred mean and std:", np.mean(flow_original_pred), np.std(flow_original_pred))
         print("Flow pred mean and std:", np.mean(flow), np.std(flow))
 
         """
@@ -1791,8 +1833,8 @@ if __name__ == "__main__":
         # """
         title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
         if args.factor == 2:
-            visualize_large(data_original_interpol, interpol_data, diffs,
-                flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
+            visualize_large(data_test, interpol_data, diffs,
+                flow, flow_original_pred, diffs_flow, u_diff, v_diff, mask,
                 factor, dataset, dir_model, title=title, show=False, save=True)
 
         title = "Density_gt_pred_diff"
@@ -1800,7 +1842,7 @@ if __name__ == "__main__":
                 factor, dataset, dir_model, title=title, show=False, save=True)
         if dataset == "lbs2d":
             title = "Flow_gt_pred_diff"
-            visualize_seq_flow(flow_gt, flow, u_diff, v_diff,
+            visualize_seq_flow(flow_original_pred, flow, u_diff, v_diff,
                     factor, dataset, dir_model, title=title, show=False, save=True)
         # """
         
@@ -1820,8 +1862,9 @@ if __name__ == "__main__":
         avg_lpips = calculate_avg_lpips(data_original_interpol, interpol_data)
         if dataset != "vimeo2d" and dataset != "droplet2d":
             # Flow metric
-            print(flow_gt.shape, flow.shape)
-            avg_epe = calculate_avg_epe(flow_gt, flow)
+            # print(flow_gt.shape, flow.shape)
+            print(flow_original_pred.shape, flow.shape)
+            avg_epe = calculate_avg_epe(flow_original_pred, flow)
         # save metrics score
         filename = os.path.join(dir_model, 'metrics.txt')
         with open(filename, 'w') as f:

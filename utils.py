@@ -529,8 +529,7 @@ def visualize_large(original_data, interpol_data, diffs,
                 ax.set_title(ax_title, fontsize=7)
         if int((i-1)/columns) == 1 and round(index - 1) % 2 == 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
-            # img = interpol_data[round((index - 1) / 2)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)
-            img = interpol_data[round(index - 1)]
+            img = interpol_data[round((index - 1) / 2)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)
             if dataset == "lbs2d":
                 plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
                 # plt.imshow(img, vmin=interpol_data.std()-interpol_data.mean(), vmax=data_to_vis.max())
@@ -545,7 +544,8 @@ def visualize_large(original_data, interpol_data, diffs,
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
         if int((i-1)/columns) == 3 and round(index - 1) % 2 == 0: # mask
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
-            img = mask[round((index - 1) / 2)] # [index-columns*2*2,...]
+            # img = mask[round((index - 1) / 2)] # [index-columns*2*2,...]
+            img = mask[round(index - 1)]
             plt.imshow(img, vmin=mask.min(), vmax=mask.max(), cmap=cmap)
 
         # if int((i-1)/columns) == 6: # flow diff
@@ -555,7 +555,8 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "vimeo2d" or dataset == "droplet2d": # show pred flow in hsv-rgb instead of gt
                 hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
                 hsv[:,:,1] = 255
-                mag, ang = cv2.cartToPolar(flow_u[round((index - 1) / 3)], flow_v[round((index - 1) / 3)])
+                # mag, ang = cv2.cartToPolar(flow_u[round((index - 1) / 3)], flow_v[round((index - 1) / 3)])
+                mag, ang = cv2.cartToPolar(flow_u[round((index - 1) / 2)], flow_v[round((index - 1) / 2)])
                 hsv[..., 0] = ang * 180 / np.pi / 2
                 hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
 

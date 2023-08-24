@@ -32,12 +32,12 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 
 version = 1
 two_blocks = False
-three_blocks = True
-four_blocks = False # True
+three_blocks = False
+four_blocks = True # True
 five_blocks = False
 six_blocks = False
 refine = False # True
-use_deconv = True # True
+use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -55,15 +55,15 @@ class IFBlock(nn.Module):
             self.convblock = nn.Sequential(
                 conv(c, c),
                 conv(c, c),
-                # conv(c, c),
+                conv(c, c),
                 conv(c, c, 3, 2, 1), # test
                 conv(c, c),
                 conv(c, c),
-                # conv(c, c),
+                conv(c, c),
                 deconv(c, c, 3, 2, 1), # test
                 conv(c, c),
                 conv(c, c),
-                # conv(c, c), # 8 conv
+                conv(c, c), # 8 conv
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
@@ -152,10 +152,10 @@ class IFBlock(nn.Module):
             else:
                 tmp = self.deconvblock(x) # added
                 # print("deconvblock:", tmp.shape)
-            # flow = tmp[:, :4] * scale * 2 # scale according to resize -> orig; distill jump
+            flow = tmp[:, :4] * scale * 2 # scale according to resize -> orig; distill jump
             # flow = tmp[:, :4] * 2 #
             # worse for both
-            flow = tmp[:, :4] # best
+            # flow = tmp[:, :4] # best
             mask = tmp[:, 4:5]
         if version == 2:
             # print("convblock0 in", x.shape)
