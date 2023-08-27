@@ -56,11 +56,11 @@ class IFBlock(nn.Module):
                 conv(c, c),
                 conv(c, c),
                 conv(c, c),
-                conv(c, c, 3, 2, 1), # test
+                conv(c, c, 3, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
                 conv(c, c),
-                deconv(c, c, 3, 2, 1), # test
+                deconv(c, c, 3, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
                 conv(c, c), # 8 conv
@@ -152,10 +152,10 @@ class IFBlock(nn.Module):
             else:
                 tmp = self.deconvblock(x) # added
                 # print("deconvblock:", tmp.shape)
-            flow = tmp[:, :4] * scale * 2 # scale according to resize -> orig; distill jump
+            # flow = tmp[:, :4] * scale * 2 # scale according to resize -> orig; distill jump
             # flow = tmp[:, :4] * 2 #
             # worse for both
-            # flow = tmp[:, :4] # best
+            flow = tmp[:, :4] # best, since I don't use resize
             mask = tmp[:, 4:5]
         if version == 2:
             # print("convblock0 in", x.shape)
@@ -326,6 +326,8 @@ class IFNet(nn.Module):
             # arb interpol
             warped_img0 = warp(img0, flow[:, :2]) # Ft->0
             warped_img1 = warp(img1, flow[:, 2:4]) # Ft->1
+            # t = t_mask[0, 0, 0, 0] # get one value / worse.
+            # input(t)
             # warped_img0 = warp(img0, flow[:, :2] * t) # Ft->0 +
             # warped_img1 = warp(img1, flow[:, 2:4] * (1 - t)) # Ft->1 +
             # warped_img0 = warp(img0, flow[:, :2] * 2 * t) # Ft->0

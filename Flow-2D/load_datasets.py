@@ -91,7 +91,10 @@ def load_data(dataset, factor, mode):
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W6middleT_40K_train.pkl"
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W3fix_30K_train.pkl"
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W10_30K_train.pkl"
-                filename += "LatticeBoltzmannSim/lbs2d_triplets_W6_40K_train.pkl"
+                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W6_40K_train.pkl"
+                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W16_40K_train.pkl"
+                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W10_40K_train.pkl"
+                filename += "LatticeBoltzmannSim/lbs2d_triplets_W8_40K_train.pkl"
             else:
                 filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_test_f32.pkl"
 
@@ -100,17 +103,20 @@ def load_data(dataset, factor, mode):
             # filename += "drop2D/droplet2d.pkl" if mode == "train" else "drop2D/droplet2d_test.pkl" # old
             if mode == "train":
                 if random_triplets:
-                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w15_30K.pkl"
-                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w10_30K_train.pkl"
-                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w5_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w1_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W4_30K_train.pkl"
+                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W8_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w15_30K.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w3_fixed_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixedW5fixed2_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F123_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F3_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W5_60K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_60K_train.pkl"
-                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W16_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W16_50K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F2_60K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mix25_W5F2_60K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10gauss_30K_train.pkl"
@@ -447,6 +453,9 @@ def load_data(dataset, factor, mode):
                     if "30K" in filename:
                         data_train = data[:27000]
                         data_val = data[27000:30000]
+                    elif "50K" in filename:
+                        data_train = data[:47000]
+                        data_val = data[47000:]
                     elif "60K" in filename:
                         data_train = data[:57000]
                         data_val = data[57000:]

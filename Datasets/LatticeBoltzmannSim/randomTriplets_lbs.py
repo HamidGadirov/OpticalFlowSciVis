@@ -51,7 +51,7 @@ with Bar("Loading the data...", max=num_triplets) as bar:
             # k = t - rand_w
             # l = t + rand_w
 
-            window = 6
+            window = 8 # 6 16
             t = np.random.randint(window, member_size - window - 1)
             t = t * member_idx # rand select member
             # Randomly select k and l within the window around t
@@ -85,7 +85,7 @@ print(triplet_data.dtype)
 # Save the triplets as a pickle file
 # filename = 'lbs2d_triplets_W6middleT_40K_train.pkl'
 # filename = 'lbs2d_triplets_W3fix_30K_train.pkl' # there was a bug
-filename = 'lbs2d_triplets_W6_40K_train.pkl'
+filename = 'lbs2d_triplets_W8_40K_train.pkl'
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 print('Saved!')
