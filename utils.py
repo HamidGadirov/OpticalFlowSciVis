@@ -544,8 +544,7 @@ def visualize_large(original_data, interpol_data, diffs,
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
         if int((i-1)/columns) == 3 and round(index - 1) % 2 == 0: # mask
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
-            # img = mask[round((index - 1) / 2)] # [index-columns*2*2,...]
-            img = mask[round(index - 1)]
+            img = mask[round((index - 1) / 2)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=mask.min(), vmax=mask.max(), cmap=cmap)
 
         # if int((i-1)/columns) == 6: # flow diff

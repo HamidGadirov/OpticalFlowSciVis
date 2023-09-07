@@ -91,10 +91,11 @@ def load_data(dataset, factor, mode):
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W6middleT_40K_train.pkl"
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W3fix_30K_train.pkl"
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W10_30K_train.pkl"
-                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W6_40K_train.pkl"
-                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W16_40K_train.pkl"
+                filename += "LatticeBoltzmannSim/lbs2d_triplets_W6_40K_train.pkl"
+                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W8_40K_train.pkl"
                 # filename += "LatticeBoltzmannSim/lbs2d_triplets_W10_40K_train.pkl"
-                filename += "LatticeBoltzmannSim/lbs2d_triplets_W8_40K_train.pkl"
+                # filename += "LatticeBoltzmannSim/lbs2d_triplets_W16_40K_train.pkl"
+                
             else:
                 filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_test_f32.pkl"
 
@@ -105,7 +106,10 @@ def load_data(dataset, factor, mode):
                 if random_triplets:
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w1_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W4_30K_train.pkl"
-                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W8_30K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_30K_train.pkl"
+                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_40K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_60K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W8_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w15_30K.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w3_fixed_30K_train.pkl"
@@ -113,8 +117,6 @@ def load_data(dataset, factor, mode):
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F123_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F3_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W5_60K_train.pkl"
-                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_60K_train.pkl"
-                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W16_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W16_50K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_mixW5F2_60K_train.pkl"
@@ -284,8 +286,8 @@ def load_data(dataset, factor, mode):
                 data = pickle.load(pkl_file)
             print(data.shape)
             print("data type:", data.dtype) # droplet2d was in float64 ???
-            data = np.float32(data)
-            print("data type:", data.dtype)
+            # data = np.float32(data)
+            # print("data type:", data.dtype)
             # if dataset == "droplet2d":
             #     data = brightness_normalization(data)
             # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
@@ -449,10 +451,12 @@ def load_data(dataset, factor, mode):
                 # data = np.float16(data)
                 # data_train = data[2700:51300] # 46800 15120
                 # data_val = data[51300:54000] # 18000 54000
-                if random_triplets:
                     if "30K" in filename:
                         data_train = data[:27000]
                         data_val = data[27000:30000]
+                    elif "40K" in filename:
+                        data_train = data[:37000]
+                        data_val = data[37000:]
                     elif "50K" in filename:
                         data_train = data[:47000]
                         data_val = data[47000:]

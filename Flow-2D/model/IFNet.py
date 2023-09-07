@@ -45,6 +45,7 @@ class IFBlock(nn.Module):
         super(IFBlock, self).__init__()
         self.conv0 = nn.Sequential(
             conv(in_planes, c//2, 3, 2, 1),
+            # conv(c//2, c//2), # test
             conv(c//2, c, 3, 2, 1),
             # conv(c//2, c, 3, 1, 1), # stride = 1 changed, no improvement
 
@@ -56,14 +57,23 @@ class IFBlock(nn.Module):
                 conv(c, c),
                 conv(c, c),
                 conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
                 conv(c, c, 3, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
                 conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
                 deconv(c, c, 3, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
-                conv(c, c), # 8 conv
+                conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c), # 8 conv
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
@@ -79,6 +89,7 @@ class IFBlock(nn.Module):
                 # add deconv instead of interpolate
                 self.deconvblock = nn.Sequential(
                     deconv(c, c//2, 4, 2, 1),
+                    # deconv(c//2, c//2), # test
                     deconv(c//2, 5, 4, 2, 1),
                     # deconv(c//2, 5, 4, 1, 1), # stride = 1 changed, no improvement
 
