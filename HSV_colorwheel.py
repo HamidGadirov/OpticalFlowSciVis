@@ -29,10 +29,3 @@ _ = ax.axis('off')
 plt.show()
 
 
-
-
-
-
-
-
-

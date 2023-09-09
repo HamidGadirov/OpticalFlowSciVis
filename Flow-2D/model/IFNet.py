@@ -33,8 +33,8 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 version = 1
 two_blocks = False
 three_blocks = False
-four_blocks = True # True
-five_blocks = False
+four_blocks = False # True
+five_blocks = True
 six_blocks = False
 refine = False # True
 use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]

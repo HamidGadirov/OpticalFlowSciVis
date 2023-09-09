@@ -107,9 +107,9 @@ def load_data(dataset, factor, mode):
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w1_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W4_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_30K_train.pkl"
-                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_40K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_60K_train.pkl"
-                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W8_30K_train.pkl"
+                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W8_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w15_30K.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_w3_fixed_30K_train.pkl"
@@ -286,8 +286,8 @@ def load_data(dataset, factor, mode):
                 data = pickle.load(pkl_file)
             print(data.shape)
             print("data type:", data.dtype) # droplet2d was in float64 ???
-            # data = np.float32(data)
-            # print("data type:", data.dtype)
+            data = np.float32(data)
+            print("data type:", data.dtype)
             # if dataset == "droplet2d":
             #     data = brightness_normalization(data)
             # print("Data is in range %f to %f" % (np.min(data), np.max(data)))

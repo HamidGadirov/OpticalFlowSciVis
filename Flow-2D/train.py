@@ -134,6 +134,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # writer_val = SummaryWriter('validate')
     step = 0
     nr_eval = 0
+    batch_size_inf = 16
 
     num_workers = 1 # 8
     if mode == "train":
@@ -143,7 +144,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             train_data = DataLoader(dataset_train, batch_size=args.batch_size, num_workers=num_workers, pin_memory=True, drop_last=True, sampler=sampler)
             args.step_per_epoch = train_data.__len__()
             dataset_val = VimeoDataset('validation')
-            val_data = DataLoader(dataset_val, batch_size=16, pin_memory=True, num_workers=num_workers)
+            val_data = DataLoader(dataset_val, batch_size=batch_size_inf, pin_memory=True, num_workers=num_workers)
         else:
             data_train, data_val = load_data(dataset, factor, mode)
             # print(data_train.shape)
@@ -161,7 +162,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     else: # mode == "test"
         if dataset == "vimeo2d": 
             dataset_test = VimeoDataset('test')
-            data_test = DataLoader(dataset_test, batch_size=16, pin_memory=True, num_workers=num_workers)
+            data_test = DataLoader(dataset_test, batch_size=batch_size_inf, pin_memory=True, num_workers=num_workers)
         else:
             if dataset == "lbs2d":
                 # data_test, flow_x_mean, flow_y_mean, flow_x_std, flow_y_std = load_data(dataset, factor, mode)
@@ -171,7 +172,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             shuffle = False
             # if dataset == "droplet2d": 
             #     shuffle = True
-            data_test = DataLoader(data_test, batch_size=8, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
+            data_test = DataLoader(data_test, batch_size=batch_size_inf, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
 
     # model_name = "flownet"
     # model_name += "_lapl" if lapl_loss else ""
@@ -528,7 +529,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # reorder based on factor
         if factor > 2:
             interpol_data_new = []
-            batch_size = 16 # what was used for inference
+            batch_size = batch_size_inf # what was used for inference
             try:
                 for fb in range(0, interpol_data.shape[0], (factor - 1) * batch_size): # 0 32 64 ...
                     # print("fb", fb)
@@ -1203,20 +1204,29 @@ if __name__ == "__main__":
     # 2x: 50.76 0.0056; 3x: 55.65 0.0093; 4x: 49.12 0.0113; 5x: 50.66 0.0134; 8x: 48.68 0.0192; 16x: 41.51 0.0382; 32x: 39.56 0.0549
     ### +++
     model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # +++ 90 ep
-    # 2x: 51.47 0.0064; 3x: 57.65 0.0096; 4x: 49.29 0.0115; 5x: 51.64 0.0135; 8x: 48.98 0.0193; 16x: 45.82 0.0388; 32x: 40.87 0.0550
+    # 2x: 51.46 0.0064; 3x: 57.65 0.0096; 4x: 49.29 0.0115; 5x: 51.64 0.0135; 8x: 48.98 0.0193; 16x: 45.82 0.0388; 32x: 40.87 0.0550
     ### +++
-    model_name = "flownet_4Blocks_l1_1conv3convDown3convUp3conv1deconv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_l1_1conv3convDown3convUp3conv1deconv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 49.76 0.0093; 3x: 52.62 0.0116; 4x: 47.68 0.0131; 5x: 47.72 0.0149; 8x: 46.43 0.0201; 16x: 45.22 0.0326; 32x: 41.05 0.0485
-    model_name = "flownet_4Blocks_l1_6convDown6convUp6conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_l1_6convDown6convUp6conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 51.03 0.0073; 3x: 45.94 0.0076; 4x: 43.79 0.0083; 5x: 41.90 0.0091; 8x: 40.71 0.0123; 16x: 37.07 0.0302; 32x: 36.63 0.0437
 
-    model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 140ep
+    # model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 140ep
     # 2x: 50.69 0.0072; 3x: 44.98 0.0077; 4x: 43.55 0.0083; 5x: 41.72 0.0091; 8x: 40.59 0.0118; 16x: 36.63 0.0211; 32x: 36.29 0.0419
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v3.pkl" # 140 ep
     # 2x: 51.64 0.0066; 3x: 45.81 0.0071; 4x: 43.83 0.0079; 5x: 41.69 0.0089; 8x: 40.68 0.0121; 16x: 37.25 0.0292; 32x: 36.06 0.0458
 
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow1e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow1e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 52.77 0.0074;
     model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow3e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 51.28 0.0069; 3x:
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 51.84 0.0814; 3x: 58.41 0.0842; 4x: 49.62 0.0873; 5x: 51.22 0.0909; 8x: 48.84 0.105 16x: 43.81 0.1020 32x: 40.20 0.09515
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr3e-4.pkl"
+    # 2x: 51.12 0.0076; 3x: 57.47 0.0102; 4x: 48.83 0.0120; 5x: 51.09 0.0139; 8x: 49.09 0.0197; 16x: 44.790 0.0386
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr1e-3.pkl"
+
+    model_name = "flownet_5Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
 
 
 
@@ -1445,9 +1455,13 @@ if __name__ == "__main__":
     # 2x: 41.11 0.0102; 3x: 39.02 0.022; 5x: 36.75 0.0296; 8x: 34.20 0.037; 16x: 30.81 0.060 ++
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 40.96 0.0111; 3x: 39.11 0.0189; 5x: 36.76 0.0301; 8x: 34.36 0.0377; 16x: 30.97 0.060
-    ###
+    ### +++
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
     # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; 5x: 36.60 0.0293; 8x: 34.26 0.0367; 16x: 30.93 0.0585 +++
+    ### +++
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W8_deconv_lr6e-4.pkl"
+    # now
+
 
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo2e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 40.65 0.0106; 3x: 38.66 0.0218; 4x: 37.51 0.0250; 5x: 36.53 0.0287; 8x: 34.10 0.0367; 16x: 30.66 0.061 vis worse
@@ -1481,7 +1495,9 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # 33.27 0.025 no distill
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
-    # no reg
+    # 2x: 40.71 0.0098; 3x: avg PSNR: 38.82 0.0206; no reg
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
+    # 2x: 41.47 0.0105; 3x: 39.49 0.0200; 4x: no photo
 
 
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4_*t.pkl" # worse.

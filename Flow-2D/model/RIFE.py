@@ -208,7 +208,7 @@ class Model(nn.Module):
 
             if flow_available:
                 loss_flow = 0.
-                num_blocks = 4 # 3 4 5
+                num_blocks = 5 # 3 4 5
                 gamma_coeff = 0.8 # 0.7 0.8 0.9
                 for i in range(num_blocks):
                     gamma = gamma_coeff ** i
