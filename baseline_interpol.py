@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 
-def linear_interpolation(original_data):
+def linear_interpolation(original_data, factor):
     # Convert the array to a PyTorch tensor
     tensor_data = torch.from_numpy(original_data)
 
@@ -13,14 +13,15 @@ def linear_interpolation(original_data):
     print("t", tensor_data.shape)
 
     # expected: mini-batch x channels x [optional depth] x [optional height] x width.
-    interpolated_tensor = F.interpolate(tensor_data, scale_factor=(2), mode='linear') # nearest
+    interpolated_tensor = F.interpolate(tensor_data, scale_factor=(factor), mode='linear') # nearest
 
     interpolated_tensor = interpolated_tensor.permute(2, 0, 1)
 
     # Convert the interpolated tensor to a NumPy array
     interpolated_data = interpolated_tensor.squeeze().numpy()
 
-    interpolated_data = interpolated_data[1::2]
+    interpolated_data = [d for i, d in enumerate(interpolated_data) if i % factor != 0]
+    interpolated_data = np.array(interpolated_data)
 
     return interpolated_data
 

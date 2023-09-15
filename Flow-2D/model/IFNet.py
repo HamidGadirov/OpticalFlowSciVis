@@ -33,8 +33,8 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 version = 1
 two_blocks = False
 three_blocks = False
-four_blocks = False # True
-five_blocks = True
+four_blocks = True # True
+five_blocks = False
 six_blocks = False
 refine = False # True
 use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
@@ -204,9 +204,9 @@ class IFNet(nn.Module):
             # self.block0 = IFBlock(2, c=256) # 6 c=240 128 256
             # self.block1 = IFBlock(5+4, c=192) # 13 c=150 96 192
             # self.block2 = IFBlock(5+4, c=128) # 13 c=90 96 64 128
-            self.block0 = IFBlock(3, c=256) # 6 c=240 128 256
-            self.block1 = IFBlock(6+4, c=192) # 13 c=150 96 192
-            self.block2 = IFBlock(6+4, c=128) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=240) # 6 c=240 128 256
+            self.block1 = IFBlock(6+4, c=150) # 13 c=150 96 192
+            self.block2 = IFBlock(6+4, c=90) # 13 c=90 96 64 128
 
         # if four_blocks:
         #     self.block0 = IFBlock(2, c=256) # 128 256
@@ -214,10 +214,10 @@ class IFNet(nn.Module):
         #     self.block2 = IFBlock(5+4, c=192) # 96 192
         #     self.block3 = IFBlock(5+4, c=128) # 64 128
         if four_blocks:
-            self.block0 = IFBlock(3, c=256) # 128 256
-            self.block1 = IFBlock(6+4, c=192) # 96 192
-            self.block2 = IFBlock(6+4, c=192) # 96 192
-            self.block3 = IFBlock(6+4, c=128) # 64 128
+            self.block0 = IFBlock(3, c=400) # 128 256 320 400
+            self.block1 = IFBlock(6+4, c=320) # 96 192 256 320
+            self.block2 = IFBlock(6+4, c=320) # 96 192 256 320
+            self.block3 = IFBlock(6+4, c=256) # 64 128 192 256
 
         if five_blocks:
             # self.block0 = IFBlock(2, c=256) # 128 256
@@ -240,7 +240,7 @@ class IFNet(nn.Module):
             self.block5 = IFBlock(5+4, c=128)
 
         # self.block_tea = IFBlock(6+4, c=128) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64 128
-        self.block_tea = IFBlock(7+4, c=128)
+        self.block_tea = IFBlock(7+4, c=256) # 90 128 192 256
         # modified
         if refine:
             self.contextnet = Contextnet()
