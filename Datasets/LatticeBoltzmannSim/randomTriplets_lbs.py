@@ -51,12 +51,29 @@ with Bar("Loading the data...", max=num_triplets) as bar:
             # k = t - rand_w
             # l = t + rand_w
 
-            window = 8 # 6 16
-            t = np.random.randint(window, member_size - window - 1)
-            t = t * member_idx # rand select member
-            # Randomly select k and l within the window around t
-            k = np.random.randint(max(0, t - window), t)
-            l = np.random.randint(t + 1, min(member_idx * member_size, t + window + 1))
+            print("\n")
+
+            # window = 7 # 6 8 16
+            # t = np.random.randint(window, member_size - window - 1)
+            # t = t * member_idx # rand select member
+            # # Randomly select k and l within the window around t
+            # k = np.random.randint(max(0, t - window), t)
+            # l = np.random.randint(t + 1, min(member_idx * member_size, t + window + 1))
+
+            window = 12
+            # Randomly select k
+            k = np.random.randint(0, member_size - 1 - window)
+            k = k * member_idx # rand select member
+            # print("k", k)
+            # Calculate the valid range for l
+            max_l = min(member_size * member_idx - 1, k + window)
+            # print("max_l", max_l)
+            # Randomly select l within the valid range
+            l = np.random.randint(k + 1 + 1, max_l + 1)
+            # print("l", l)
+            # Randomly select t between k and l
+            t = np.random.randint(k + 1, l)
+            # print("t", t)
             
             # k = t - window
             # l = t + window
@@ -85,7 +102,8 @@ print(triplet_data.dtype)
 # Save the triplets as a pickle file
 # filename = 'lbs2d_triplets_W6middleT_40K_train.pkl'
 # filename = 'lbs2d_triplets_W3fix_30K_train.pkl' # there was a bug
-filename = 'lbs2d_triplets_W8_40K_train.pkl'
+# filename = 'lbs2d_triplets_W7_40K_train.pkl'
+filename = 'lbs2d_triplets_W12simple_40K_train.pkl'
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 print('Saved!')

@@ -1187,26 +1187,28 @@ if __name__ == "__main__":
     # 2x: 50.26 0.0133; 3x: 54.03 0.0147; 4x: 48.21 0.0158; 8x: 48.64 0.0209; 16x: 43.64 0.032; 32x: 42.58 0.0498
     model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W10_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 80 ep
     # 2x: 50.49 0.0117; 3x: 53.97 0.0127; 4x: 48.56 0.0138; 8x: 49.09 0.0198; 16x: 43.34 0.032; 32x: 40.48 0.054
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 175 ep
-    # 2x: 50.79 0.0089; 3x: 55.97 0.0111; 4x: 48.97 0.0128; 5x: 51.36 0.0144; 8x: 49.17 0.0197; 16x: 46.43 0.0334; 32x: 40.30 0.0553
 
-    model_name = "flownet_4Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 160 ep
+    # model_name = "flownet_4Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 160 ep
     # 2x: 50.71 0.0112; 3x: 55.08 0.0128; 4x: 48.98 0.0140; 5x: 50.43 0.0154; 8x: 49.11 0.0201; 16x: 43.44 0.0344; 32x: 39.98 0.0562
-    model_name = "flownet_4Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma9e-1_eqRes_deconv_lr6e-4.pkl" # 100 ep
+    # model_name = "flownet_4Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma9e-1_eqRes_deconv_lr6e-4.pkl" # 100 ep
     # 2x: 49.85 0.0119; 3x: 55.81 0.0130; 4x: 49.02 0.0142; 5x: 51.25 0.0156; 8x: 49.27 0.0202; 16x: 43.62 0.0343; 32x: 40.33 0.0563
-    model_name = "flownet_4Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma7e-1_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_l1_2convDown2convUp2conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma7e-1_eqRes_deconv_lr6e-4.pkl"
     # 2x: 51.02 0.0126; 3x: 56.28 0.0137; 4x: 48.88 0.0147; 5x: 50.46 0.0160; 8x: 49.18 0.0204; 16x: 44.31 0.0347; 32x: 40.00 0.0566
 
-    model_name = "flownet_4Blocks_l1_4convDown4convUp4conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_l1_4convDown4convUp4conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 50.76 0.0056; 3x: 55.65 0.0093; 4x: 49.12 0.0113; 5x: 50.66 0.0134; 8x: 48.68 0.0192; 16x: 41.51 0.0382; 32x: 39.56 0.0549
     ###
-    model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # +++ 90 ep
+    # model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # +++ 90 ep
     # 2x: 51.46 0.0064; 3x: 57.65 0.0096; 4x: 49.29 0.0115; 5x: 51.64 0.0135; 8x: 48.98 0.0193; 16x: 45.82 0.0388; 32x: 40.87 0.0550
     ###
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # no deconv
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # no deconv
     # 2x: 51.21 0.0042; 3x: 58.50 0.0089; 5x: 51.96 0.0135; 8x: 49.31 0.0192; 16x: 45.87 0.0321; 32x: 40.16 0.0494
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v2.pkl"
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_400_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v2.pkl"
+    # 2x: 52.06 0.0056; 3x: 57.80 0.0093; 5x: 51.42 0.0134; 8x: 49.29 0.0192; 16x: 45.00 0.0373;
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 50.84 0.0066; 3x: 56.08 0.0099; 5x: 51.08 0.0137; 8x: 49.00 0.0192; 16x: 41.63 0.0324; 48x: 34.78 0.0607
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_400_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 51.36 0.0081; 5x: 50.17 0.0143; 8x: 47.92 0.0198; 16x: 41.47 0.0397 early stop
     # model_name = "flownet_4Blocks_l1_1conv3convDown3convUp3conv1deconv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 49.76 0.0093; 3x: 52.62 0.0116; 4x: 47.68 0.0131; 5x: 47.72 0.0149; 8x: 46.43 0.0201; 16x: 45.22 0.0326; 32x: 41.05 0.0485
     # model_name = "flownet_4Blocks_l1_6convDown6convUp6conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
@@ -1225,12 +1227,24 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_deconv_lr6e-4.pkl"
     # 2x: 51.73 0.2283; very bad flow -
 
-    # model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 140ep
+    model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 140ep
     # 2x: 50.69 0.0072; 3x: 44.98 0.0077; 4x: 43.55 0.0083; 5x: 41.72 0.0091; 8x: 40.59 0.0118; 16x: 36.63 0.0211; 32x: 36.29 0.0419
     ### +++
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v3.pkl" # 140 ep
     # 2x: 51.64 0.0066; 3x:  57.02 0.0098; 4x: 49.37 0.0118; 5x: 51.14 0.0137; 8x: 49.15 0.0195; 16x: 43.84 0.0384; 32x: 39.73 0.0559
     ### +++
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 175 ep
+    # 2x: 50.79 0.0089; 3x: 55.97 0.0111; 4x: 48.97 0.0128; 5x: 51.36 0.0144; 8x: 49.17 0.0197; 16x: 46.43 0.0334; 32x: 40.30 0.0553
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v4.pkl"
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W7_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 51.15 0.0072; 3x: 56.94 0.0102; 5x: 51.16 0.0138 8x: 49.10 0.0193; 16x: 45.15 0.0343; 32x: 39.87 0.0543
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W10simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 51.60 0.0053; 3x: 57.34 0.0094; 5x: 50.81 0.0136; 8x: 49.25 0.0193; 16x: 45.42 0.0417; 32x: 40.42 0.0552
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W15simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # now habrok
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # now habrok
+
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow1e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 52.77 0.0074;
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow3e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
@@ -1473,6 +1487,14 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
     # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; 5x: 36.60 0.0293; 8x: 34.26 0.0367; 16x: 30.93 0.0585 +++
     ### +++
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W12simple_deconv_lr6e-4.pkl" #
+    # now server
+
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W10simple_deconv_lr6e-4.pkl" #
+    # 2x: 40.40 0.0111; 3x: 38.48 0.0220; 5x: 36.31 0.0294; 8x: 33.81 0.0388; 16x: 30.29 0.0637
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W15simple_deconv_lr6e-4.pkl" #
+    # 2x: 41.25 0.0089; 3x: 39.13 0.0185; 5x: 36.65 0.0295; 8x: 34.08 0.0386; 16x: 30.55 0.0622
+
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W8_deconv_lr6e-4.pkl"
     # 2x: 39.14 0.0129; 3x: 37.84 0.0180; 4x: 36.59 0.0254; 5x: 35.67 0.0312; 8x: 33.60 0.0398; 16x: 30.59 0.0621
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W7_deconv_lr6e-4.pkl"
@@ -1480,7 +1502,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W5_deconv_lr6e-4.pkl"
     # 2x: 38.94 0.0120; 3x: 37.90 0.0177; 4x: 36.52 0.0236; 16x: 30.18 0.0623
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_320_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
-    # TODO
+    # 2x: 40.55 0.0099; 3x: 38.65 0.0174; 4x: 37.33 0.0231; 5x: 36.31 0.0281; 8x: 33.98 0.0373 16x: 30.65 0.0594
 
     # model_name = "flownet_5Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 41.04 0.0113; 3x: 39.16 0.0172; 4x: 37.78 0.0235; 5x: 36.70 0.0305; 8x: 34.27 0.0385; 16x: 30.83 0.0614
@@ -1680,8 +1702,11 @@ if __name__ == "__main__":
         # factor = 2
         # factor = 2 ** args.exp
         # factor = args.factor # check all
-
-        factors = [2, 3, 4, 5, 8, 16, 32]
+ 
+        if dataset == "droplet2d": 
+            factors = [2, 3, 4, 5, 8, 16, 24, 32]
+        elif dataset == "lbs2d":
+            factors = [2, 3, 4, 5, 8, 16, 24, 32, 48, 64]
         # factors = [8, 16, 32]
         for factor in factors:
             dir_res = "Results"
