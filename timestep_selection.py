@@ -126,7 +126,14 @@ def calculate_dist_matrix(data_test, model, device):
                 # print(factor)
                 # print(interpol_step)
                 # input("x")
-                merged, flow, mask = model.inference(data_test_i, data_test_j, t=interpol_step)
+                mask = np.zeros((1, 160, 224), dtype=np.float32)
+                mask[0] = 1
+                t_mask = mask * interpol_step
+                t_mask = torch.from_numpy(t_mask).unsqueeze(0).to(device)
+                # print(data_test_i.shape)
+                # print(t_mask.shape)
+                # input("inference")
+                merged, flow, mask = model.inference(data_test_i, data_test_j, t_mask)
                 merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
                 merged_last = merged_last.squeeze(0)
                 # print(merged_last.shape)

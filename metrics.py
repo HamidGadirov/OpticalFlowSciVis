@@ -22,6 +22,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 from tqdm import tqdm
+import re
 
 import torch
 import lpips
@@ -83,7 +84,7 @@ def calculate_ssim(img1, img2):
     else:
         raise ValueError('Wrong input image dimensions.')
 
-def calculate_avg_psnr(original_data_gt, interpol_data, dir_model):
+def calculate_avg_psnr(original_data_gt, interpol_data, dir_model, factor):
     # normalize to [0, 1]
     original_data_gt = (original_data_gt - original_data_gt.min()) / (original_data_gt.max() - original_data_gt.min())
     interpol_data = (interpol_data - interpol_data.min()) / (interpol_data.max() - interpol_data.min())
@@ -101,7 +102,9 @@ def calculate_avg_psnr(original_data_gt, interpol_data, dir_model):
     print(psnr.shape)
     # input("psnr")
     # Save the PSNR scores to a pickle file
-    filename = os.path.join(dir_model, "psnr_for_boxplot.pkl")
+    # filename = os.path.join(dir_model, "psnr_LREST_" + str(factor) + "x.pkl")
+    # filename = os.path.join(dir_model, "psnr_RIFE_" + str(factor) + "x.pkl")
+    filename = os.path.join(dir_model, "psnr_linear_" + str(factor) + "x.pkl")
     with open(filename, 'wb') as f:
         pickle.dump(psnr, f)
     # input("psnr saved")
@@ -132,7 +135,7 @@ def calculate_avg_ssim(original_data_gt, interpol_data):
     print('avg SSIM: %.4f' % avg_ssim)
     return avg_ssim
 
-def calculate_avg_lpips(original_data_gt, interpol_data, dir_model, batch_size=16):
+def calculate_avg_lpips(original_data_gt, interpol_data, dir_model, factor, batch_size=16):
     # normalize to [0, 1]
     original_data_gt = (original_data_gt - original_data_gt.min()) / (original_data_gt.max() - original_data_gt.min())
     interpol_data = (interpol_data - interpol_data.min()) / (interpol_data.max() - interpol_data.min())
@@ -162,7 +165,9 @@ def calculate_avg_lpips(original_data_gt, interpol_data, dir_model, batch_size=1
     distances = torch.cat(distances, dim=0)
 
     # Save LPIPS results for boxplot
-    filename = os.path.join(dir_model, "lpips_for_boxplot.pkl")
+    # filename = os.path.join(dir_model, "lpips_LREST_" + str(factor) + "x.pkl")
+    # filename = os.path.join(dir_model, "lpips_RIFE_" + str(factor) + "x.pkl")
+    filename = os.path.join(dir_model, "lpips_linear_" + str(factor) + "x.pkl")
     with open(filename, 'wb') as f:
         pickle.dump(np.squeeze(distances.detach().cpu().numpy()), f)
     # print("lpips:", distances)
@@ -175,7 +180,7 @@ def calculate_avg_lpips(original_data_gt, interpol_data, dir_model, batch_size=1
     print('avg LPIPS: %.6f' % avg_lpips)
     return avg_lpips
     
-def calculate_avg_epe(flow_gt, flow_pred, dir_model):
+def calculate_avg_epe(flow_gt, flow_pred, dir_model, factor):
     # return torch.norm(flow_pred - flow_gt, p=2, dim=1).mean()
     error = np.sqrt(np.sum((flow_pred - flow_gt) ** 2, axis=1))
 
@@ -184,7 +189,10 @@ def calculate_avg_epe(flow_gt, flow_pred, dir_model):
     # Save the EPE scores to a pickle file
     epe = np.mean(error, axis=(1, 2))
     print(epe.shape)
-    filename = os.path.join(dir_model, "epe_for_boxplot.pkl")
+    # print(dir_model)
+    # input("x")
+    filename = os.path.join(dir_model, "epe_LREST_" + str(factor) + "x.pkl")
+    # filename = os.path.join(dir_model, "epe_RIFE_" + str(factor) + "x.pkl")
     with open(filename, 'wb') as f:
         pickle.dump(epe, f)
     # input("epe saved")

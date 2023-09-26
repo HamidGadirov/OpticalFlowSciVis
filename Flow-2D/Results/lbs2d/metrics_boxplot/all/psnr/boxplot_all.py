@@ -12,7 +12,8 @@ colors = {
 # Load and process PSNR data for each model and factor
 data = {}
 models = ['LREST', 'RIFE', 'Linear']
-factors = ['2x', '3x', '4x', '5x', '8x', '16x', '32x']
+# factors = ['2x', '3x', '4x', '5x', '8x', '12x', '16x', '24x', '32x', '48x', '64x', '96x', '128x']
+factors = ['3x', '5x', '8x', '12x', '16x', '32x', '48x', '64x']
 
 for model in models:
     data[model] = []
@@ -50,7 +51,7 @@ legend_labels = [plt.Rectangle((0, 0), 1, 1, color=colors[model], label=model) f
 ax1.legend(handles=legend_labels, loc='upper right')
 
 # Save the plot as an image file
-plt.savefig('psnr_lpips_boxplot.pdf')
+plt.savefig('psnr_boxplot_lbs.pdf')
 
 # Show the plot
 plt.show()

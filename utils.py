@@ -493,12 +493,12 @@ def visualize_large(original_data, interpol_data, diffs,
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
 
     index = 0
+    index_pred = 0
     # fig, axes = plt.subplots(nrows=rows, ncols=columns)
     # for ax in axes.flat:
     #     im = ax.imshow
 
     for i in range(1, columns*rows+1):
-        # index = (i-1)*2 # skip eaach second - do it defferently
         # if (index >= data_to_vis.shape[0]):
         #     break
         ax = fig.add_subplot(rows, columns, i)
@@ -521,15 +521,15 @@ def visualize_large(original_data, interpol_data, diffs,
                 ax_title = "t=" + str(index + 3000 + 1605)
             elif dataset == "droplet2d":
                 ax_title = "t=" + str(index + 10)
-            if index % 2 == 1: # if index % 3 == 1:
+            if index % factor != 0: # if index % 3 == 1:
                 ax_title += "*"
             if dataset == "lbs2d":
                 ax.set_title(ax_title, fontsize=10)
             if dataset == "droplet2d":
                 ax.set_title(ax_title, fontsize=7)
-        if int((i-1)/columns) == 1 and round(index - 1) % 2 == 0: # interpol
+        if int((i-1)/columns) == 1 and round(index) % factor != 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
-            img = interpol_data[round((index - 1) / 2)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)
+            img = interpol_data[round(index_pred)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)
             if dataset == "lbs2d":
                 plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
                 # plt.imshow(img, vmin=interpol_data.std()-interpol_data.mean(), vmax=data_to_vis.max())
@@ -537,25 +537,29 @@ def visualize_large(original_data, interpol_data, diffs,
                 plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
             # print("index:", index)
             # print("(index - 1) % 3:", (index - 1) / 3)
+            index_pred += 1
 
-        if int((i-1)/columns) == 2 and round(index - 1) % 2 == 0: # diff
+        if int((i-1)/columns) == 2 and round(index) % factor != 0: # diff
             # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
-            img = diffs[round((index - 1) / 2)] # [index-columns*2*2,...]
+            # img = diffs[round((index - 1) / 2)] # [index-columns*2*2,...]
+            img = diffs[round(index_pred)] # [index-columns*2*2,...]
             plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
-        if int((i-1)/columns) == 3 and round(index - 1) % 2 == 0: # mask
-            # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
-            img = mask[round((index - 1) / 2)] # [index-columns*2*2,...]
-            plt.imshow(img, vmin=mask.min(), vmax=mask.max(), cmap=cmap)
+            index_pred += 1
+
+        # if int((i-1)/columns) == 3 and round(index) % factor != 0: # mask
+        #     # img = data_to_vis[index+int((data_to_vis.shape[0]/3)*2),...]
+        #     img = mask[round((index - 1) / 2)] # [index-columns*2*2,...]
+        #     plt.imshow(img, vmin=mask.min(), vmax=mask.max(), cmap=cmap)
 
         # if int((i-1)/columns) == 6: # flow diff
         #     img = diffs_flow[round(index)] # [index-columns*2*2,...]
         #     plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max())
-        if int((i-1)/columns) == 4 and round(index - 1) % 2 == 0: # flow gt
+        if int((i-1)/columns) == 3 and round(index) % factor != 0: # flow gt
             if dataset == "vimeo2d" or dataset == "droplet2d": # show pred flow in hsv-rgb instead of gt
                 hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
                 hsv[:,:,1] = 255
                 # mag, ang = cv2.cartToPolar(flow_u[round((index - 1) / 3)], flow_v[round((index - 1) / 3)])
-                mag, ang = cv2.cartToPolar(flow_u[round((index - 1) / 2)], flow_v[round((index - 1) / 2)])
+                mag, ang = cv2.cartToPolar(flow_u[round(index_pred)], flow_v[round(index_pred)])
                 hsv[..., 0] = ang * 180 / np.pi / 2
                 hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
 
@@ -565,8 +569,8 @@ def visualize_large(original_data, interpol_data, diffs,
                 # plt.imshow(bgr, vmin=data_to_vis.min(), vmax=data_to_vis.max())
                 plt.imshow(bgr)
             else:
-                u_gt = flow_u_gt[round((index - 1) / 2)]
-                v_gt = flow_v_gt[round((index - 1) / 2)]
+                u_gt = flow_u_gt[round(index_pred)]
+                v_gt = flow_v_gt[round(index_pred)]
                 norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt) # / norm_coeff
                 # print(norm_gt.mean())
                 # img = original_data[round(index)] # [index-columns*2*2*2]
@@ -604,9 +608,12 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print(data_range)
                 if round(index) >= data_range:
                     break
-        if int((i-1)/columns) == 5 and round(index - 1) % 2 == 0: # and dataset == "lbs2d": # flow pred; only for interpolated!
-            u = flow_u[round((index - 1) / 2)]
-            v = flow_v[round((index - 1) / 2)]
+                index_pred += 1
+                # print("flow gt, index_pred", index_pred)
+        if int((i-1)/columns) == 4 and round(index) % factor != 0: # and dataset == "lbs2d": # flow pred; only for interpolated!
+            # print("index_pred", index_pred)
+            u = flow_u[round(index_pred)]
+            v = flow_v[round(index_pred)]
             norm = np.sqrt(u * u + v * v) # / norm_coeff
             # print(norm.mean())
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
@@ -643,9 +650,11 @@ def visualize_large(original_data, interpol_data, diffs,
             # print(data_range)
             if round(index) >= data_range:
                 break
-        if int((i-1)/columns) == 6 and round(index - 1) % 2 == 0 and dataset == "lbs2d": # flow diff vec
-            u_diff = flow_u_diff[round((index - 1) / 2)]
-            v_diff = flow_v_diff[round((index - 1) / 2)]
+            index_pred += 1
+            # print("flow pred, index_pred", index_pred)
+        if int((i-1)/columns) == 5 and round(index) % factor != 0 and dataset == "lbs2d": # flow diff vec
+            u_diff = flow_u_diff[round(index_pred)]
+            v_diff = flow_v_diff[round(index_pred)]
             norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff) # / norm_coeff
             # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
             # print("u_diff is in range %f to %f" % (np.min(u_diff), np.max(u_diff)))
@@ -662,6 +671,8 @@ def visualize_large(original_data, interpol_data, diffs,
 
             if round(index) >= data_range:
                 break
+
+            index_pred += 1
 
         # if dataset != "vimeo2d":
         #     # if round(index) % factor == 0 and int((i-1)/columns) == 0:
@@ -685,6 +696,11 @@ def visualize_large(original_data, interpol_data, diffs,
             # plt.imshow(img, cmap=cmap, vmin=data_to_vis.min(), vmax=data_to_vis.max())
 
         index += skip
+        if (i-1) % columns == 0:
+            index_pred = 0
+            # print("is an integer", index_pred)
+            # input("int")
+
         # index += factor / math.log2(factor) # skip = factor / exp  128/7
         # print(round(index))
         # if round(index) == round(columns * (factor / math.log2(factor))):
@@ -695,12 +711,14 @@ def visualize_large(original_data, interpol_data, diffs,
         # each image has a different vmin and vmax
         # cmap=cm.get_cmap('viridis')
         # colorbar for density
+        # [left, bottom, width, height]
         normalizer=Normalize(vmin=vmin, vmax=data_to_vis.max())
         im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
         if "lbs2d" in dataset:
             # cb_ax = fig.add_axes([0.91, 0.5, 0.005, 0.3])
             # cb_ax = fig.add_axes([0.82, 0.5, 0.005, 0.35]) # 9 cols
-            cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.35]) 
+            # cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.35]) 
+            cb_ax = fig.add_axes([0.75, 0.59, 0.005, 0.28]) 
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
         # cb.ax.tick_params(labelsize=font_size)
@@ -713,7 +731,8 @@ def visualize_large(original_data, interpol_data, diffs,
         if "lbs2d" in dataset:
             # cb_ax = fig.add_axes([0.91, 0.2, 0.005, 0.25])
             # cb_ax = fig.add_axes([0.82, 0.15, 0.005, 0.25]) # 9 cols
-            cb_ax = fig.add_axes([0.75, 0.15, 0.005, 0.25])
+            # cb_ax = fig.add_axes([0.75, 0.15, 0.005, 0.25])
+            cb_ax = fig.add_axes([0.75, 0.23, 0.005, 0.3])
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.12, 0.005, 0.3])
         bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
@@ -791,14 +810,14 @@ def visualize_large(original_data, interpol_data, diffs,
     fig.text(x, y, 'Dens GT', size=font_size)
     fig.text(x, y - step, 'Dens pred', size=font_size)
     fig.text(x, y - step*2, 'Dens diff', size=font_size)
-    fig.text(x, y - step*3, 'Dens mask', size=font_size)
+    # fig.text(x, y - step*3, 'Dens mask', size=font_size)
     if "droplet2d" in dataset or "vimeo2d" in dataset:
-        fig.text(x, y - step*4, 'Flow pred HSV', size=font_size)
+        fig.text(x, y - step*3, 'Flow pred HSV', size=font_size)
     else:
-        fig.text(x, y - step*4, 'Flow GT', size=font_size)
-    fig.text(x, y - step*5, 'Flow pred', size=font_size)
+        fig.text(x, y - step*3, 'Flow GT', size=font_size)
+    fig.text(x, y - step*4, 'Flow pred', size=font_size)
     if dataset != "droplet2d" and dataset != "vimeo2d":
-        fig.text(x, y - step*6, 'Flow diff', size=font_size)
+        fig.text(x, y - step*5, 'Flow diff', size=font_size)
 
     if show:
         plt.show() 

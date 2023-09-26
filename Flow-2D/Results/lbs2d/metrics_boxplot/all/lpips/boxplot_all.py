@@ -11,8 +11,9 @@ colors = {
 
 # Load and process LPIPS data for each model and factor
 data = {}
-models = ['LREST', 'RIFE', 'Linear']
-factors = ['2x', '3x', '4x', '5x', '8x', '16x']
+models = ['LREST']
+# models = ['LREST', 'RIFE', 'Linear']
+factors = ['2x', '3x', '4x', '5x', '8x', '12x', '16x', '24x', '32x', '48x', '64x']
 
 for model in models:
     data[model] = []
@@ -50,7 +51,7 @@ legend_labels = [plt.Rectangle((0, 0), 1, 1, color=colors[model], label=model) f
 ax1.legend(handles=legend_labels, loc='upper right')
 
 # Save the plot as an image file
-plt.savefig('lpips_lpips_boxplot.pdf')
+plt.savefig('lpips_boxplot_droplet.pdf')
 
 # Show the plot
 plt.show()

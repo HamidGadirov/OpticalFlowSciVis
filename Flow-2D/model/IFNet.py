@@ -73,11 +73,6 @@ class IFBlock(nn.Module):
                 conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
-                # conv(c, c), # 8 conv
-                # conv(c, c),
-                # conv(c, c),
-                # conv(c, c),
-                # conv(c, c), # 12
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),

@@ -3,13 +3,28 @@ HOME=str(Path.home())
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath(HOME+'/dev/helper/helper_timesel'))
+# sys.path.insert(0, os.path.abspath(HOME+'/dev/helper/helper_timesel'))
+sys.path.insert(0, os.path.abspath('/Users/hamidgadirov/Desktop/OpticalFlow/FlowSciVis/helper_timesel'))
+
+# python3.11 selection.py
 
 import helper_timesel as sel
 
+nTimeSteps = 169 # 70 169
+# distsFName = f'{HOME}/Desktop/OpticalFlow/FlowSciVis/dist_matrix_70.txt'
+# distsFName=f'/Users/hamidgadirov/Desktop/OpticalFlow/FlowSciVis/dist_matrix_169.txt'
+distsFName=f'/Users/hamidgadirov/Desktop/OpticalFlow/FlowSciVis/dist_matrix_169_1.txt'
 
-nTimeSteps=150
-distsFName=f'{HOME}/Desktop/dist_matrix_150.txt'
+# k=7 v=4173.755582 | selection: [0, 21, 72, 98, 130, 158, 168]
+# k=8 v=4219.463857 | selection: [0, 21, 72, 98, 131, 147, 159, 168]
+# k=9 v=4260.105192 | selection: [0, 33, 64, 74, 98, 131, 147, 159, 168]
+# k=10 v=4300.339904 | selection: [0, 33, 64, 74, 98, 120, 135, 147, 159, 168]
+# k=11 v=4315.807689 | selection: [0, 21, 33, 64, 74, 98, 120, 135, 147, 159, 168]
+# k=12 v=4327.717379000001 | selection: [0, 21, 33, 64, 74, 98, 115, 120, 135, 147, 159, 168]
+# k=16 v=4336.2659380000005 | selection: [0, 21, 29, 37, 56, 65, 74, 98, 115, 119, 131, 135, 142, 147, 159, 168]
+
+# dist_matrix_169_1
+# k=8 v=4238.963533 | selection: [0, 30, 56, 84, 115, 142, 160, 168]
 
 with open(distsFName) as f:
     lines = [line.rstrip().split(' ') for line in f]

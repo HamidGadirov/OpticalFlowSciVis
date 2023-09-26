@@ -10,6 +10,7 @@ from matplotlib.pyplot import axes, title
 # import matplotlib
 # matplotlib.use('TkAgg')  # or 'Qt5Agg', depending on your system
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import os
 import cv2
 import math
@@ -60,6 +61,7 @@ def get_learning_rate(step):
         # return 3e-4 * mul # # orig
         # return 4e-4 * mul
         return 6e-4 * mul # my
+        # return 6e-5 * mul #
         # return 8e-4 * mul
         # return 1e-3 * mul
     else:
@@ -71,6 +73,7 @@ def get_learning_rate(step):
         # return (3e-4 - 3e-5) * mul + 3e-5 # orig
         # return (4e-4 - 4e-6) * mul + 4e-6
         return (6e-4 - 6e-6) * mul + 6e-6 # my
+        # return (6e-5 - 6e-6) * mul + 6e-6 #
         # return (6e-4 - 6e-5) * mul + 6e-5
         # return (8e-4 - 8e-6) * mul + 8e-6
         # return (1e-3 - 1e-5) * mul + 1e-5
@@ -184,7 +187,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     # model_name += "_" + dataset
     # model_name += ".pkl"
 
-    # model.load_model(model_name, log_path)
+    model.load_model(model_name, log_path)
     try:
         model.load_model(model_name, log_path)
         # print("Loaded RIFE model:", model_name)
@@ -283,14 +286,14 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 #     gt = data_gpu[:, 2:3, 0]
                 train_time_interval = time.time() - time_stamp
                 time_stamp = time.time()
-                if step % 200 == 1 and local_rank == 0:
-                    print("step 200")
+                # if step % 200 == 1 and local_rank == 0:
+                #     print("step 200")
                     # writer.add_scalar('learning_rate', learning_rate, step)
                     # writer.add_scalar('loss/l1', info['loss_l1'], step)
                     # writer.add_scalar('loss/tea', info['loss_tea'], step)
                     # writer.add_scalar('loss/distill', info['loss_distill'], step)
-                if step % 1000 == 1 and local_rank == 0:
-                    print("step 1000")
+                # if step % 1000 == 1 and local_rank == 0:
+                #     print("step 1000")
                     # gt = (gt.permute(0, 2, 3, 1).detach().cpu().numpy() * 255).astype('uint8')
                     # mask = (torch.cat((info['mask'], info['mask_tea']), 3).permute(0, 2, 3, 1).detach().cpu().numpy() * 255).astype('uint8')
                     # pred = (pred.permute(0, 2, 3, 1).detach().cpu().numpy() * 255).astype('uint8')
@@ -769,9 +772,9 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 if __name__ == "__main__":    
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=200, type=int) # 300 500 1000
+    parser.add_argument('--epoch', default=150, type=int) # 200 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1197,12 +1200,12 @@ if __name__ == "__main__":
 
     # model_name = "flownet_4Blocks_l1_4convDown4convUp4conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 50.76 0.0056; 3x: 55.65 0.0093; 4x: 49.12 0.0113; 5x: 50.66 0.0134; 8x: 48.68 0.0192; 16x: 41.51 0.0382; 32x: 39.56 0.0549
-    ###
     # model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # +++ 90 ep
     # 2x: 51.46 0.0064; 3x: 57.65 0.0096; 4x: 49.29 0.0115; 5x: 51.64 0.0135; 8x: 48.98 0.0193; 16x: 45.82 0.0388; 32x: 40.87 0.0550
     ###
-    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # no deconv
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # no deconv
     # 2x: 51.21 0.0042; 3x: 58.50 0.0089; 5x: 51.96 0.0135; 8x: 49.31 0.0192; 16x: 45.87 0.0321; 32x: 40.16 0.0494
+    ###
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v2.pkl"
     # 2x: 52.06 0.0056; 3x: 57.80 0.0093; 5x: 51.42 0.0134; 8x: 49.29 0.0192; 16x: 45.00 0.0373;
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
@@ -1218,7 +1221,7 @@ if __name__ == "__main__":
     # 2x: 53.17 0.0904; 3x: 59.01 0.1009; 4x: 49.97 0.1125; 5x: 51.72 0.1253; 8x: 49.33 0.1683; 16x: 42.61 0.2017; 32x: 40.21 0.2050
     # model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline.pkl" # baseline
     # 2x: 52.16 0.0935; 3x: 58.12 0.1039; 5x: 51.02 0.1310; 16x: 44.28 0.2132; 32x: 40.05 0.2030
-    # model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline_v2.pkl" # 100 ep
+    model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline_v2.pkl" # 100 ep
     # Baseline 2x: 51.90 0.0919; 3x: 56.12 0.0987; 5x: 50.96 0.1168; 8x: 49.26 0.1467; 16x: 44.15 0.1644; 32x: 39.57 0.1582
 
     # model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline.pkl" # baseline
@@ -1227,23 +1230,26 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_deconv_lr6e-4.pkl"
     # 2x: 51.73 0.2283; very bad flow -
 
-    model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 140ep
+    # model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 140ep
     # 2x: 50.69 0.0072; 3x: 44.98 0.0077; 4x: 43.55 0.0083; 5x: 41.72 0.0091; 8x: 40.59 0.0118; 16x: 36.63 0.0211; 32x: 36.29 0.0419
-    ### +++
+    ###
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v3.pkl" # 140 ep
     # 2x: 51.64 0.0066; 3x:  57.02 0.0098; 4x: 49.37 0.0118; 5x: 51.14 0.0137; 8x: 49.15 0.0195; 16x: 43.84 0.0384; 32x: 39.73 0.0559
-    ### +++
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 175 ep
+    ###
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # 175 ep
     # 2x: 50.79 0.0089; 3x: 55.97 0.0111; 4x: 48.97 0.0128; 5x: 51.36 0.0144; 8x: 49.17 0.0197; 16x: 46.43 0.0334; 32x: 40.30 0.0553
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v4.pkl"
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v4.pkl"
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W7_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 51.15 0.0072; 3x: 56.94 0.0102; 5x: 51.16 0.0138 8x: 49.10 0.0193; 16x: 45.15 0.0343; 32x: 39.87 0.0543
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W10simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W10simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 51.60 0.0053; 3x: 57.34 0.0094; 5x: 50.81 0.0136; 8x: 49.25 0.0193; 16x: 45.42 0.0417; 32x: 40.42 0.0552
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W15simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
-    # now habrok
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W15simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 51.32 0.0058; 3x: 57.68 0.0098; 5x: 51.56 0.0138; 8x: 49.21 0.0194; 16x: 46.09 0.0322; 32x: 39.66 0.0531
+    ### +++
     model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
-    # now habrok
+    # 2x: 52.18 0.0056; 3x: 58.44 0.0096; 5x: 51.18 0.0137; 8x: 49.03 0.0192; 16x: 46.53 0.0356; 32x: 40.46 0.0545
+    ### +++
+
 
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow1e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 52.77 0.0074;
@@ -1487,11 +1493,11 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
     # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; 5x: 36.60 0.0293; 8x: 34.26 0.0367; 16x: 30.93 0.0585 +++
     ### +++
-    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W12simple_deconv_lr6e-4.pkl" #
-    # now server
 
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W10simple_deconv_lr6e-4.pkl" #
     # 2x: 40.40 0.0111; 3x: 38.48 0.0220; 5x: 36.31 0.0294; 8x: 33.81 0.0388; 16x: 30.29 0.0637
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W12simple_deconv_lr6e-4.pkl" #
+    # 2x: 40.28 0.0165; 3x: 38.43 0.0229; 5x: 36.08 0.0320; 8x: 33.53 0.0414; 16x: 30.16 0.0662
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W15simple_deconv_lr6e-4.pkl" #
     # 2x: 41.25 0.0089; 3x: 39.13 0.0185; 5x: 36.65 0.0295; 8x: 34.08 0.0386; 16x: 30.55 0.0622
 
@@ -1514,7 +1520,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_v1_240_drop40KrandTripl_W6_lr3e-4_RIFEbaseline.pkl" # baseline
     # early stop after 50 -
     # model_name = "flownet_lapl_dist_v1_240_drop40KrandTripl_W6_lr3e-4_RIFEbaseline_v2.pkl"
-    # 5x: 35.31 0.0331
+    # baseline 5x: 35.31 0.0331
 
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo2e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 40.65 0.0106; 3x: 38.66 0.0218; 4x: 37.51 0.0250; 5x: 36.53 0.0287; 8x: 34.10 0.0367; 16x: 30.66 0.061 vis worse
@@ -1704,9 +1710,9 @@ if __name__ == "__main__":
         # factor = args.factor # check all
  
         if dataset == "droplet2d": 
-            factors = [2, 3, 4, 5, 8, 16, 24, 32]
+            factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
         elif dataset == "lbs2d":
-            factors = [2, 3, 4, 5, 8, 16, 24, 32, 48, 64]
+            factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64, 96, 128]
         # factors = [8, 16, 32]
         for factor in factors:
             dir_res = "Results"
@@ -1833,19 +1839,19 @@ if __name__ == "__main__":
             print("flow pred & mask:", flow.shape, mask.shape)
             # input("n")
 
-            """
+            # """
             ##### Baseline evaluation
             lin_interpol = linear_interpolation(data_original, factor)
             lin_interpol = lin_interpol[:data_original_interpol.shape[0]]
             print(lin_interpol.shape)
 
-            avg_psnr = calculate_avg_psnr(data_original_interpol, lin_interpol, dir_model)
-            avg_lpips = calculate_avg_lpips(data_original_interpol, lin_interpol, dir_model)
+            avg_psnr = calculate_avg_psnr(data_original_interpol, lin_interpol, dir_model, factor)
+            avg_lpips = calculate_avg_lpips(data_original_interpol, lin_interpol, dir_model, factor)
             # Droplets: linear: PSNR: 32.21 LPIPS: 0.0356; nearest: PSNR: 30.76 LPIPS: 0.0373
             # LBS: linear: PSNR: 44.88; nearest: PSNR: 47.99
-            input("baseline")
+            # input("baseline")
             #####
-            """
+            # """
 
             if "lbs2d" in dataset: # denormalize
                 # print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
@@ -2006,10 +2012,10 @@ if __name__ == "__main__":
 
             # """
             title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
-            if factor == 2:
-                visualize_large(data_test, interpol_data, diffs,
-                    flow, flow_original_pred, diffs_flow, u_diff, v_diff, mask,
-                    factor, dataset, dir_model, title=title, show=False, save=True)
+            # if factor == 2:
+            visualize_large(data_test, interpol_data, diffs,
+                flow, flow_original_pred, diffs_flow, u_diff, v_diff, mask,
+                factor, dataset, dir_model, title=title, show=False, save=True)
 
             title = "Density_gt_pred_diff"
             visualize_seq_dens(data_original_interpol, interpol_data, diffs,
@@ -2031,14 +2037,14 @@ if __name__ == "__main__":
             #     print(original_data_gt.shape, interpol_data.shape)
             #     original_data_gt = original_data_gt[:2000]
             #     interpol_data = interpol_data[:2000]
-            avg_psnr = calculate_avg_psnr(data_original_interpol, interpol_data, dir_model)
+            # avg_psnr = calculate_avg_psnr(data_original_interpol, interpol_data, dir_model, factor)
             # avg_ssim = calculate_avg_ssim(original_data_gt, interpol_data)
-            avg_lpips = calculate_avg_lpips(data_original_interpol, interpol_data, dir_model)
+            # avg_lpips = calculate_avg_lpips(data_original_interpol, interpol_data, dir_model, factor)
             if dataset != "vimeo2d" and dataset != "droplet2d":
                 # Flow metric
                 # print(flow_gt.shape, flow.shape)
                 print(flow_original_pred.shape, flow.shape)
-                avg_epe = calculate_avg_epe(flow_original_pred, flow, dir_model)
+                avg_epe = calculate_avg_epe(flow_original_pred, flow, dir_model, factor)
             # save metrics score
             filename = os.path.join(dir_model, 'metrics.txt')
             with open(filename, 'w') as f:
@@ -2049,20 +2055,31 @@ if __name__ == "__main__":
                     f.write('EPE: {:.5f}\n'.format(avg_epe))
 
             data_test = data_test_no_skip
-            # fig, axs = plt.subplots(nrows=12, ncols=12, figsize=(10, 10))
+
+            # # Define the indices from selection
+            # # highlighted_indices = [0, 21, 33, 64, 74, 98, 120, 135, 147, 159, 168] # 169_0
+            # highlighted_indices = [0, 30, 56, 84, 115, 142, 168] # # 169_1
+            # fig, axs = plt.subplots(nrows=13, ncols=13, figsize=(10, 10))
             # axs = axs.flatten()
             # for i in range(data_test.shape[0]):
             #     try:
             #         image = data_test[i].squeeze()
             #         axs[i].imshow(image, cmap='gray')
             #         axs[i].axis('off')
-            #         axs[i].set_title(str(i))  # Add label as the title
+            #         title = axs[i].set_title(str(i), fontsize=10, pad=3)  # Add label as the title
+                    
+            #         # Check if the current index should have a red boundary
+            #         if i in highlighted_indices:
+            #             rect = patches.Rectangle((0, 0), 224, 160, linewidth=2, edgecolor='red', facecolor='none')
+            #             axs[i].add_patch(rect)
+            #             axs[i].set_title(str(i), fontsize=10, color='red', pad=3)  # Set the title color to red
             #     except:
             #         break
             # # Adjust the spacing between the subplots
             # plt.tight_layout()
             # # Save the plot to a file
-            # fig.savefig("droplets.png", dpi=300)
+            # fig.savefig("droplets.pdf", dpi=300)
+            # print("droplets pdf saved!")
             # # input("x")
 
             # # 300-600 subset works
@@ -2099,6 +2116,7 @@ if __name__ == "__main__":
                 plt.ylabel('Timestep')
                 # plt.show()
                 plt.savefig("dist_matrix.png", dpi=300) 
+                input("dist_matrix calculation completed")
 
 # print("Dataset:", dataset)
 

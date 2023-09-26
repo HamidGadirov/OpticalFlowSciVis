@@ -12,7 +12,7 @@ colors = {
 # Load and process epe data for each model and factor
 data = {}
 models = ['LREST', 'RIFE']
-factors = ['2x', '3x', '4x', '5x', '8x', '16x', '32x']
+factors = ['2x', '3x', '4x', '5x', '8x', '12x', '16x', '24x', '32x', '48x', '64x', '96x', '128x']
 
 for model in models:
     data[model] = []
