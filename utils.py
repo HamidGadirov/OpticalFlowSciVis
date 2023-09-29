@@ -235,7 +235,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
     if "lbs2d" in dataset:
         vmin = 95
         print("vis range:", vmin, data_to_vis.max())
-        hspace = -0.41
+        hspace = -0.14
         wspace = 0.01
         cmap ='turbo'
     if "droplet2d" in dataset:
@@ -262,8 +262,8 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
             ax_title = "t=" + str(index + shift + 3000 + 1605)
             ax.set_title(ax_title, fontsize=20)
         elif dataset == "droplet2d":
-            ax_title = "t=" + str(index + shift + 10)
-            ax.set_title(ax_title, fontsize=15)
+            ax_title = "t=" + str(index + shift + 15)
+            ax.set_title(ax_title, fontsize=12, pad=10)
         ax.axis('off')
 
         # Second row: interpolated data
@@ -282,7 +282,8 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         ax.axis('off')
 
         index += skip
-        shift += 1 # we have only GT here
+        if i % columns == 0:
+            shift += 1 # we have only GT here
         if round(index) == round(columns * skip):
             index = 0
 
@@ -305,6 +306,18 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         if not os.path.isdir(dir_res):
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
+        # save data for plots
+        original_data_filename = os.path.join(dir_res, 'original_data.pkl')
+        with open(original_data_filename, 'wb') as f:
+            pickle.dump(original_data, f)
+        interpol_data_filename = os.path.join(dir_res, 'interpol_data_LREST.pkl')
+        # interpol_data_filename = os.path.join(dir_res, 'interpol_data_RIFE.pkl')
+        with open(interpol_data_filename, 'wb') as f:
+            pickle.dump(interpol_data, f)
+        diffs_filename = os.path.join(dir_res, 'diffs_LREST.pkl')
+        # diffs_filename = os.path.join(dir_res, 'diffs_RIFE.pkl')
+        with open(diffs_filename, 'wb') as f:
+            pickle.dump(diffs, f)
 
 def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
     factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
@@ -315,7 +328,7 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
     elif dataset == "lbs2d":
         columns = 8
     rows = 3
-    skip = 1
+    skip = 3 # 1
     data_to_vis = flow_gt
     index = 0
     shift = 1
@@ -332,7 +345,7 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
     flow_v = flow_pred[:, 1, ...]
 
     # wspace is x; hspace is y
-    fig, axs = plt.subplots(nrows=rows, ncols=columns, figsize=(30, 3), gridspec_kw={'hspace': -0.41, 'wspace': 0.01})
+    fig, axs = plt.subplots(nrows=rows, ncols=columns, figsize=(30, 3), gridspec_kw={'hspace': -0.14, 'wspace': 0.01})
 
     # TODO: fix timesteps, t
 
@@ -348,7 +361,7 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         if dataset == "lbs2d":
             ax_title = "t=" + str(index + shift + 3000 + 1605)
         elif dataset == "droplet2d":
-            ax_title = "t=" + str(index + shift + 10)
+            ax_title = "t=" + str(index + shift + 15)
         ax.set_title(ax_title, fontsize=20)
         ax.axis('off')
 
@@ -373,7 +386,8 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         ax.axis('off')
 
         index += skip
-        shift += 1 # we have only GT here
+        if i % columns == 0:
+            shift += 1 # we have only GT here
         if round(index) == round(columns * skip):
             index = 0
 
@@ -396,6 +410,23 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
 
+        flow_gt_filename = os.path.join(dir_res, 'flow_gt.pkl')
+        with open(flow_gt_filename, 'wb') as f:
+            pickle.dump(flow_gt, f)
+        # save data for plots   flow_pred, flow_u_diff, flow_v_diff
+        interpol_data_filename = os.path.join(dir_res, 'flow_pred_LREST.pkl')
+        # interpol_data_filename = os.path.join(dir_res, 'flow_pred_RIFE.pkl')
+        with open(interpol_data_filename, 'wb') as f:
+            pickle.dump(flow_pred, f)
+        diffs_filename = os.path.join(dir_res, 'flow_u_diff_LREST.pkl')
+        # diffs_filename = os.path.join(dir_res, 'flow_u_diff_RIFE.pkl')
+        with open(diffs_filename, 'wb') as f:
+            pickle.dump(flow_u_diff, f)
+        diffs_filename = os.path.join(dir_res, 'flow_v_diff_LREST.pkl')
+        # diffs_filename = os.path.join(dir_res, 'flow_v_diff_RIFE.pkl')
+        with open(diffs_filename, 'wb') as f:
+            pickle.dump(flow_v_diff, f)
+
 def visualize_large(original_data, interpol_data, diffs,
         flow, flow_gt, diffs_flow, flow_u_diff, flow_v_diff, mask,
         factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
@@ -412,10 +443,10 @@ def visualize_large(original_data, interpol_data, diffs,
         columns = 28
     rows = 7 # 4
     skip = 1
-    if factor == 8:
-        skip = 2
-    if factor >= 16: # or factor == 32 or factor == 64:
-        skip = 4
+    # if factor == 8:
+    #     skip = 2
+    # if factor >= 16: # or factor == 32 or factor == 64:
+    #     skip = 4
     # if factor == 128:
     #     skip = 8
 
@@ -520,13 +551,14 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "lbs2d":
                 ax_title = "t=" + str(index + 3000 + 1605)
             elif dataset == "droplet2d":
-                ax_title = "t=" + str(index + 10)
+                ax_title = "t=" + str(index + 15)
             if index % factor != 0: # if index % 3 == 1:
                 ax_title += "*"
             if dataset == "lbs2d":
                 ax.set_title(ax_title, fontsize=10)
             if dataset == "droplet2d":
-                ax.set_title(ax_title, fontsize=7)
+                # ax.set_title(ax_title, fontsize=7)
+                ax.set_title(ax_title, fontsize=5, pad=-8)
         if int((i-1)/columns) == 1 and round(index) % factor != 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
             img = interpol_data[round(index_pred)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)
@@ -568,6 +600,7 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print("Flow in bgr:", bgr.shape)
                 # plt.imshow(bgr, vmin=data_to_vis.min(), vmax=data_to_vis.max())
                 plt.imshow(bgr)
+                index_pred += 1
             else:
                 u_gt = flow_u_gt[round(index_pred)]
                 v_gt = flow_v_gt[round(index_pred)]
@@ -608,9 +641,9 @@ def visualize_large(original_data, interpol_data, diffs,
                 # print(data_range)
                 if round(index) >= data_range:
                     break
-                index_pred += 1
+                index_pred += 3
                 # print("flow gt, index_pred", index_pred)
-        if int((i-1)/columns) == 4 and round(index) % factor != 0: # and dataset == "lbs2d": # flow pred; only for interpolated!
+        if int((i-1)/columns) == 4 and round(index) % factor != 0: # flow pred; only for interpolated!
             # print("index_pred", index_pred)
             u = flow_u[round(index_pred)]
             v = flow_v[round(index_pred)]
@@ -650,7 +683,10 @@ def visualize_large(original_data, interpol_data, diffs,
             # print(data_range)
             if round(index) >= data_range:
                 break
-            index_pred += 1
+            if dataset == "droplet2d":
+                index_pred += 1
+            if dataset == "lbs2d":
+                index_pred += 3
             # print("flow pred, index_pred", index_pred)
         if int((i-1)/columns) == 5 and round(index) % factor != 0 and dataset == "lbs2d": # flow diff vec
             u_diff = flow_u_diff[round(index_pred)]
@@ -672,7 +708,7 @@ def visualize_large(original_data, interpol_data, diffs,
             if round(index) >= data_range:
                 break
 
-            index_pred += 1
+            index_pred += 3
 
         # if dataset != "vimeo2d":
         #     # if round(index) % factor == 0 and int((i-1)/columns) == 0:

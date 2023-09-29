@@ -14,6 +14,8 @@ def linear_interpolation(original_data, factor):
 
     # expected: mini-batch x channels x [optional depth] x [optional height] x width.
     interpolated_tensor = F.interpolate(tensor_data, scale_factor=(factor), mode='linear') # nearest
+    # print("interpolated_tensor:", interpolated_tensor.shape)
+    # input("x")
 
     interpolated_tensor = interpolated_tensor.permute(2, 0, 1)
 

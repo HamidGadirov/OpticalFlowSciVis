@@ -12,7 +12,6 @@ colors = {
 # Load and process PSNR data for each model and factor
 data = {}
 models = ['LREST', 'RIFE', 'Linear']
-# factors = ['2x', '3x', '4x', '5x', '8x', '12x', '16x', '24x', '32x', '48x', '64x', '96x', '128x']
 factors = ['3x', '5x', '8x', '12x', '16x', '32x', '48x', '64x']
 
 for model in models:
@@ -25,9 +24,10 @@ for model in models:
 
 # Create a figure and axis
 fig, ax1 = plt.subplots()
-ax1.set_title('Methods Comparison, LBS')
-ax1.set_xlabel('Factor')
-ax1.set_ylabel('PSNR score')
+
+# Increase font size for all text elements
+font_size = 14
+plt.rcParams.update({'font.size': font_size})
 
 # Create boxplots for each model's data
 boxplots = []
@@ -46,9 +46,12 @@ for i, model in enumerate(models):
 ax1.set_xticks(positions + 0.25)
 ax1.set_xticklabels(factors)
 
-# Create a legend
+# Increase font size for axis labels and numbers on the axes
+ax1.tick_params(axis='both', which='both', labelsize=font_size)
+
+# Create a legend with increased font size
 legend_labels = [plt.Rectangle((0, 0), 1, 1, color=colors[model], label=model) for model in models]
-ax1.legend(handles=legend_labels, loc='upper right')
+ax1.legend(handles=legend_labels, loc='upper right', fontsize=font_size)
 
 # Save the plot as an image file
 plt.savefig('psnr_boxplot_lbs.pdf')

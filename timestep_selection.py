@@ -5,6 +5,7 @@ import math
 import tqdm
 
 import torch
+import torch.nn.functional as F
 
 from metrics import calculate_sum_psnr
 
@@ -121,6 +122,8 @@ def calculate_dist_matrix(data_test, model, device):
 
             # interpolte in between (run inference(I0, In))
             factor = j - i
+            # LREST
+            """
             for k in range(1, factor):
                 interpol_step = float(k) / factor
                 # print(factor)
@@ -140,10 +143,21 @@ def calculate_dist_matrix(data_test, model, device):
                 # input("merged")
                 interpolated.append(merged_last.transpose((1,2,0)))
             # print("out loop k")
+            """
+
+            # Beseline linear
+            tensor_data = torch.cat((data_test_i, data_test_j), dim=0).squeeze()
+            # print(tensor_data.shape)
+            tensor_data = tensor_data.permute(1, 2, 0)
+            interpolated_tensor = F.interpolate(tensor_data, scale_factor=(factor), mode='linear') # nearest
+            interpolated_tensor = interpolated_tensor.permute(2, 0, 1)
+            # print("interpolated_tensor", interpolated_tensor.shape)
+            interpolated_data = interpolated_tensor.detach().cpu().squeeze().numpy()
+            interpolated = [d for i, d in enumerate(interpolated_data) if i % factor != 0]
 
             # calc error
             interpolated = np.array(interpolated)
-            interpolated = interpolated.squeeze(-1)
+            # interpolated = interpolated.squeeze(-1) # needed for LREST
 
             # print(concat_in_between.shape)
             # print(interpolated.shape)

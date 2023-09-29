@@ -722,7 +722,8 @@ def load_data(dataset, factor, mode):
                 # data_test = data[21000:24000] # ens21 Cy1r1t1
                 # data_test = data[22607:24000] # ens21 22605
                 # data_test = data[:3000] # ens21 Cy1r1t1 test file
-                data_test = data[1607:3000]
+                # data_test = data[1607:3000] # 1607
+                data_test = data[1607:1907] # 1607 small
                 # TODO: use Cy1r1t1 test file directly
 
                 # data_test = data[30100:30400] # data[30000:33000] 

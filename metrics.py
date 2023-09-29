@@ -103,8 +103,8 @@ def calculate_avg_psnr(original_data_gt, interpol_data, dir_model, factor):
     # input("psnr")
     # Save the PSNR scores to a pickle file
     # filename = os.path.join(dir_model, "psnr_LREST_" + str(factor) + "x.pkl")
-    # filename = os.path.join(dir_model, "psnr_RIFE_" + str(factor) + "x.pkl")
-    filename = os.path.join(dir_model, "psnr_linear_" + str(factor) + "x.pkl")
+    filename = os.path.join(dir_model, "psnr_RIFE_" + str(factor) + "x.pkl")
+    # filename = os.path.join(dir_model, "psnr_linear_" + str(factor) + "x.pkl")
     with open(filename, 'wb') as f:
         pickle.dump(psnr, f)
     # input("psnr saved")
@@ -166,8 +166,8 @@ def calculate_avg_lpips(original_data_gt, interpol_data, dir_model, factor, batc
 
     # Save LPIPS results for boxplot
     # filename = os.path.join(dir_model, "lpips_LREST_" + str(factor) + "x.pkl")
-    # filename = os.path.join(dir_model, "lpips_RIFE_" + str(factor) + "x.pkl")
-    filename = os.path.join(dir_model, "lpips_linear_" + str(factor) + "x.pkl")
+    filename = os.path.join(dir_model, "lpips_RIFE_" + str(factor) + "x.pkl")
+    # filename = os.path.join(dir_model, "lpips_linear_" + str(factor) + "x.pkl")
     with open(filename, 'wb') as f:
         pickle.dump(np.squeeze(distances.detach().cpu().numpy()), f)
     # print("lpips:", distances)
@@ -191,8 +191,8 @@ def calculate_avg_epe(flow_gt, flow_pred, dir_model, factor):
     print(epe.shape)
     # print(dir_model)
     # input("x")
-    filename = os.path.join(dir_model, "epe_LREST_" + str(factor) + "x.pkl")
-    # filename = os.path.join(dir_model, "epe_RIFE_" + str(factor) + "x.pkl")
+    # filename = os.path.join(dir_model, "epe_LREST_" + str(factor) + "x.pkl")
+    filename = os.path.join(dir_model, "epe_RIFE_" + str(factor) + "x.pkl")
     with open(filename, 'wb') as f:
         pickle.dump(epe, f)
     # input("epe saved")

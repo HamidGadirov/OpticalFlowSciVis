@@ -359,7 +359,6 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # data_test_combined = []
         print(f"inference for {factor}x interpolation")
         for i, data in enumerate(data_test):
-            # print("test len:", len(data_gpu))
             # print("data:", data.shape)
             # input("x")
             # data = np.expand_dims(data, axis=0)
@@ -525,6 +524,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         print(f"inference for {factor}x interpolation completed!")
         interpol_data = np.squeeze(np.array(interpol_data))
         print("interpolated:", interpol_data.shape)
+        # input("x")
 
         # reorder based on factor
         if factor > 2:
@@ -538,7 +538,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                             # print("k+b:", k + b)
                             interpol_data_new.append(interpol_data[k + b])
             except:
-                print("reordered")
+                print("dens reordered")
             interpol_data = np.squeeze(np.array(interpol_data_new))
             print("interpolated:", interpol_data.shape)
 
@@ -548,15 +548,30 @@ def train(model, dataset, factor, model_name, mode, local_rank):
 
         # Vector field quiver plot
         flow_combined = np.array(flow_combined)
+
+        # print("flow_combined:", flow_combined.shape)
+        # input("x")
+
+        # reorder based on factor
+        if factor > 2:
+            flow_combined_new = []
+            batch_size = batch_size_inf # what was used for inference
+            try:
+                for fb in range(0, flow_combined.shape[0], (factor - 1) * batch_size): # 0 32 64 ...
+                    # print("fb", fb)
+                    for b in range(batch_size): # 0 1; 0 1; ...
+                        for k in range(fb, fb + (factor - 1) * batch_size, batch_size): # 0 16; 32 64; ... 
+                            # print("k+b:", k + b)
+                            flow_combined_new.append(flow_combined[k + b])
+            except:
+                print("flow reordered")
+            flow_combined = np.squeeze(np.array(flow_combined_new))
+            print("flow_combined:", flow_combined.shape)
+
         mask_combined = np.squeeze(np.array(mask_combined))
         # flow_gt_combined = np.array(flow_gt_combined)
         print("Flow:", flow_combined.shape)
-        # print(interpol_data.dtype)
-        flow_u = flow_combined[:, 2, ...]
-        flow_v = flow_combined[:, 3, ...]
-        title = "inference_flow_arrows_" + str(factor) + "x"
-        # if "2d" in dataset:
-        #     visualize_series_flow(interpol_data, flow_u, flow_v, dataset, dir_res, title=title, show=False, save=True)
+        # input("x")
 
         # """
         if factor == 2:
@@ -1248,8 +1263,8 @@ if __name__ == "__main__":
     ### +++
     model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 52.18 0.0056; 3x: 58.44 0.0096; 5x: 51.18 0.0137; 8x: 49.03 0.0192; 16x: 46.53 0.0356; 32x: 40.46 0.0545
+    # 2x: 52.18 0.0056; 3x: 58.44 0.0051; 5x: 51.18 0.0045; 8x: 49.03 0.0040; 16x: 46.53 0.0143; 32x: 40.46 0.0282 # fixed bug with flow order
     ### +++
-
 
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow1e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 52.77 0.0074;
@@ -1490,7 +1505,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 40.96 0.0111; 3x: 39.11 0.0189; 5x: 36.76 0.0301; 8x: 34.36 0.0377; 16x: 30.97 0.060
     ### +++
-    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
+    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
     # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; 5x: 36.60 0.0293; 8x: 34.26 0.0367; 16x: 30.93 0.0585 +++
     ### +++
 
@@ -1712,7 +1727,9 @@ if __name__ == "__main__":
         if dataset == "droplet2d": 
             factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
         elif dataset == "lbs2d":
-            factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+            # factors = [2, 3, 4, 5, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+            # factors = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+            factors = [12, 16]
         # factors = [8, 16, 32]
         for factor in factors:
             dir_res = "Results"
@@ -1839,7 +1856,7 @@ if __name__ == "__main__":
             print("flow pred & mask:", flow.shape, mask.shape)
             # input("n")
 
-            # """
+            """
             ##### Baseline evaluation
             lin_interpol = linear_interpolation(data_original, factor)
             lin_interpol = lin_interpol[:data_original_interpol.shape[0]]
@@ -1851,7 +1868,7 @@ if __name__ == "__main__":
             # LBS: linear: PSNR: 44.88; nearest: PSNR: 47.99
             # input("baseline")
             #####
-            # """
+            """
 
             if "lbs2d" in dataset: # denormalize
                 # print("flow_gt mean std", np.mean(flow_gt), np.std(flow_gt))
@@ -2037,9 +2054,9 @@ if __name__ == "__main__":
             #     print(original_data_gt.shape, interpol_data.shape)
             #     original_data_gt = original_data_gt[:2000]
             #     interpol_data = interpol_data[:2000]
-            # avg_psnr = calculate_avg_psnr(data_original_interpol, interpol_data, dir_model, factor)
+            avg_psnr = calculate_avg_psnr(data_original_interpol, interpol_data, dir_model, factor)
             # avg_ssim = calculate_avg_ssim(original_data_gt, interpol_data)
-            # avg_lpips = calculate_avg_lpips(data_original_interpol, interpol_data, dir_model, factor)
+            avg_lpips = calculate_avg_lpips(data_original_interpol, interpol_data, dir_model, factor)
             if dataset != "vimeo2d" and dataset != "droplet2d":
                 # Flow metric
                 # print(flow_gt.shape, flow.shape)
@@ -2056,31 +2073,37 @@ if __name__ == "__main__":
 
             data_test = data_test_no_skip
 
-            # # Define the indices from selection
-            # # highlighted_indices = [0, 21, 33, 64, 74, 98, 120, 135, 147, 159, 168] # 169_0
+            # Define the indices from selection
+            # highlighted_indices = [0, 21, 33, 64, 74, 98, 120, 135, 147, 159, 168] # 169_0
             # highlighted_indices = [0, 30, 56, 84, 115, 142, 168] # # 169_1
-            # fig, axs = plt.subplots(nrows=13, ncols=13, figsize=(10, 10))
-            # axs = axs.flatten()
-            # for i in range(data_test.shape[0]):
-            #     try:
-            #         image = data_test[i].squeeze()
-            #         axs[i].imshow(image, cmap='gray')
-            #         axs[i].axis('off')
-            #         title = axs[i].set_title(str(i), fontsize=10, pad=3)  # Add label as the title
-                    
-            #         # Check if the current index should have a red boundary
-            #         if i in highlighted_indices:
-            #             rect = patches.Rectangle((0, 0), 224, 160, linewidth=2, edgecolor='red', facecolor='none')
-            #             axs[i].add_patch(rect)
-            #             axs[i].set_title(str(i), fontsize=10, color='red', pad=3)  # Set the title color to red
-            #     except:
-            #         break
-            # # Adjust the spacing between the subplots
-            # plt.tight_layout()
-            # # Save the plot to a file
-            # fig.savefig("droplets.pdf", dpi=300)
-            # print("droplets pdf saved!")
-            # # input("x")
+            highlighted_indices_LREST = [0, 30, 56, 121, 168] # 169_1
+            highlighted_indices_linear = [21, 86, 131] # linear, skip ends
+            fig, axs = plt.subplots(nrows=13, ncols=13, figsize=(10, 10))
+            axs = axs.flatten()
+            for i in range(data_test.shape[0]):
+                try:
+                    image = data_test[i].squeeze()
+                    axs[i].imshow(image, cmap='gray')
+                    axs[i].axis('off')
+                    title = axs[i].set_title(str(i), fontsize=10, pad=3)  # Add label as the title
+
+                    # Check if the current index should have a red boundary
+                    if i in highlighted_indices_LREST:
+                        rect = patches.Rectangle((0, 0), 224, 160, linewidth=3, edgecolor='blue', facecolor='none')
+                        axs[i].add_patch(rect)
+                        title.set_color('blue')  # Set the title color
+                    elif i in highlighted_indices_linear:
+                        rect = patches.Rectangle((0, 0), 224, 160, linewidth=3, edgecolor='red', facecolor='none')
+                        axs[i].add_patch(rect)
+                        title.set_color('red')  # Set the title color
+                except:
+                    break
+            # Adjust the spacing between the subplots
+            plt.tight_layout()
+            # Save the plot to a file
+            fig.savefig("droplets.pdf", dpi=300)
+            print("droplets pdf saved!")
+            input("x")
 
             # # 300-600 subset works
             # TODO for a member of DD
@@ -2102,7 +2125,7 @@ if __name__ == "__main__":
                 print("Execution time:", execution_time, "seconds")
                 print(dist_matrix.shape)
                 print(dist_matrix)
-                np.savetxt('dist_matrix.txt', dist_matrix, fmt='%f')
+                np.savetxt('dist_matrix_linear.txt', dist_matrix, fmt='%f')
 
                 # Mirror the values across the diagonal
                 dist_matrix_full = dist_matrix + dist_matrix.T - np.diag(np.diag(dist_matrix))
@@ -2115,7 +2138,7 @@ if __name__ == "__main__":
                 plt.xlabel('Timestep')
                 plt.ylabel('Timestep')
                 # plt.show()
-                plt.savefig("dist_matrix.png", dpi=300) 
+                plt.savefig("dist_matrix_linear.png", dpi=300) 
                 input("dist_matrix calculation completed")
 
 # print("Dataset:", dataset)
