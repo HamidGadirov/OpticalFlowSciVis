@@ -262,7 +262,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
             ax_title = "t=" + str(index + shift + 3000 + 1605)
             ax.set_title(ax_title, fontsize=20)
         elif dataset == "droplet2d":
-            ax_title = "t=" + str(index + shift + 15)
+            ax_title = "t=" + str(index + shift + 25)
             ax.set_title(ax_title, fontsize=12, pad=10)
         ax.axis('off')
 
@@ -310,12 +310,12 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         original_data_filename = os.path.join(dir_res, 'original_data.pkl')
         with open(original_data_filename, 'wb') as f:
             pickle.dump(original_data, f)
-        interpol_data_filename = os.path.join(dir_res, 'interpol_data_LREST.pkl')
-        # interpol_data_filename = os.path.join(dir_res, 'interpol_data_RIFE.pkl')
+        # interpol_data_filename = os.path.join(dir_res, 'interpol_data_LREST.pkl')
+        interpol_data_filename = os.path.join(dir_res, 'interpol_data_RIFE.pkl')
         with open(interpol_data_filename, 'wb') as f:
             pickle.dump(interpol_data, f)
-        diffs_filename = os.path.join(dir_res, 'diffs_LREST.pkl')
-        # diffs_filename = os.path.join(dir_res, 'diffs_RIFE.pkl')
+        # diffs_filename = os.path.join(dir_res, 'diffs_LREST.pkl')
+        diffs_filename = os.path.join(dir_res, 'diffs_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
             pickle.dump(diffs, f)
 
@@ -361,7 +361,7 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         if dataset == "lbs2d":
             ax_title = "t=" + str(index + shift + 3000 + 1605)
         elif dataset == "droplet2d":
-            ax_title = "t=" + str(index + shift + 15)
+            ax_title = "t=" + str(index + shift + 25)
         ax.set_title(ax_title, fontsize=20)
         ax.axis('off')
 
@@ -414,16 +414,16 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         with open(flow_gt_filename, 'wb') as f:
             pickle.dump(flow_gt, f)
         # save data for plots   flow_pred, flow_u_diff, flow_v_diff
-        interpol_data_filename = os.path.join(dir_res, 'flow_pred_LREST.pkl')
-        # interpol_data_filename = os.path.join(dir_res, 'flow_pred_RIFE.pkl')
+        # interpol_data_filename = os.path.join(dir_res, 'flow_pred_LREST.pkl')
+        interpol_data_filename = os.path.join(dir_res, 'flow_pred_RIFE.pkl')
         with open(interpol_data_filename, 'wb') as f:
             pickle.dump(flow_pred, f)
-        diffs_filename = os.path.join(dir_res, 'flow_u_diff_LREST.pkl')
-        # diffs_filename = os.path.join(dir_res, 'flow_u_diff_RIFE.pkl')
+        # diffs_filename = os.path.join(dir_res, 'flow_u_diff_LREST.pkl')
+        diffs_filename = os.path.join(dir_res, 'flow_u_diff_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
             pickle.dump(flow_u_diff, f)
-        diffs_filename = os.path.join(dir_res, 'flow_v_diff_LREST.pkl')
-        # diffs_filename = os.path.join(dir_res, 'flow_v_diff_RIFE.pkl')
+        # diffs_filename = os.path.join(dir_res, 'flow_v_diff_LREST.pkl')
+        diffs_filename = os.path.join(dir_res, 'flow_v_diff_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
             pickle.dump(flow_v_diff, f)
 
@@ -551,7 +551,7 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "lbs2d":
                 ax_title = "t=" + str(index + 3000 + 1605)
             elif dataset == "droplet2d":
-                ax_title = "t=" + str(index + 15)
+                ax_title = "t=" + str(index + 25)
             if index % factor != 0: # if index % 3 == 1:
                 ax_title += "*"
             if dataset == "lbs2d":

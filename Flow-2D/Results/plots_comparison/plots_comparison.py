@@ -244,34 +244,34 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         fig.savefig(os.path.join(dir_res, title), dpi=300)
 
 
-# # Define the file names
-# original_data_file = 'original_data.pkl'
-# interpol_data_LREST_file = 'interpol_data_LREST.pkl'
-# diffs_LREST_file = 'diffs_LREST.pkl'
-# interpol_data_RIFE_file = 'interpol_data_RIFE.pkl'
-# diffs_RIFE_file = 'diffs_RIFE.pkl'
+# Define the file names
+original_data_file = 'original_data.pkl'
+interpol_data_LREST_file = 'interpol_data_LREST.pkl'
+diffs_LREST_file = 'diffs_LREST.pkl'
+interpol_data_RIFE_file = 'interpol_data_RIFE.pkl'
+diffs_RIFE_file = 'diffs_RIFE.pkl'
 
-# # Load data from the .pkl files
-# with open(original_data_file, 'rb') as f:
-#     original_data = pickle.load(f)
+# Load data from the .pkl files
+with open(original_data_file, 'rb') as f:
+    original_data = pickle.load(f)
 
-# with open(interpol_data_LREST_file, 'rb') as f:
-#     interpol_data_LREST = pickle.load(f)
+with open(interpol_data_LREST_file, 'rb') as f:
+    interpol_data_LREST = pickle.load(f)
 
-# with open(diffs_LREST_file, 'rb') as f:
-#     diffs_LREST = pickle.load(f)
+with open(diffs_LREST_file, 'rb') as f:
+    diffs_LREST = pickle.load(f)
 
-# with open(interpol_data_RIFE_file, 'rb') as f:
-#     interpol_data_RIFE = pickle.load(f)
+with open(interpol_data_RIFE_file, 'rb') as f:
+    interpol_data_RIFE = pickle.load(f)
 
-# with open(diffs_RIFE_file, 'rb') as f:
-#     diffs_RIFE = pickle.load(f)
+with open(diffs_RIFE_file, 'rb') as f:
+    diffs_RIFE = pickle.load(f)
 
-# title = "Density_gt_pred_diff"
-# dir_model = "./"
-# dataset = "lbs2d"
-# visualize_seq_dens(original_data, interpol_data_LREST, diffs_LREST, interpol_data_RIFE, diffs_RIFE,
-#         factor, dataset, dir_model, title=title, show=False, save=True)
+title = "Density_gt_pred_diff"
+dir_model = "./"
+dataset = "lbs2d"
+visualize_seq_dens(original_data, interpol_data_LREST, diffs_LREST, interpol_data_RIFE, diffs_RIFE,
+        dataset, dir_model, title=title, show=False, save=True)
 
 # Define FLOW the file names
 flow_gt_file = 'flow_gt.pkl'

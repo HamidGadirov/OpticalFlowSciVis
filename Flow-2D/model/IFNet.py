@@ -32,12 +32,12 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 
 version = 1
 two_blocks = False
-three_blocks = False
-four_blocks = True # True
+three_blocks = True
+four_blocks = False # True
 five_blocks = False
 six_blocks = False
 refine = False # True
-use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
+use_deconv = False # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -60,17 +60,17 @@ class IFBlock(nn.Module):
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
-                conv(c, c, 3, 2, 1), # +
+                # conv(c, c, 3, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
                 conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
-                deconv(c, c, 3, 2, 1), # +
+                # deconv(c, c, 3, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
-                conv(c, c),
+                # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
@@ -235,7 +235,7 @@ class IFNet(nn.Module):
             self.block5 = IFBlock(5+4, c=128)
 
         # self.block_tea = IFBlock(6+4, c=128) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64 128
-        self.block_tea = IFBlock(7+4, c=128) # 90 128 192 256
+        self.block_tea = IFBlock(7+4, c=90) # 90 128 192 256
         # modified
         if refine:
             self.contextnet = Contextnet()

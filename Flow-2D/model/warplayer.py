@@ -35,6 +35,12 @@ def warp(tenInput, tenFlow):
         grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)
         # grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='nearest', padding_mode='border')
 
+    # input=tenInput: This is the input tensor that you want to warp or transform. It's the tensor representing the original image or density field.
+    # grid=g: This is the grid of sampling points where you want to sample pixel values from the input tensor. 
+    # g is generated based on the optical flow field and represents the mapping of pixels from the transformed image back to their original positions in the original image.
+
+    # if you are not sure - just draw it! :)
+
     # grid_s = grid_s.to(torch.float16)
 
     # return torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)

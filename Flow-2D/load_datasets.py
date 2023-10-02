@@ -781,12 +781,13 @@ def load_data(dataset, factor, mode):
                 # if random_triplets:
                 #     data_test = data # random triplets
                 # data_test = data[:2700] # 36.81
-                # data_test = data[350:2700] # for plots
+                data_test = data[360:660] # for plots
+                # data_test = data[635:935] # for plots 1
                 # data_test = data[2700:5400] # 34.26
                 # data_test = data[0:2700] # 35.12
                 # data_test = data[350:950] # 29.98
                 # data_test = data[335:504] # 335:504 for selection 0
-                data_test = data[597:766] # for selection 1
+                # data_test = data[597:766] # for selection 1
                 # data_test = data[515:585] # for selection 2
                 # data_test = data[:350] # 31.07
                 # data_test = data[1500:2100] # 30.57

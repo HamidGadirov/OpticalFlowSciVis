@@ -1261,7 +1261,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W15simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 51.32 0.0058; 3x: 57.68 0.0098; 5x: 51.56 0.0138; 8x: 49.21 0.0194; 16x: 46.09 0.0322; 32x: 39.66 0.0531
     ### +++
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 52.18 0.0056; 3x: 58.44 0.0096; 5x: 51.18 0.0137; 8x: 49.03 0.0192; 16x: 46.53 0.0356; 32x: 40.46 0.0545
     # 2x: 52.18 0.0056; 3x: 58.44 0.0051; 5x: 51.18 0.0045; 8x: 49.03 0.0040; 16x: 46.53 0.0143; 32x: 40.46 0.0282 # fixed bug with flow order
     ### +++
@@ -1505,7 +1505,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 40.96 0.0111; 3x: 39.11 0.0189; 5x: 36.76 0.0301; 8x: 34.36 0.0377; 16x: 30.97 0.060
     ### +++
-    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
     # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; 5x: 36.60 0.0293; 8x: 34.26 0.0367; 16x: 30.93 0.0585 +++
     ### +++
 
@@ -1725,11 +1725,12 @@ if __name__ == "__main__":
         # factor = args.factor # check all
  
         if dataset == "droplet2d": 
-            factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
+            # factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
+            factors = [3]
         elif dataset == "lbs2d":
             # factors = [2, 3, 4, 5, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
             # factors = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-            factors = [12, 16]
+            factors = [8, 12]
         # factors = [8, 16, 32]
         for factor in factors:
             dir_res = "Results"
@@ -2073,11 +2074,14 @@ if __name__ == "__main__":
 
             data_test = data_test_no_skip
 
+            """
             # Define the indices from selection
             # highlighted_indices = [0, 21, 33, 64, 74, 98, 120, 135, 147, 159, 168] # 169_0
+            highlighted_indices_LREST = [0, 21, 72, 98, 168] # 169_0
+            highlighted_indices_linear = [0, 37, 99, 147, 168] # 169_0
             # highlighted_indices = [0, 30, 56, 84, 115, 142, 168] # # 169_1
-            highlighted_indices_LREST = [0, 30, 56, 121, 168] # 169_1
-            highlighted_indices_linear = [21, 86, 131] # linear, skip ends
+            # highlighted_indices_LREST = [0, 30, 56, 121, 168] # 169_1
+            # highlighted_indices_linear = [21, 86, 131] # linear, skip ends
             fig, axs = plt.subplots(nrows=13, ncols=13, figsize=(10, 10))
             axs = axs.flatten()
             for i in range(data_test.shape[0]):
@@ -2104,6 +2108,7 @@ if __name__ == "__main__":
             fig.savefig("droplets.pdf", dpi=300)
             print("droplets pdf saved!")
             input("x")
+            """
 
             # # 300-600 subset works
             # TODO for a member of DD

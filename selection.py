@@ -12,10 +12,13 @@ import helper_timesel as sel
 
 nTimeSteps = 169 # 70 169
 # distsFName = f'{HOME}/Desktop/OpticalFlow/FlowSciVis/dist_matrix_70.txt'
-distsFName=f'/Users/hamidgadirov/Desktop/OpticalFlow/FlowSciVis/dist_matrix_169.txt'
+distsFName=f'/Users/hamidgadirov/Desktop/OpticalFlow/FlowSciVis/dist_matrix_169.txt' # appendix
+distsFName=f'/Users/hamidgadirov/Desktop/OpticalFlow/FlowSciVis/dist_matrix_linear_169.txt' # appendix
 # distsFName=f'/Users/hamidgadirov/Desktop/OpticalFlow/FlowSciVis/dist_matrix_169_1.txt' # paper
-# distsFName=f'/Users/hamidgadirov/Desktop/OpticalFlow/FlowSciVis/dist_matrix_linear_169.txt'
+# distsFName=f'/Users/hamidgadirov/Desktop/OpticalFlow/FlowSciVis/dist_matrix_linear_169_1.txt' # paper
 
+# k=5 v=4032.1341270000003 | selection: [0, 21, 72, 98, 168] # LREST
+# k=5 v=3752.296824 | selection: [0, 37, 98, 147, 168] # linear
 # k=7 v=4173.755582 | selection: [0, 21, 72, 98, 130, 158, 168]
 # k=8 v=4219.463857 | selection: [0, 21, 72, 98, 131, 147, 159, 168]
 # k=9 v=4260.105192 | selection: [0, 33, 64, 74, 98, 131, 147, 159, 168]
