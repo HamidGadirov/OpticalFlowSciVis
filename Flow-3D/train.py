@@ -54,17 +54,17 @@ def get_learning_rate(step):
     if step < 2000:
         mul = step / 2000.
         # return 3e-4 * mul
-        # return 6e-4 * mul
+        return 6e-4 * mul # 2D
         # return 3e-5 * mul
         # return 6e-6 * mul
-        return 3e-7 * mul
+        # return 3e-7 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
         # return (3e-4 - 3e-6) * mul + 3e-6
-        # return (6e-4 - 6e-6) * mul + 6e-6
+        return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-5 - 3e-6) * mul + 3e-6
         # return (6e-6 - 6e-7) * mul + 6e-7
-        return (3e-7 - 3e-8) * mul + 3e-8
+        # return (3e-7 - 3e-8) * mul + 3e-8
     # return 1e-6 # worse
 
 def flow2rgb(flow_map_np):
@@ -106,6 +106,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     step = 0
     nr_eval = 0
     early_stopper = EarlyStopper(patience=30, min_delta=0.01)
+    batch_size_inf = 6
 
     num_workers = 1 # 8
     if mode == "train":
@@ -125,7 +126,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     else:
         data_test = load_data(dataset, mode)
         shuffle = False
-        data_test = DataLoader(data_test, batch_size=8, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
+        data_test = DataLoader(data_test, batch_size=batch_size_inf, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
 
     # input("x")
 
@@ -564,7 +565,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=1000, type=int) # 300 500
+    parser.add_argument('--epoch', default=300, type=int) # 300 500
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
     parser.add_argument('--local-rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -586,7 +587,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle3d":
         args.batch_size = 40
     if args.dataset == "jets3d":
-        args.batch_size = 8
+        args.batch_size = 6 # 8
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -636,6 +637,7 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test6.pkl" # lr3e-5: loss increases -
     model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test7.pkl" # lr6e-6: loss increases - ???
     model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test8.pkl" # lr3e-7: loss constant -
+    model_name = "flownet_3Blocks_l1_flow2e-1_v1_128_jets_gamma_eqRes_deconv_lr6e-4_test.pkl"
     # is there a bug? why loss does not decrease?
     
     """ tangaroa """

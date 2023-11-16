@@ -17,6 +17,8 @@ from model.refine import *
 device = torch.device("cuda")
 
 flow_available = True # True False
+
+student_teacher = False # True False
     
 class Model(nn.Module):
     def __init__(self, local_rank=-1, arbitrary=False):
@@ -74,7 +76,10 @@ class Model(nn.Module):
         # input("x")
         imgs = torch.cat((img0, img1), 1)
         gt = img0.clone() * 0 # no GT during inference
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
+        if student_teacher:
+            flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
+        else:
+            flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1))
 
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, gt_flow, scale_list, timestep=timestep)
@@ -150,7 +155,10 @@ class Model(nn.Module):
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1))
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
+        if student_teacher:
+            flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
+        else:
+            flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1)) # # try without student-teacher: gt is not used
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), gt_flow, scale=[1, 1, 1])
         # mask = mask[2] # only gt (pred) durig training
         mask = mask[-1] # n blocks
@@ -213,7 +221,8 @@ class Model(nn.Module):
                 for i in range(num_blocks):
                     gamma = gamma_coeff ** i
                     loss_flow += (flow[num_blocks - i - 1][:, 2:4] - gt_flow).abs().mean() * gamma
-                loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
+                if student_teacher:
+                    loss_flow += (flow_teacher[:, 2:4] - gt_flow).abs().mean() * 1.
             else:
                 loss_flow = torch.tensor(0.)
 
@@ -287,7 +296,10 @@ class Model(nn.Module):
         # print("L1 loss")
         # print(merged[2].shape, gt.shape)
         # loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
-        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1
+        if student_teacher:
+            loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1 
+        else:
+            loss_tea = torch.tensor(0.) # no student-teacher
         # print(merged_teacher.shape, gt.shape)
         # sum(torch.nn.functional.l1_loss(a, b) for a, b in zip(pyr_input, pyr_target))
 
@@ -450,9 +462,9 @@ class Model(nn.Module):
             lambda_reg = 0
             lambda_photo = 0
         else:
-            lambda_distill = 1e-4 # 0.01 # 5e-3 # 0.001 # 0.01
-            lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
-            lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
+            lambda_distill = 0 # 1e-4 # 0.01 # 5e-3 # 0.001 # 0.01
+            lambda_reg = 1e-9 # droplet # 1e-6 best on rectangle
+            lambda_photo = 1e-7 # 2 3 4 5 # 1e-5 best 1e-6
             lambda_flow = 0
         lambda_smooth = 0 # 1e-8 not important
         
@@ -461,8 +473,12 @@ class Model(nn.Module):
         # change in interpol func - additional parameter
 
         # check if distill los is nan or overflow
-        if math.isnan(loss_distill) or loss_distill > 10.:
-            loss_distill = torch.tensor(0.)
+        if student_teacher:
+            if math.isnan(loss_distill) or loss_distill > 10.:
+                loss_distill = torch.tensor(0.)
+        else:
+            loss_distill = torch.tensor(0.) 
+
         if dataset == "droplet2d" or dataset == "vimeo2d":
             loss_flow = torch.tensor(0.)
 
@@ -486,6 +502,10 @@ class Model(nn.Module):
         else:
             flow_teacher = flow[-1] # [2]
             merged_teacher = merged[-1] # [2]
+
+        if student_teacher == False:
+            merged_teacher = torch.tensor(0.)
+            flow_teacher = torch.tensor(0.)
 
         # return merged[2], {
         return merged[-1], {

@@ -30,6 +30,7 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 
 version = 1
 refine = False # True
+use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -50,7 +51,16 @@ class IFBlock(nn.Module):
                 conv(c, c),
                 conv(c, c),
             )
-            self.lastconv = nn.ConvTranspose3d(c, 7, 4, 2, 1) # (c, 5, 4, 2, 1)
+            if use_deconv == False:
+                self.lastconv = nn.ConvTranspose3d(c, 7, 4, 2, 1) # (c, 5, 4, 2, 1)
+            else:
+                # add deconv instead of interpolate
+                self.deconvblock = nn.Sequential(
+                    deconv(c, c//2, 4, 2, 1),
+                    deconv(c//2, 7, 4, 2, 1),
+                    # deconv(c, c//2, 5, 2, 2),
+                    # deconv(c//2, 5, 5, 2, 2),
+                )
         if version == 2:
             self.convblock0 = nn.Sequential(
                 conv(c, c),
@@ -100,12 +110,18 @@ class IFBlock(nn.Module):
             # print("conv0", x.shape)
             x = self.convblock(x) + x
             # print("convblock", x.shape)
-            tmp = self.lastconv(x)
-            # print("lastconv", tmp.shape)
-            tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="trilinear", align_corners=False)
-            # print("interpolate", tmp.shape)
-            # input("tmp")
-            flow = tmp[:, :6] * scale * 2
+            if use_deconv == False:
+                tmp = self.lastconv(x)
+                # print("lastconv", tmp.shape)
+                tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="trilinear", align_corners=False)
+                # print("interpolate", tmp.shape)
+                # input("tmp")
+            else:
+                tmp = self.deconvblock(x) # added
+                # print("deconvblock:", tmp.shape)
+            # flow = tmp[:, :6] * scale * 2
+            # mask = tmp[:, 6:7]
+            flow = tmp[:, :6] # best, since I don't use resize
             mask = tmp[:, 6:7]
         if version == 2:
             # print(x.shape, self.convblock0(x).shape)
@@ -191,8 +207,9 @@ class IFNet(nn.Module):
             img1 = img1[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
             mask_list.append(torch.sigmoid(mask))
             flow_list.append(flow)
+            # print("img0:", img0.shape)
             # print("flow:", flow.shape)
-            # input("flow")
+            # input("x")
             warped_img0 = warp(img0, flow[:, :3]) # Ft->0
             warped_img1 = warp(img1, flow[:, 3:6]) # Ft->1
             merged_student = (warped_img0, warped_img1)

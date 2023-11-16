@@ -264,6 +264,9 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         elif dataset == "droplet2d":
             ax_title = "t=" + str(index + shift + 25)
             ax.set_title(ax_title, fontsize=12, pad=10)
+        elif dataset == "jets3d":
+            ax_title = "t=" + str(index + shift + 25)
+            ax.set_title(ax_title, fontsize=12, pad=10)
         ax.axis('off')
 
         # Second row: interpolated data
@@ -307,6 +310,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
         # save data for plots
+        """
         original_data_filename = os.path.join(dir_res, 'original_data.pkl')
         with open(original_data_filename, 'wb') as f:
             pickle.dump(original_data, f)
@@ -318,6 +322,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         diffs_filename = os.path.join(dir_res, 'diffs_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
             pickle.dump(diffs, f)
+        """
 
 def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
     factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
@@ -361,6 +366,8 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         if dataset == "lbs2d":
             ax_title = "t=" + str(index + shift + 3000 + 1605)
         elif dataset == "droplet2d":
+            ax_title = "t=" + str(index + shift + 25)
+        elif dataset == "jets3d":
             ax_title = "t=" + str(index + shift + 25)
         ax.set_title(ax_title, fontsize=20)
         ax.axis('off')
@@ -409,7 +416,7 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         if not os.path.isdir(dir_res):
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
-
+        """
         flow_gt_filename = os.path.join(dir_res, 'flow_gt.pkl')
         with open(flow_gt_filename, 'wb') as f:
             pickle.dump(flow_gt, f)
@@ -426,6 +433,7 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         diffs_filename = os.path.join(dir_res, 'flow_v_diff_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
             pickle.dump(flow_v_diff, f)
+        """
 
 def visualize_large(original_data, interpol_data, diffs,
         flow, flow_gt, diffs_flow, flow_u_diff, flow_v_diff, mask,
@@ -519,6 +527,7 @@ def visualize_large(original_data, interpol_data, diffs,
         scale = None
         vmin = 0
         print("vis range:", vmin, data_to_vis.max())
+        cmap ='turbo'
     # input("norm")
 
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
@@ -550,15 +559,16 @@ def visualize_large(original_data, interpol_data, diffs,
             #     ax.set_title('t=2')
             if dataset == "lbs2d":
                 ax_title = "t=" + str(index + 3000 + 1605)
+                ax.set_title(ax_title, fontsize=10)
             elif dataset == "droplet2d":
                 ax_title = "t=" + str(index + 25)
-            if index % factor != 0: # if index % 3 == 1:
-                ax_title += "*"
-            if dataset == "lbs2d":
-                ax.set_title(ax_title, fontsize=10)
-            if dataset == "droplet2d":
                 # ax.set_title(ax_title, fontsize=7)
                 ax.set_title(ax_title, fontsize=5, pad=-8)
+            elif dataset == "jets3d":
+                ax_title = "t=" + str(index + 25)
+                ax.set_title(ax_title, fontsize=5, pad=-8)
+            if index % factor != 0: # if index % 3 == 1:
+                ax_title += "*"
         if int((i-1)/columns) == 1 and round(index) % factor != 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
             img = interpol_data[round(index_pred)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)

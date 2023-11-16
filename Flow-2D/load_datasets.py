@@ -112,10 +112,10 @@ def load_data(dataset, factor, mode):
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W4_30K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W5_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_30K_train.pkl"
-                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_40K_train.pkl"
+                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W8simple_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10simple_40K_train.pkl"
-                    filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W12simple_40K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W12simple_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W15simple_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W7_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W8_40K_train.pkl"
@@ -780,8 +780,8 @@ def load_data(dataset, factor, mode):
                 # data_test = data[:3000] # 36.82
                 # if random_triplets:
                 #     data_test = data # random triplets
-                # data_test = data[:2700] # 36.81
-                data_test = data[360:660] # for plots
+                data_test = data[:2700] # 36.81
+                # data_test = data[360:660] # for plots
                 # data_test = data[635:935] # for plots 1
                 # data_test = data[2700:5400] # 34.26
                 # data_test = data[0:2700] # 35.12

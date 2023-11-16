@@ -187,7 +187,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     # model_name += "_" + dataset
     # model_name += ".pkl"
 
-    model.load_model(model_name, log_path)
+    # model.load_model(model_name, log_path)
     try:
         model.load_model(model_name, log_path)
         # print("Loaded RIFE model:", model_name)
@@ -789,7 +789,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=150, type=int) # 200 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1266,6 +1266,9 @@ if __name__ == "__main__":
     # 2x: 52.18 0.0056; 3x: 58.44 0.0051; 5x: 51.18 0.0045; 8x: 49.03 0.0040; 16x: 46.53 0.0143; 32x: 40.46 0.0282 # fixed bug with flow order
     ### +++
 
+    # no student-teacher
+    model_name = "flownet_noTea_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow1e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 52.77 0.0074;
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow3e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
@@ -1572,7 +1575,19 @@ if __name__ == "__main__":
     # 2x: 40.71 0.0098; 3x: avg PSNR: 38.82 0.0206; no reg
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 41.47 0.0105; 3x: 39.49 0.0200; 4x: no photo
+    # combinations of loss ablations:
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
+    # 2x: 41.51 0.0110; 3x: 39.62 0.0175; 4x: 38.22 0.0218; no reg no photo
+    # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; - best
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
+    # 2x: 40.37 0.0117; 3x: 38.36 0.0245; no dis no reg
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_reg1e-8_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
+    # 2x: 40.36 0.0116; 3x: 38.52 0.0184; no dis no photo
 
+    # no student-teacher
+    # model_name = "flownet_noTea_4Blocks_3convDown3convUp3conv_l1_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
+    # 2x: 32.31 0.0311; 3x: 32.037 0.0348; 4x: 31.76 0.0374
+    # model_name = "flownet_noTea_4Blocks_3convDown3convUp3conv_l1_reg1e-9_photo1e-7_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
 
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4_*t.pkl" # worse.
     # 2x: 34.08 0.022; 3x: 33.70 0.026; 8x: 31.17 0.046
@@ -1725,12 +1740,12 @@ if __name__ == "__main__":
         # factor = args.factor # check all
  
         if dataset == "droplet2d": 
-            # factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
-            factors = [3]
+            factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
+            # factors = [3]
         elif dataset == "lbs2d":
-            # factors = [2, 3, 4, 5, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+            factors = [2, 3, 4, 5, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
             # factors = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-            factors = [8, 12]
+            # factors = [8, 12]
         # factors = [8, 16, 32]
         for factor in factors:
             dir_res = "Results"

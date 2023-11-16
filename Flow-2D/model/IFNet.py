@@ -32,12 +32,14 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 
 version = 1
 two_blocks = False
-three_blocks = True
-four_blocks = False # True
+three_blocks = False
+four_blocks = True # True
 five_blocks = False
 six_blocks = False
 refine = False # True
-use_deconv = False # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
+use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
+
+student_teacher = False # True False
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -60,17 +62,17 @@ class IFBlock(nn.Module):
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
-                # conv(c, c, 3, 2, 1), # +
+                conv(c, c, 3, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
                 conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
-                # deconv(c, c, 3, 2, 1), # +
+                deconv(c, c, 3, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
-                # conv(c, c),
+                conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
                 # conv(c, c),
@@ -235,7 +237,8 @@ class IFNet(nn.Module):
             self.block5 = IFBlock(5+4, c=128)
 
         # self.block_tea = IFBlock(6+4, c=128) # 16 from cat, 4 from flow, replaces by 6 because grayscale  c=90 96 64 128
-        self.block_tea = IFBlock(7+4, c=90) # 90 128 192 256
+        if student_teacher:
+            self.block_tea = IFBlock(7+4, c=90) # 90 128 192 256
         # modified
         if refine:
             self.contextnet = Contextnet()
@@ -358,56 +361,58 @@ class IFNet(nn.Module):
 
             # print("gt:", gt.shape[1])
             
-        if gt.shape[1] == 1: # 3
-            # print("gt.shape[1] = 1")
-            # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
-            # correct shapes
-            max_shape_2 = min(img0.shape[2], warped_img0.shape[2])
-            max_shape_3 = min(img0.shape[3], warped_img0.shape[3])
-            img0 = img0[:,:,:max_shape_2,:max_shape_3]
-            img1 = img1[:,:,:max_shape_2,:max_shape_3]
-            warped_img0 = warped_img0[:,:,:max_shape_2,:max_shape_3]
-            warped_img1 = warped_img1[:,:,:max_shape_2,:max_shape_3]
-            mask = mask[:,:,:max_shape_2,:max_shape_3]
-            flow = flow[:,:,:max_shape_2,:max_shape_3]
-            gt = gt[:,:,:max_shape_2,:max_shape_3]
-            # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
-            # print("flow:", flow.shape)
+        if student_teacher:
+            if gt.shape[1] == 1: # 3
+                # print("gt.shape[1] = 1")
+                # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
+                # correct shapes
+                max_shape_2 = min(img0.shape[2], warped_img0.shape[2])
+                max_shape_3 = min(img0.shape[3], warped_img0.shape[3])
+                img0 = img0[:,:,:max_shape_2,:max_shape_3]
+                img1 = img1[:,:,:max_shape_2,:max_shape_3]
+                warped_img0 = warped_img0[:,:,:max_shape_2,:max_shape_3]
+                warped_img1 = warped_img1[:,:,:max_shape_2,:max_shape_3]
+                mask = mask[:,:,:max_shape_2,:max_shape_3]
+                flow = flow[:,:,:max_shape_2,:max_shape_3]
+                gt = gt[:,:,:max_shape_2,:max_shape_3]
+                # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
+                # print("flow:", flow.shape)
 
-            # print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
-            # flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
-            flow_d, mask_d = self.block_tea(torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
-            # flow_d, mask_d, sup_flow_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
-            flow_d = flow_d[:,:,:max_shape_2,:max_shape_3]
-            mask_d = mask_d[:,:,:max_shape_2,:max_shape_3]
-            
-            flow_teacher = flow + flow_d
-            # print(flow_teacher.size())
-            # input("x")
-            warped_img0_teacher = warp(img0, flow_teacher[:, :2])
-            warped_img1_teacher = warp(img1, flow_teacher[:, 2:4])
-            mask_teacher = torch.sigmoid(mask + mask_d)
-            merged_teacher = warped_img0_teacher * mask_teacher + warped_img1_teacher * (1 - mask_teacher)
-        else:
-            # print("flow_teacher = None")
-            flow_teacher = None
-            merged_teacher = None
+                # print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
+                # flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+                flow_d, mask_d = self.block_tea(torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+                # flow_d, mask_d, sup_flow_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+                flow_d = flow_d[:,:,:max_shape_2,:max_shape_3]
+                mask_d = mask_d[:,:,:max_shape_2,:max_shape_3]
+                
+                flow_teacher = flow + flow_d
+                # print(flow_teacher.size())
+                # input("x")
+                warped_img0_teacher = warp(img0, flow_teacher[:, :2])
+                warped_img1_teacher = warp(img1, flow_teacher[:, 2:4])
+                mask_teacher = torch.sigmoid(mask + mask_d)
+                merged_teacher = warped_img0_teacher * mask_teacher + warped_img1_teacher * (1 - mask_teacher)
+            else:
+                # print("flow_teacher = None")
+                flow_teacher = None
+                merged_teacher = None
 
         for i in range(blocks_range):
             merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
             # merged[i] = merged[i][0] * mask_list[i] * (1 - t) + merged[i][1] * (1 - mask_list[i]) * t
             merged[i] = merged[i][:,:,:gt.shape[2],:gt.shape[3]]
             
-            if gt.shape[1] == 1: # 3
-                flow_list[i] = flow_list[i][:,:,:flow_teacher.shape[2],:flow_teacher.shape[3]]
+            if student_teacher:
+                if gt.shape[1] == 1: # 3
+                    flow_list[i] = flow_list[i][:,:,:flow_teacher.shape[2],:flow_teacher.shape[3]]
 
-                loss_mask = ( (merged[i] - gt).abs().mean(1, True) > (merged_teacher - gt).abs().mean(1, True) + 0.01 ).float().detach()
-                # loss_distill += ((flow_teacher.detach() - flow_list[i]).abs() * loss_mask).mean()
-                loss_distill += (((flow_teacher.detach() - flow_list[i]) ** 2).mean(1, True) ** 0.5 * loss_mask).mean()
-                # print( (((flow_teacher.detach() - flow_list[i]) ** 2).mean(1, True) ** 0.5).mean() )
-                # print(loss_mask)
-                # print(loss_mask.mean())
-                # input("loss_distill")
+                    loss_mask = ( (merged[i] - gt).abs().mean(1, True) > (merged_teacher - gt).abs().mean(1, True) + 0.01 ).float().detach()
+                    # loss_distill += ((flow_teacher.detach() - flow_list[i]).abs() * loss_mask).mean()
+                    loss_distill += (((flow_teacher.detach() - flow_list[i]) ** 2).mean(1, True) ** 0.5 * loss_mask).mean()
+                    # print( (((flow_teacher.detach() - flow_list[i]) ** 2).mean(1, True) ** 0.5).mean() )
+                    # print(loss_mask)
+                    # print(loss_mask.mean())
+                    # input("loss_distill")
 
         # print("in IFNet, forward")
         if refine:
@@ -432,7 +437,10 @@ class IFNet(nn.Module):
             # input("x")
             # print("refined")
         # return flow_list, mask_list[2], merged, flow_teacher, merged_teacher, loss_distill
-        return flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill
+        if student_teacher:
+            return flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill
+        else:
+            return flow_list, mask_list, merged
         # return flow_list, sup_flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill
 
 

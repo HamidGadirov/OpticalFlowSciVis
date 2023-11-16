@@ -15,6 +15,8 @@ from model.laplacian import *
 from model.refine import *
 
 device = torch.device("cuda")
+
+flow_available = True # True False
     
 class Model:
     def __init__(self, local_rank=-1, arbitrary=False):
@@ -153,24 +155,37 @@ class Model:
         # print(np.min(gt.detach().cpu().numpy()), np.max(gt.detach().cpu().numpy()))
         # input("l1_loss")
 
-        # RIFE loss: same as l1 that I had.
-        # i_weight = gamma**(n_predictions - i - 1)
-        # i_loss = (flow_preds[i] - flow_gt).abs()
-        # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
-        loss_flow = 0.
-        loss_flow += (flow[0][:, 3:6] - gt_flow).abs().mean() * 0.64
-        loss_flow += (flow[1][:, 3:6] - gt_flow).abs().mean() * 0.8
-        loss_flow += (flow[2][:, 3:6] - gt_flow).abs().mean() * 1.
-        # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
-        # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
-        # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
-        loss_flow += (flow_teacher[:, 3:6] - gt_flow).abs().mean() * 1.
-        # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
-        # loss_flow /= 2.
+        # # RIFE loss: same as l1 that I had.
+        # # i_weight = gamma**(n_predictions - i - 1)
+        # # i_loss = (flow_preds[i] - flow_gt).abs()
+        # # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
+        # loss_flow = 0.
+        # loss_flow += (flow[0][:, 3:6] - gt_flow).abs().mean() * 0.64
+        # loss_flow += (flow[1][:, 3:6] - gt_flow).abs().mean() * 0.8
+        # loss_flow += (flow[2][:, 3:6] - gt_flow).abs().mean() * 1.
+        # # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
+        # # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
+        # # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
+        # loss_flow += (flow_teacher[:, 3:6] - gt_flow).abs().mean() * 1.
+        # # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
+        # # loss_flow /= 2.
 
-        loss_l1 = torch.nn.functional.l1_loss(merged[2], gt)
+        if flow_available:
+            loss_flow = 0.
+            num_blocks = 3 # 3 4 5
+            gamma_coeff = 0.8 # 0.7 0.8 0.9
+            for i in range(num_blocks):
+                gamma = gamma_coeff ** i
+                loss_flow += (flow[num_blocks - i - 1][:, 3:6] - gt_flow).abs().mean() * gamma
+            loss_flow += (flow_teacher[:, 3:6] - gt_flow).abs().mean() * 1.
+        else:
+            loss_flow = torch.tensor(0.)
+
+        # loss_l1 = torch.nn.functional.l1_loss(merged[2], gt)
+        loss_l1 = torch.nn.functional.l1_loss(merged[-1], gt) # l1
         # loss_tea = (self.lap(merged_teacher, gt)).mean()
-        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt)
+        # loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt)
+        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1
         # print(merged_teacher.shape, gt.shape)
         # input("loss")
 
@@ -178,27 +193,23 @@ class Model:
         # print("Parameters in IFNet:", num_params) # 9641368
         # input("p")
 
-        # # adding L1 reg:
-        # l1_lambda = 1e-6 # 1e-5 1e-4
-        # l1_norm = sum(torch.norm(p, 1) for p in self.flownet.parameters())
-        # l1_reg = l1_lambda * l1_norm
+        """ L1 regularization """
+        if flow_available:
+            l1_reg = torch.tensor(0.)
+        else:
+            block_params_norm = 0.
+            for param_tensor in self.flownet.state_dict():
+                # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
+                # if "block2" in param_tensor or "block_tea" in param_tensor:
+                if "block2" in param_tensor or "block_tea" in param_tensor: # last block block2
+                    block_params = self.flownet.state_dict()[param_tensor]
+                    block_params_norm += torch.norm(block_params, 1)
+            # print(block2_params_norm)
+            # input("x")
+            l1_reg = block_params_norm
 
-        # block2_params = 0.
-        # for param_tensor in self.flownet.state_dict():
-        #     # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
-        #     if "block2" in param_tensor or "block_tea" in param_tensor:
-        #         p = self.flownet.state_dict()[param_tensor]
-        #         # print(p)
-        #         block2_params += torch.norm(p, 1)
-        # # print(block2_params)
-        # # input("x")
-        # # l1_lambda = 1e-5 # 1e-4
-        # l1_norm = block2_params
-        # l1_reg = l1_norm # l1_lambda * l1_norm
-        l1_reg = torch.tensor(0.)
-
-        # def charbonnier(x, alpha=0.25, epsilon=1.e-9):
-        #     return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
+        def charbonnier(x, alpha=0.25, epsilon=1.e-9):
+            return torch.pow(torch.pow(x, 2) + epsilon**2, alpha)
 
         # def smoothness_loss(flow):
         #     # print("Smoothness loss")
@@ -224,47 +235,47 @@ class Model:
         # # loss_smooth = smooth_lambda * smooth
 
 
-        # def generate_grid(B, H, W, Z, device):
-        #     # xx = torch.arange(0, W, Z).view(1, W, Z).repeat(H, 1, 1)
-        #     # yy = torch.arange(H, 0, Z).view(H, 1, Z).repeat(1, W, 1)
-        #     # zz = torch.arange(H, W, 0).view(H, W, 1).repeat(1, 1, Z)
-        #     xx = torch.arange(0, W * Z).view(1, -1).repeat(H, 1)
-        #     yy = torch.arange(0, H * Z).view(1, -1).repeat(W, 1)
-        #     zz = torch.arange(0, H * W).view(1, -1).repeat(Z, 1)
-        #     # print("xx:", xx.size)
+        def generate_grid(B, H, W, Z, device):
+            # xx = torch.arange(0, W, Z).view(1, W, Z).repeat(H, 1, 1)
+            # yy = torch.arange(H, 0, Z).view(H, 1, Z).repeat(1, W, 1)
+            # zz = torch.arange(H, W, 0).view(H, W, 1).repeat(1, 1, Z)
+            xx = torch.arange(0, W * Z).view(1, -1).repeat(H, 1)
+            yy = torch.arange(0, H * Z).view(1, -1).repeat(W, 1)
+            zz = torch.arange(0, H * W).view(1, -1).repeat(Z, 1)
+            # print("xx:", xx.size)
 
-        #     xx = xx.view(1, 1, H, W, Z).repeat(B, 1, 1, 1, 1)
-        #     yy = yy.view(1, 1, H, W, Z).repeat(B, 1, 1, 1, 1)
-        #     zz = zz.view(1, 1, H, W, Z).repeat(B, 1, 1, 1, 1)
-        #     # print("xx:", xx.size)
+            xx = xx.view(1, 1, H, W, Z).repeat(B, 1, 1, 1, 1)
+            yy = yy.view(1, 1, H, W, Z).repeat(B, 1, 1, 1, 1)
+            zz = zz.view(1, 1, H, W, Z).repeat(B, 1, 1, 1, 1)
+            # print("xx:", xx.size)
 
-        #     grid = torch.cat((xx, yy, zz), 1).float()
-        #     grid = torch.transpose(grid, 1, 2)
-        #     grid = torch.transpose(grid, 2, 3)
-        #     grid = torch.transpose(grid, 3, 4)
-        #     grid = grid.to(device)
-        #     return grid
+            grid = torch.cat((xx, yy, zz), 1).float()
+            grid = torch.transpose(grid, 1, 2)
+            grid = torch.transpose(grid, 2, 3)
+            grid = torch.transpose(grid, 3, 4)
+            grid = grid.to(device)
+            return grid
 
-        # def backwrd_warp(flow, frame):
-        #     # frame is img2
-        #     # b, _, h, w = flow.shape
-        #     b, c, h, w, z = flow.size()
-        #     frame = F.interpolate(frame, size=(h, w, z), mode='trilinear', align_corners=True)
-        #     flow = torch.transpose(flow, 1, 2)
-        #     flow = torch.transpose(flow, 2, 3)
-        #     flow = torch.transpose(flow, 3, 4)
+        def backwrd_warp(flow, frame):
+            # frame is img2
+            # b, _, h, w = flow.shape
+            b, c, h, w, z = flow.size()
+            frame = F.interpolate(frame, size=(h, w, z), mode='trilinear', align_corners=True)
+            flow = torch.transpose(flow, 1, 2)
+            flow = torch.transpose(flow, 2, 3)
+            flow = torch.transpose(flow, 3, 4)
 
-        #     # print(flow.size(), generate_grid(b, h, w, z, flow.device).size())
-        #     # input("x")
+            # print(flow.size(), generate_grid(b, h, w, z, flow.device).size())
+            # input("x")
 
-        #     grid = flow + generate_grid(b, h, w, z, flow.device)
-        #     # print("grid:", grid.size())
+            grid = flow + generate_grid(b, h, w, z, flow.device)
+            # print("grid:", grid.size())
 
-        #     factor = torch.FloatTensor([[[[2 / w, 2 / h, 2 / z]]]]).to(flow.device)
-        #     grid = grid * factor - 1
-        #     warped_frame = F.grid_sample(frame, grid)
+            factor = torch.FloatTensor([[[[2 / w, 2 / h, 2 / z]]]]).to(flow.device)
+            grid = grid * factor - 1
+            warped_frame = F.grid_sample(frame, grid)
 
-        #     return warped_frame
+            return warped_frame
 
         # # Photometric loss
         # # computed as the difference between the first image and the backward/inverse warped second image
@@ -284,22 +295,47 @@ class Model:
         # loss_photo /= 2
         # # print(loss_photo)
         # # input("x")
-        loss_photo = torch.tensor(0.)
+        # loss_photo = torch.tensor(0.)
 
-        lambda_l1 = 1
-        lambda_tea = 1
-        lambda_distill = 0 # 0.01 0.1 # without is bad # 0.01 best
-        lambda_reg = 0 # 1e-6
-        lambda_photo = 0 # 1e-6
-        lambda_smooth = 0 # 1e-8
-        lambda_flow = 0.5 # 0.01 0.2 1; 0.5 best on rectangle
+        if flow_available:
+            loss_photo = torch.tensor(0.)
+        else:
+            def photometric_loss(wraped, frame1):
+                h, w, z = wraped.shape[2:]
+                frame1 = F.interpolate(frame1, (h, w, z), mode='trilinear', align_corners=False)
+                # frame1 = F.interpolate(frame1, (h, w), mode='nearest') 
+                p_loss = charbonnier(wraped - frame1)
+                p_loss = torch.sum(p_loss, dim=1) # / 3 this is for channels
+                return torch.sum(p_loss) / frame1.size(0)
+            
+            frame1 = img0
+            warped_frame2 = backwrd_warp(flow[-1][:, 3:6, ...], merged[-1])
+            loss_photo = photometric_loss(warped_frame2, frame1)
+            frame3 = img1
+            warped_frame2 = backwrd_warp(flow[-1][:, :3, ...], merged[-1])
+            loss_photo += photometric_loss(warped_frame2, frame3)
+            loss_photo /= 2.
+
+        lambda_l1 = 1 # 1
+        lambda_tea = 1 # 1
+        if flow_available:
+            lambda_flow = 0.2 # 0.01 0.2 1; 0.5 best on rectangle
+            lambda_distill = 0
+            lambda_reg = 0
+            lambda_photo = 0
+        else:
+            lambda_distill = 1e-4 # 0.01 # 5e-3 # 0.001 # 0.01
+            lambda_reg = 1e-8 # droplet # 1e-6 best on rectangle
+            lambda_photo = 1e-6 # 2 3 4 5 # 1e-5 best 1e-6
+            lambda_flow = 0
+        lambda_smooth = 0 # 1e-8 not important
 
         # check if distill los is nan or overflow
         if math.isnan(loss_distill) or loss_distill > 10.:
             loss_distill = torch.tensor(0.)
 
         loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
-                l1_reg * lambda_reg + loss_flow * lambda_flow # + loss_photo * lambda_photo + loss_smooth * lambda_smooth
+                l1_reg * lambda_reg + loss_photo * lambda_photo + loss_flow * lambda_flow # + loss_smooth * lambda_smooth
 
         if training:
             self.optimG.zero_grad()
