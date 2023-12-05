@@ -723,6 +723,8 @@ def load_data(dataset, factor, mode):
                 # data_test = data[22607:24000] # ens21 22605
                 # data_test = data[:3000] # ens21 Cy1r1t1 test file
                 # data_test = data[1607:3000] # 1607
+                # data_test = data[1607:2607] # for video
+                # data_test = data[1607:1907] # 1607 small
                 data_test = data[1607:1907] # 1607 small
                 # TODO: use Cy1r1t1 test file directly
 
@@ -780,8 +782,9 @@ def load_data(dataset, factor, mode):
                 # data_test = data[:3000] # 36.82
                 # if random_triplets:
                 #     data_test = data # random triplets
-                data_test = data[:2700] # 36.81
-                # data_test = data[360:660] # for plots
+                # data_test = data[:2700] # 36.81
+                # data_test = data[0:1000] # for video
+                data_test = data[360:660] # for plots
                 # data_test = data[635:935] # for plots 1
                 # data_test = data[2700:5400] # 34.26
                 # data_test = data[0:2700] # 35.12

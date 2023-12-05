@@ -310,7 +310,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
         # save data for plots
-        """
+        # """
         original_data_filename = os.path.join(dir_res, 'original_data.pkl')
         with open(original_data_filename, 'wb') as f:
             pickle.dump(original_data, f)
@@ -322,7 +322,7 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         diffs_filename = os.path.join(dir_res, 'diffs_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
             pickle.dump(diffs, f)
-        """
+        # """
 
 def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
     factor, dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
@@ -416,24 +416,29 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         if not os.path.isdir(dir_res):
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
-        """
+        # """
         flow_gt_filename = os.path.join(dir_res, 'flow_gt.pkl')
         with open(flow_gt_filename, 'wb') as f:
             pickle.dump(flow_gt, f)
         # save data for plots   flow_pred, flow_u_diff, flow_v_diff
-        # interpol_data_filename = os.path.join(dir_res, 'flow_pred_LREST.pkl')
-        interpol_data_filename = os.path.join(dir_res, 'flow_pred_RIFE.pkl')
+        interpol_data_filename = os.path.join(dir_res, 'flow_pred_LREST.pkl')
+        # interpol_data_filename = os.path.join(dir_res, 'flow_pred_RIFE.pkl')
         with open(interpol_data_filename, 'wb') as f:
             pickle.dump(flow_pred, f)
-        # diffs_filename = os.path.join(dir_res, 'flow_u_diff_LREST.pkl')
-        diffs_filename = os.path.join(dir_res, 'flow_u_diff_RIFE.pkl')
+        flow_diff = np.stack((flow_u_diff, flow_v_diff), axis=1)
+        diffs_filename = os.path.join(dir_res, 'flow_diff_LREST.pkl')
+        # diffs_filename = os.path.join(dir_res, 'flow_diff_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
-            pickle.dump(flow_u_diff, f)
-        # diffs_filename = os.path.join(dir_res, 'flow_v_diff_LREST.pkl')
-        diffs_filename = os.path.join(dir_res, 'flow_v_diff_RIFE.pkl')
-        with open(diffs_filename, 'wb') as f:
-            pickle.dump(flow_v_diff, f)
-        """
+            pickle.dump(flow_diff, f)
+        # # diffs_filename = os.path.join(dir_res, 'flow_u_diff_LREST.pkl')
+        # diffs_filename = os.path.join(dir_res, 'flow_u_diff_RIFE.pkl')
+        # with open(diffs_filename, 'wb') as f:
+        #     pickle.dump(flow_u_diff, f)
+        # # diffs_filename = os.path.join(dir_res, 'flow_v_diff_LREST.pkl')
+        # diffs_filename = os.path.join(dir_res, 'flow_v_diff_RIFE.pkl')
+        # with open(diffs_filename, 'wb') as f:
+        #     pickle.dump(flow_v_diff, f)
+        # """
 
 def visualize_large(original_data, interpol_data, diffs,
         flow, flow_gt, diffs_flow, flow_u_diff, flow_v_diff, mask,

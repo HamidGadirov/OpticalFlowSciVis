@@ -27,5 +27,7 @@ ax.scatter(PHI, RHO, c=c)
 _ = ax.axis('off')
 
 plt.show()
+title = "HSV_colorwheel.png"
+fig.savefig(title, dpi = 300)
 
 

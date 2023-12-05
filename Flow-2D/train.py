@@ -187,7 +187,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     # model_name += "_" + dataset
     # model_name += ".pkl"
 
-    # model.load_model(model_name, log_path)
+    model.load_model(model_name, log_path)
     try:
         model.load_model(model_name, log_path)
         # print("Loaded RIFE model:", model_name)
@@ -1236,8 +1236,10 @@ if __name__ == "__main__":
     # 2x: 53.17 0.0904; 3x: 59.01 0.1009; 4x: 49.97 0.1125; 5x: 51.72 0.1253; 8x: 49.33 0.1683; 16x: 42.61 0.2017; 32x: 40.21 0.2050
     # model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline.pkl" # baseline
     # 2x: 52.16 0.0935; 3x: 58.12 0.1039; 5x: 51.02 0.1310; 16x: 44.28 0.2132; 32x: 40.05 0.2030
+    # Baseline Baseline Baseline
     model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline_v2.pkl" # 100 ep
     # Baseline 2x: 51.90 0.0919; 3x: 56.12 0.0987; 5x: 50.96 0.1168; 8x: 49.26 0.1467; 16x: 44.15 0.1644; 32x: 39.57 0.1582
+    # Baseline Baseline Baseline
 
     # model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W8_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline.pkl" # baseline
     # 2x: 52.32 0.0984; 3x: 57.07 0.1086; 4x: 49.47 0.1212; 5x: 50.80 0.1359; 8x: 49.07 0.1873; 16x: 42.62 0.2946; 32x: 39.82 0.2673
@@ -1260,14 +1262,18 @@ if __name__ == "__main__":
     # 2x: 51.60 0.0053; 3x: 57.34 0.0094; 5x: 50.81 0.0136; 8x: 49.25 0.0193; 16x: 45.42 0.0417; 32x: 40.42 0.0552
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W15simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 51.32 0.0058; 3x: 57.68 0.0098; 5x: 51.56 0.0138; 8x: 49.21 0.0194; 16x: 46.09 0.0322; 32x: 39.66 0.0531
+
     ### +++
-    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 52.18 0.0056; 3x: 58.44 0.0096; 5x: 51.18 0.0137; 8x: 49.03 0.0192; 16x: 46.53 0.0356; 32x: 40.46 0.0545
     # 2x: 52.18 0.0056; 3x: 58.44 0.0051; 5x: 51.18 0.0045; 8x: 49.03 0.0040; 16x: 46.53 0.0143; 32x: 40.46 0.0282 # fixed bug with flow order
     ### +++
 
     # no student-teacher
-    model_name = "flownet_noTea_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_noTea_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 51.65 0.0062; 3x: 55.18 0.0105; 5x: 51.49 0.0050; 8x: 49.18 0.0045; 16x: 46.50 0.0156; 32x: 40.24 0.0295
+    # model_name = "flownet_noTea_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_256_lbs2d_triplets_W12simple_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v2.pkl"
+    # 2x: 51.29 0.0059; 3x: 56.37 0.0054; 5x: 50.14 0.0047; 8x: 48.93 0.0042; 16x: 46.86 0.0157; 32x: 40.31 0.0310
 
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow1e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 52.77 0.0074;
@@ -1507,8 +1513,9 @@ if __name__ == "__main__":
     # 2x: 41.11 0.0102; 3x: 39.02 0.022; 5x: 36.75 0.0296; 8x: 34.20 0.037; 16x: 30.81 0.060 ++
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 40.96 0.0111; 3x: 39.11 0.0189; 5x: 36.76 0.0301; 8x: 34.36 0.0377; 16x: 30.97 0.060
+
     ### +++
-    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
+    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
     # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; 5x: 36.60 0.0293; 8x: 34.26 0.0367; 16x: 30.93 0.0585 +++
     ### +++
 
@@ -1537,8 +1544,11 @@ if __name__ == "__main__":
     # 2x: 40.45 0.0146; 3x: 38.45 0.0217; 4x: 37.20 0.0259; 5x: 36.10 0.0308; 8x: 33.59 0.0395; 16x: 30.25 0.0628
     # model_name = "flownet_lapl_dist_v1_240_drop40KrandTripl_W6_lr3e-4_RIFEbaseline.pkl" # baseline
     # early stop after 50 -
-    # model_name = "flownet_lapl_dist_v1_240_drop40KrandTripl_W6_lr3e-4_RIFEbaseline_v2.pkl"
+
+    # Baseline Baseline Baseline
+    model_name = "flownet_lapl_dist_v1_240_drop40KrandTripl_W6_lr3e-4_RIFEbaseline_v2.pkl"
     # baseline 5x: 35.31 0.0331
+    # Baseline Baseline Baseline
 
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo2e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 40.65 0.0106; 3x: 38.66 0.0218; 4x: 37.51 0.0250; 5x: 36.53 0.0287; 8x: 34.10 0.0367; 16x: 30.66 0.061 vis worse
@@ -1570,15 +1580,24 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_5convDown5convUp5conv_l1_dist1e-5_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # early stop -
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
-    # 33.27 0.025 no distill
+    # 2x: 33.27 0.025 no distill
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4_v2.pkl"
+    # 2x: 41.35 0.0105 3x: 39.39 0.0171; no distill - this was only l1 and Tea
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4_v3.pkl"
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
-    # 2x: 40.71 0.0098; 3x: avg PSNR: 38.82 0.0206; no reg
+    # 2x: 40.71 0.0098 3x: 38.82 0.0206; no reg
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 41.47 0.0105; 3x: 39.49 0.0200; 4x: no photo
+
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4_v2.pkl"
+    # wrong, flow_available=True
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4_v3.pkl"
+    # 2x: 41.09 0.0092; 3x: 38.77 0.0222;
+
     # combinations of loss ablations:
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 41.51 0.0110; 3x: 39.62 0.0175; 4x: 38.22 0.0218; no reg no photo
-    # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; - best
+    # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; - best -
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 40.37 0.0117; 3x: 38.36 0.0245; no dis no reg
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_reg1e-8_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
@@ -1586,8 +1605,13 @@ if __name__ == "__main__":
 
     # no student-teacher
     # model_name = "flownet_noTea_4Blocks_3convDown3convUp3conv_l1_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
-    # 2x: 32.31 0.0311; 3x: 32.037 0.0348; 4x: 31.76 0.0374
+    # 2x: 32.31 0.0311; 3x: 32.04 0.0348; 4x: 31.76 0.0374 - not correct result
+    # model_name = "flownet_noTea_4Blocks_3convDown3convUp3conv_l1_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4_v2.pkl"
+    # 2x: 40.75 0.0202; 3x: 39.06 0.0260; 4x: 37.74 0.0310
     # model_name = "flownet_noTea_4Blocks_3convDown3convUp3conv_l1_reg1e-9_photo1e-7_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
+    # 2x: 40.02 0.0148; 3x: 38.32 0.0246; 
+    # model_name = "flownet_noTea_4Blocks_3convDown3convUp3conv_l1_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl"
+    # 2x: 41.26 0.0136; 3x: 39.22 0.0222;
 
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4_*t.pkl" # worse.
     # 2x: 34.08 0.022; 3x: 33.70 0.026; 8x: 31.17 0.046
@@ -1740,12 +1764,12 @@ if __name__ == "__main__":
         # factor = args.factor # check all
  
         if dataset == "droplet2d": 
-            factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
-            # factors = [3]
+            # factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
+            factors = [3]
         elif dataset == "lbs2d":
-            factors = [2, 3, 4, 5, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+            # factors = [2, 3, 4, 5, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
             # factors = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-            # factors = [8, 12]
+            factors = [6, 8, 16]
         # factors = [8, 16, 32]
         for factor in factors:
             dir_res = "Results"
@@ -2057,6 +2081,11 @@ if __name__ == "__main__":
                 title = "Flow_gt_pred_diff"
                 visualize_seq_flow(flow_original_pred, flow, u_diff, v_diff,
                         factor, dataset, dir_model, title=title, show=False, save=True)
+            if dataset == "droplet2d":
+                # flow_filename = os.path.join(dir_model, 'flow_pred_LREST.pkl')
+                flow_filename = os.path.join(dir_model, 'flow_pred_RIFE.pkl')
+                with open(flow_filename, 'wb') as f:
+                    pickle.dump(flow, f)
             # """
             
             # input("metrics")
