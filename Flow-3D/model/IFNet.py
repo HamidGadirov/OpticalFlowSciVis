@@ -253,7 +253,9 @@ class IFNet(nn.Module):
             mask_d = mask_d[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
             
             flow_teacher = flow + flow_d
+            # print("img0 before warp:", img0.shape)
             warped_img0_teacher = warp(img0, flow_teacher[:, :3])
+            # print("warped_img0_teacher:", warped_img0_teacher.shape)
             warped_img1_teacher = warp(img1, flow_teacher[:, 3:6])
             mask_teacher = torch.sigmoid(mask + mask_d)
             merged_teacher = warped_img0_teacher * mask_teacher + warped_img1_teacher * (1 - mask_teacher)

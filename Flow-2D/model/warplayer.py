@@ -5,8 +5,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 backwarp_tenGrid = {}
 
 def warp(tenInput, tenFlow):
-    # print(tenInput.shape, tenFlow.shape)
-    # input("x")
+    print(tenInput.shape, tenFlow.shape)
+    input("x")
     k = (str(tenFlow.device), str(tenFlow.size()))
     if k not in backwarp_tenGrid:
         tenHorizontal = torch.linspace(-1.0, 1.0, tenFlow.shape[3], device=device).view(
@@ -20,13 +20,13 @@ def warp(tenInput, tenFlow):
                          tenFlow[:, 1:2, :, :] / ((tenInput.shape[2] - 1.0) / 2.0)], 1)
     # performs normalization on the flow tensor tenFlow to bring its values within the range of -1.0 to 1.0.
 
-    # print(tenHorizontal.shape, backwarp_tenGrid[k].shape, tenFlow.shape)
-    # input("warp")
+    print(tenHorizontal.shape, backwarp_tenGrid[k].shape, tenFlow.shape)
+    input("warp")
 
     g = (backwarp_tenGrid[k] + tenFlow).permute(0, 2, 3, 1)
 
-    # print(g.shape, tenFlow.shape)
-    # input("warp")
+    print("g:", g.shape)
+    input("warp")
 
     if tenInput.dtype==torch.float16:
         # bilinear

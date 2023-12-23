@@ -21,16 +21,19 @@ def warp(tenInput, tenFlow): # img0, flow[:, :3]
             1, 1, 1, 1, tenFlow.shape[4]).expand(tenFlow.shape[0], -1, tenFlow.shape[2], tenFlow.shape[3], -1)
         backwarp_tenGrid[k] = torch.cat(
             [tenHorizontal, tenVertical, tenDepth], 1).to(device)
+        
+    # TODO: experiment with modified dims so that to chech the order of d, h, w
 
     tenFlow = torch.cat([tenFlow[:, 0:1, :, :, :] / ((tenInput.shape[3] - 1.0) / 2.0),
                          tenFlow[:, 1:2, :, :, :] / ((tenInput.shape[2] - 1.0) / 2.0),
                          tenFlow[:, 2:3, :, :, :] / ((tenInput.shape[4] - 1.0) / 2.0)], 1)
 
     # print(backwarp_tenGrid[k].shape, tenFlow.shape)
-    # input("warp")
 
     g = (backwarp_tenGrid[k] + tenFlow).permute(0, 2, 3, 4, 1) # 5D
     # When mode='bilinear' and the input is 5-D, the interpolation mode used internally will actually be trilinear.
+    # print("g:", g.shape)
+    # input("warp")
 
     # half precision
     # g.half()
@@ -42,6 +45,8 @@ def warp(tenInput, tenFlow): # img0, flow[:, :3]
     else:
         grid_s = torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)
     # grid_s = grid_s.to(torch.float16)
+
+    # In the case of 5D inputs, grid[n, d, h, w] specifies the x, y, z pixel locations for interpolating output[n, :, d, h, w].
 
     # return torch.nn.functional.grid_sample(input=tenInput, grid=g, mode='bilinear', padding_mode='border', align_corners=True)
     return grid_s

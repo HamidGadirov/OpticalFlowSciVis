@@ -81,11 +81,17 @@ def getListOfFiles(dirName):
                 allFiles = allFiles + getListOfFiles(fullPath)
             else:
                 allFiles.append(fullPath)
+        # fullPath = os.path.join(dirName, entry)
+        # if os.path.isdir(fullPath):
+        #     allFiles = allFiles + getListOfFiles(fullPath)
+        # else:
+        #     allFiles.append(fullPath)
                 
     return allFiles  
 
 # dirNames = ['Velocity'] # 'Density', 
-dirName = 'Density'
+dirName = 'Density' # float32
+# dirName = '5Jets_density_uchar' # uint8
 
 # for dirName in dirNames:
 print(dirName)
@@ -97,6 +103,7 @@ print("listOfFiles is sorted!")
 #     print(listOfFiles[k])
     # print(len(listOfFiles))
 # input("files")
+print(len(listOfFiles))
 
 data = []
 count = 0
@@ -115,7 +122,9 @@ with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
             if count >= 1870: # skip last t.s. with broken seq.
                 break
 
-            tmp_data = np.fromfile(elem, dtype='uint8')
+            # tmp_data = np.fromfile(elem, dtype='uint8')
+            tmp_data = np.fromfile(elem, dtype='float32')
+            # tmp_data = np.fromfile(elem, dtype='uint8').reshape((128, 128, 128)) # 'uint8' np.uint8
             # print(tmp_data.shape) # 8388608 dens; 25165824 vel
             # input("x")
             tmp_data.resize(128, 128, 128, 1) # density
@@ -134,6 +143,10 @@ with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
 print(len(data))
 print(np.array(data).shape)
 # input("data")
+
+# data_to_vis = np.array(data)[:, :, :, 64, 0]
+# visualize_series(data_to_vis, dir_res="Results", title="5Jets_Densities_2D", show=False, save=True)
+# input("viz")
 
 # data = np.expand_dims(data, axis=1)
 # print(np.array(data).shape)
@@ -169,7 +182,7 @@ with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
             if count >= 1870: # skip last t.s. with broken seq.
                 break
 
-            tmp_data = np.fromfile(elem, dtype='uint8')
+            tmp_data = np.fromfile(elem, dtype='float32')
             # print(tmp_data.shape) # 8388608 dens; 25165824 vel
             # input("x")
             # tmp_data.resize(128, 128, 128, 1) # density
@@ -193,6 +206,7 @@ print("combining density and vel")
 data = np.concatenate((data, data_vel), axis=-1)
 print(len(data))
 print(np.array(data).shape)
+
 # input("data_dens_vel")
 
 # pkl_filename = "5jets3d" + "_dens" + ".pkl" 
@@ -222,10 +236,13 @@ print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
 # input(data.shape)
 # input("Data range")
-data = (data - np.min(data)) / (np.max(data) - np.min(data))
-# data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
+for i in range(4):
+    data[:, i] = (data[:, i] - np.min(data[:, i])) / (np.max(data[:, i]) - np.min(data[:, i]))
+# data = (data - np.min(data[:, 0])) / (np.max(data[:, 0]) - np.min(data[:, 0]))
+# # data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
 print("Density scaled to [0, 1] range!")
-# data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], 0., 1., cv2.NORM_MINMAX)
+# # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], 0., 1., cv2.NORM_MINMAX)
+# data = (data - np.min(data[:, 1])) / (np.max(data[:, 1]) - np.min(data[:, 1]))
 # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], 0., 1., cv2.NORM_MINMAX)
 # data[:, 3] = cv2.normalize(data[:, 3], data[:, 3], 0., 1., cv2.NORM_MINMAX)
 print("Velocities scaled to [0, 1] range!")
@@ -235,11 +252,12 @@ print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
 print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 
 # print(data.shape)
-# # data_to_vis = data[:, 0, :, :, 64]
+data_to_vis = data[:, 0, :, :, 64]
 # data_to_vis = data[:, 0, 64, :, :]
 # print(data_to_vis.shape)
 # # viz
 # visualize_series(data_to_vis, dir_res="Results", title="5Jets_Densities_2D", show=False, save=True)
+# input("viz")
 
 data_to_vis = data[:, 0]
 print(data_to_vis.shape)
@@ -266,7 +284,7 @@ plt.show()
 dir_res = "Results"
 title = "5Jets_Densities_3D"
 fig.savefig(os.path.join(dir_res, title), dpi = 300)
-input("viz")
+# input("viz")
 
 # input("32")
 # data = np.float16(data)
@@ -277,6 +295,8 @@ data_train = data[:300] #
 data_val = data[300:372] #
 data_test = data[300:372] #
 
+del data, data_vel, data_to_vis
+"""
 print("before augmented:", data_train.shape)
 data_train = np.append(data_train, data_train[:,:,:,::-1,:], axis=0)
 # data_train = np.append(data_train, data_train[:,:,::-1,:,:], axis=0)
@@ -284,6 +304,7 @@ data_train = np.append(data_train, data_train[:,:,:,::-1,:], axis=0)
 print("augmented:", data_train.shape)
 # input("x")
 # data_train = np.float16(data_train)
+"""
 
 data_train_three = []
 data_val_three = []

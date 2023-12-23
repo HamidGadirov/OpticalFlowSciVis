@@ -52,6 +52,9 @@ def load_data(dataset, mode):
             pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_train.pkl"
             pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_val.pkl"
             pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_test.pkl"
+            # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_train.pkl"
+            # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_val.pkl"
+            # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_test.pkl"
         if dataset == "droplet3d":
             filename_train = filename + "droplet3d_64_train.pkl"
             filename_val = filename + "droplet3d_64_val.pkl"
@@ -136,26 +139,42 @@ def load_data(dataset, mode):
                 data_test = pickle.load(flow_file)
 
             print(len(data_train))
+            # data_train = data_train[:180] # test
 
             data = np.array(data_train)
+            # data = data[:, :, :, :128, :124, :120]
+            # data_val = np.array(data_val[:, :, :, :128, :124, :120])
+            data_train = data
             print(data.shape)
-            
-            # # data = np.float32(data)
-            # print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+
+            factor = 2
+            dir_res = "Results"
+            dir_res = os.path.join(dir_res, dataset)
+            dir_res = os.path.join(dir_res, str(factor) + "x")
+            visualize_series(data_train[:, 1, 0, ..., 64], factor, dataset, dir_res, title="Density", show=False, save=True)
+
+            """
+            # data = np.float32(data)
+            print("Density range %f to %f" % (np.min(data[:, :, 0]), np.max(data[:, :, 0])))
+            # print("Density range %f to %f" % (np.min(data[..., 0]), np.max(data[..., 0]))) # 0.000000 to 255.000000
+            # print("Vel x range %f to %f" % (np.min(data[..., 1]), np.max(data[..., 1]))) # 0.000000 to 255.000000
+            # print("dens:", data[..., 0])
+            # print("vel:", data[..., 1])
             # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            # print(data.shape)
-            # # input("Data range")
-            # data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
-            # print("Density scaled to [0, 1] range!")
-            # data[:, 1] = cv2.normalize(data[:, 1], data[:, 1], 0., 1., cv2.NORM_MINMAX)
-            # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], 0., 1., cv2.NORM_MINMAX)
-            # data[:, 3] = cv2.normalize(data[:, 3], data[:, 3], 0., 1., cv2.NORM_MINMAX)
-            # print("Velocities scaled to [0, 1] range!")
-            # print("Density range %f to %f" % (np.min(data[:, :, 0]), np.max(data[:, :, 0])))
-            # print("Vel x range %f to %f" % (np.min(data[:, :, 1]), np.max(data[:, :, 1])))
-            # print("Vel y range %f to %f" % (np.min(data[:, :, 2]), np.max(data[:, :, 2])))
-            # print("Vel z range %f to %f" % (np.min(data[:, :, 3]), np.max(data[:, :, 3])))
+            print(data.shape)
             # input("Data range")
+            data[:, :, 0] = cv2.normalize(data[:, :, 0], data[:, :, 0], 0., 1., cv2.NORM_MINMAX)
+            print("Density scaled to [0, 1] range!")
+            data[:, :, 1] = cv2.normalize(data[:, :, 1], data[:, :, 1], 0., 1., cv2.NORM_MINMAX)
+            data[:, :, 2] = cv2.normalize(data[:, :, 2], data[:, :, 2], 0., 1., cv2.NORM_MINMAX)
+            data[:, :, 3] = cv2.normalize(data[:, :, 3], data[:, :, 3], 0., 1., cv2.NORM_MINMAX)
+            print("Velocities scaled to [0, 1] range!")
+            print("Density range %f to %f" % (np.min(data[:, :, 0]), np.max(data[:, :, 0])))
+            print("Vel x range %f to %f" % (np.min(data[:, :, 1]), np.max(data[:, :, 1])))
+            print("Vel y range %f to %f" % (np.min(data[:, :, 2]), np.max(data[:, :, 2])))
+            print("Vel z range %f to %f" % (np.min(data[:, :, 3]), np.max(data[:, :, 3])))
+            input("Data range")
+            """
         
         if dataset == "rectangle3d": # or dataset == "jets3d": # expand dims for later concatenating
             data = np.expand_dims(data, axis=1)

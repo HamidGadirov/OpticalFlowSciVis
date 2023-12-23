@@ -57,6 +57,7 @@ def get_learning_rate(step):
         return 6e-4 * mul # 2D
         # return 3e-5 * mul
         # return 6e-6 * mul
+        # return 1e-6 * mul 
         # return 3e-7 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
@@ -64,6 +65,7 @@ def get_learning_rate(step):
         return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-5 - 3e-6) * mul + 3e-6
         # return (6e-6 - 6e-7) * mul + 6e-7
+        # return (1e-6 - 1e-8) * mul + 1e-8
         # return (3e-7 - 3e-8) * mul + 3e-8
     # return 1e-6 # worse
 
@@ -105,8 +107,8 @@ def train(model, dataset, exp, model_name, mode, local_rank):
     #     writer_val = SummaryWriter('validate')
     step = 0
     nr_eval = 0
-    early_stopper = EarlyStopper(patience=30, min_delta=0.01)
-    batch_size_inf = 6
+    early_stopper = EarlyStopper(patience=100, min_delta=0.01) # 30
+    batch_size_inf = 2 # 6
 
     num_workers = 1 # 8
     if mode == "train":
@@ -120,6 +122,7 @@ def train(model, dataset, exp, model_name, mode, local_rank):
         print(data_train[0].shape)
         val_data = DataLoader(data_val, batch_size=args.batch_size, pin_memory=True, num_workers=num_workers)
         print("len:", len(val_data))
+        # input("x")
         # print(len(train_data.dataset))
         # for i, data in enumerate(train_data):
         #     print(i)
@@ -201,12 +204,12 @@ def train(model, dataset, exp, model_name, mode, local_rank):
 
                 # learning_rate = get_learning_rate(step)
                 learning_rate = get_learning_rate(step) * args.world_size / 4
-                # with torch.autograd.detect_anomaly():
+                with torch.autograd.detect_anomaly():
                 # model.half()
-                with torch.cuda.amp.autocast(True):
-                    pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
+                    with torch.cuda.amp.autocast(True):
+                        pred, info = model.update(imgs, gt, dataset, learning_rate, training=True)
                 
-                # print(pred.shape, gt.shape, info['mask'].shape)
+                # print("pred:", pred.shape, gt.shape, info['mask'].shape)
                 # pred = pred.permute(0, 1, 3, 4, 2) # (0, 1, 3, 4, 2)
                 # gt = gt.permute(0, 1, 3, 4, 2)
                 # info['mask'] = info['mask'].permute(0, 1, 3, 4, 2)
@@ -567,7 +570,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=300, type=int) # 300 500
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local-rank', default=0, type=int, help='local rank')
+    parser.add_argument('--local_rank', default=0, type=int, help='local rank')
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -587,7 +590,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle3d":
         args.batch_size = 40
     if args.dataset == "jets3d":
-        args.batch_size = 6 # 8
+        args.batch_size = 2 # 6 8
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -638,6 +641,12 @@ if __name__ == "__main__":
     model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test7.pkl" # lr6e-6: loss increases - ???
     model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test8.pkl" # lr3e-7: loss constant -
     model_name = "flownet_3Blocks_l1_flow2e-1_v1_128_jets_gamma_eqRes_deconv_lr6e-4_test.pkl"
+    model_name = "flownet_3Blocks_l1_flow2e-1_v1_128_jets_gamma_eqRes_deconv_lr6e-4_test1.pkl"
+    model_name = "flownet_3Blocks_l1_flow2e-1_v1_128_jets_gamma_eqRes_deconv_lr6e-4_test2.pkl"
+    model_name = "flownet_3Blocks_l1_v1_128_jets_gamma_eqRes_deconv_lr6e-4_test.pkl"
+    model_name = "flownet_3Blocks_l1_v1_128_jets_gamma_eqRes_deconv_lr1e-6_test.pkl"
+    # fixed bug with the data
+    model_name = "flownet_3Blocks_l1_flow2e-1_v1_128_jets_gamma_eqRes_deconv_lr6e-4_databugfix.pkl"
     # is there a bug? why loss does not decrease?
     
     """ tangaroa """
@@ -765,7 +774,8 @@ if __name__ == "__main__":
         print(flow.shape, flow_gt.shape, diffs_flow.shape)
         print(u_diff.shape, v_diff.shape, mask.shape)
 
-        # 2D FOR VIS
+        # 2D for VIS
+        # TODO check dims
         original_data = original_data[..., 64]
         interpol_data = interpol_data[..., 64]
         diffs = diffs[..., 64]
