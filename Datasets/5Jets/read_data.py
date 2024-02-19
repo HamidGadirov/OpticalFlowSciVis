@@ -28,6 +28,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from skimage.measure import block_reduce
+import random
 
 def visualize_series(data_to_vis, dir_res="Results", title="Data", show=True, save=False):
     fig = plt.figure()
@@ -262,6 +263,7 @@ data_to_vis = data[:, 0, :, :, 64]
 data_to_vis = data[:, 0]
 print(data_to_vis.shape)
 
+"""
 # Choose some volumes to visualize
 volumes_to_visualize = [0, 10, 20, 30]
 
@@ -285,15 +287,38 @@ dir_res = "Results"
 title = "5Jets_Densities_3D"
 fig.savefig(os.path.join(dir_res, title), dpi = 300)
 # input("viz")
+"""
 
 # input("32")
 # data = np.float16(data)
 # input("16")
 data = np.expand_dims(data, axis=1)
 
-data_train = data[:300] #
-data_val = data[300:372] #
-data_test = data[300:372] #
+# TODO: randomly select
+# data_train = data[:300] #
+# data_val = data[300:372] #
+# data_test = data[300:372] #
+
+# Randomly select 300 indices for the training set
+train_indices = random.sample(range(len(data)), 300)
+data_train = [data[i] for i in train_indices]
+
+# Remove the selected indices to avoid duplicates in the validation and test sets
+remaining_indices = set(range(len(data))) - set(train_indices)
+
+# Randomly select 36 indices for the validation set
+val_indices = random.sample(remaining_indices, 36)
+data_val = [data[i] for i in val_indices]
+
+# Use the remaining indices for the test set
+test_indices = remaining_indices - set(val_indices)
+data_test = [data[i] for i in test_indices]
+
+print("random subsets created!")
+
+data_train = np.array(data_train)
+data_val = np.array(data_val)
+data_test = np.array(data_test)
 
 del data, data_vel, data_to_vis
 """

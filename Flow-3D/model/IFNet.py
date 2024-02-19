@@ -17,6 +17,8 @@ def deconv(in_planes, out_planes, kernel_size=4, stride=2, padding=1):
         torch.nn.ConvTranspose3d(in_channels=in_planes, out_channels=out_planes, 
                                 kernel_size=kernel_size, stride=stride, padding=padding),
         nn.PReLU(out_planes),
+        # nn.Tanh(),
+        # nn.Linear(out_planes, out_planes),
         # nn.InstanceNorm3d(out_planes) # added
     )
 
@@ -25,12 +27,20 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
         nn.Conv3d(in_planes, out_planes, kernel_size=kernel_size, stride=stride,
                   padding=padding, dilation=dilation, bias=True),
         nn.PReLU(out_planes),
+        # nn.Tanh(),
+        # nn.Linear(out_planes, out_planes),
         # nn.InstanceNorm3d(out_planes) # added
     )
 
 version = 1
+two_blocks = False
+three_blocks = False
+four_blocks = True # True
+five_blocks = False
+six_blocks = False
 refine = False # True
 use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
+student_teacher = True # True False
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -39,17 +49,35 @@ class IFBlock(nn.Module):
         self.conv0 = nn.Sequential( # downscale x4; c=128
             conv(in_planes, c//2, 4, 2, 1), # stride=2 -> donwscale
             conv(c//2, c, 4, 2, 1), # # stride=2 -> donwscale  c=128 now
+            # conv(in_planes, c//2, 3, 2, 1),
+            # # conv(c//2, c//2), # test
+            # conv(c//2, c, 3, 2, 1),
             )
         if version == 1:
             self.convblock = nn.Sequential(
                 conv(c, c),
                 conv(c, c),
                 conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                conv(c, c, 3, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
                 conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                deconv(c, c, 4, 2, 1), # +
                 conv(c, c),
                 conv(c, c),
+                conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
             )
             if use_deconv == False:
                 self.lastconv = nn.ConvTranspose3d(c, 7, 4, 2, 1) # (c, 5, 4, 2, 1)
@@ -81,12 +109,16 @@ class IFBlock(nn.Module):
             self.conv1 = nn.Sequential(
                 nn.ConvTranspose3d(c, c//2, 4, 2, 1),
                 nn.PReLU(c//2),
+                # nn.Tanh(),
+                # nn.Linear(c//2, c//2),
                 # nn.InstanceNorm3d(c//2), # added
                 nn.ConvTranspose3d(c//2, 6, 4, 2, 1), # flow (c//2, 4, 4, 2, 1)
             )
             self.conv2 = nn.Sequential(
                 nn.ConvTranspose3d(c, c//2, 4, 2, 1),
                 nn.PReLU(c//2),
+                # nn.Tanh(),
+                # nn.Linear(c//2, c//2),
                 # nn.InstanceNorm3d(c//2), # added
                 nn.ConvTranspose3d(c//2, 1, 4, 2, 1), # mask
             )
@@ -95,7 +127,7 @@ class IFBlock(nn.Module):
         # print("scale:", scale)
         if scale != 1:
             # input("here dim bug starts")
-            # print("before interpolate, ", x.shape)
+            print("before interpolate, ", x.shape)
             x = F.interpolate(x, scale_factor = 1. / scale, mode="trilinear", align_corners=False)
         if flow != None:
             # print("flow != None ", flow.shape)
@@ -108,7 +140,11 @@ class IFBlock(nn.Module):
         # print("conv0", x.shape)
         if version == 1:
             # print("conv0", x.shape)
-            x = self.convblock(x) + x
+            # x = self.convblock(x) + x
+            convblock_out = self.convblock(x)
+            convblock_out = convblock_out[:,:,:x.shape[2],:x.shape[3], :x.shape[4]]
+            # print("convblock_out", convblock_out.shape)
+            x = convblock_out + x
             # print("convblock", x.shape)
             if use_deconv == False:
                 tmp = self.lastconv(x)
@@ -142,23 +178,37 @@ class IFBlock(nn.Module):
 class IFNet(nn.Module):
     def __init__(self):
         super(IFNet, self).__init__()
-        self.block0 = IFBlock(2, c=128) # 240
-        self.block1 = IFBlock(5+6, c=96) # 150
-        self.block2 = IFBlock(5+6, c=64) # 90
-        self.block_tea = IFBlock(6+6, c=64) # 6 from cat, 6 from flow  c=90
+        if three_blocks:
+            # self.block0 = IFBlock(2, c=128) # 240
+            # self.block1 = IFBlock(5+6, c=96) # 150
+            # self.block2 = IFBlock(5+6, c=64) # 90
+            self.block0 = IFBlock(3, c=128) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=96) # 13 c=150 96 192
+            self.block2 = IFBlock(6+6, c=64) # 13 c=90 96 64 128
+
+        if four_blocks:
+            self.block0 = IFBlock(3, c=128) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=96) # 96 192 256 320
+            self.block2 = IFBlock(6+6, c=96) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=64) # 64 128 192 256
+
+        # self.block_tea = IFBlock(6+6, c=64) # 6 from cat, 6 from flow  c=90
+        self.block_tea = IFBlock(7+6, c=64) # 90 128 192 256
         # modified
         if refine:
             self.contextnet = Contextnet()
             self.unet = Unet()
 
-    @torch.cuda.amp.autocast(True)
-    def forward(self, x, scale=[1, 1, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
-        img0 = x[:, :1] 
-        img1 = x[:, 1:2]
-        gt = x[:, 2:3] # In inference time, gt is None
+    # @torch.cuda.amp.autocast(True)
+    # def forward(self, x, scale=[1, 1, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
+    def forward(self, x): # scale=[4, 2, 1] scale=[1, 1, 1] t=0.5
         # img0 = x[:, :1] 
         # img1 = x[:, 1:2]
-        # gt = x[:, 2:] # In inference time, gt is None
+        # gt = x[:, 2:3] # In inference time, gt is None
+        img0 = x[:, :1]
+        img1 = x[:, 1:2]
+        gt = x[:, 2:3]
+        t_mask = x[:, 3:4]
 
         flow_list = [] # flow_list represents flow predictions by each IFBlock, 6 channels in 3D, Ft->0, Ft->1
         merged = []
@@ -167,9 +217,22 @@ class IFNet(nn.Module):
         warped_img1 = img1
         flow = None 
         loss_distill = 0
-        stu = [self.block0, self.block1, self.block2]
+        if two_blocks:
+            blocks_range = 2
+            stu = [self.block0, self.block1]
+            scale = [1, 1] if use_deconv else [2, 1]
+        elif three_blocks:
+            blocks_range = 3
+            stu = [self.block0, self.block1, self.block2]
+            scale = [1, 1, 1] if use_deconv else [4, 2, 1]
+        elif four_blocks:
+            blocks_range = 4
+            stu = [self.block0, self.block1, self.block2, self.block3]
+            # scale = [1, 1, 1, 1] if use_deconv else [8, 4, 2, 1]
+            scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
+        # stu = [self.block0, self.block1, self.block2]
         # stu = [self.block0, self.block2]
-        for i in range(3):
+        for i in range(blocks_range):
             if flow != None:
                 # correct shapes
                 max_shape_2 = min(img0.shape[2], warped_img0.shape[2])
@@ -185,7 +248,8 @@ class IFNet(nn.Module):
                 # gt = gt[:,:,:max_shape_2,:max_shape_3]
                 # print(i)
                 # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
-                flow_d, mask_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
+                # flow_d, mask_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
+                flow_d, mask_d = stu[i](torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
                 flow_d = flow_d[:,:,:img0.shape[2],:img0.shape[3],:img0.shape[4]]
                 mask_d = mask_d[:,:,:img0.shape[2],:img0.shape[3],:img0.shape[4]]
                 flow = flow + flow_d
@@ -194,7 +258,8 @@ class IFNet(nn.Module):
                 # print(i)
                 # print("cat", torch.cat((img0, img1), 1).shape)
                 # input("flow == None")
-                flow, mask = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i]) # stu[0]
+                # flow, mask = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i]) # stu[0]
+                flow, mask = stu[i](torch.cat((img0, img1, t_mask), 1), None, scale=scale[i])
                 # print(flow, mask) # nan
                 # input("flow")
             # correct shapes
@@ -212,6 +277,8 @@ class IFNet(nn.Module):
             # input("x")
             warped_img0 = warp(img0, flow[:, :3]) # Ft->0
             warped_img1 = warp(img1, flow[:, 3:6]) # Ft->1
+            # print("img0:", img0.shape)
+            # print("warped_img0:", warped_img0.shape)
             merged_student = (warped_img0, warped_img1)
             merged.append(merged_student)
 
@@ -248,7 +315,8 @@ class IFNet(nn.Module):
             # print("flow:", flow.shape)
 
             # print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
-            flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+            # flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+            flow_d, mask_d = self.block_tea(torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
             flow_d = flow_d[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
             mask_d = mask_d[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
             
@@ -263,7 +331,7 @@ class IFNet(nn.Module):
             # print("flow_teacher = None")
             flow_teacher = None
             merged_teacher = None
-        for i in range(3):
+        for i in range(blocks_range):
             merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
             merged[i] = merged[i][:,:,:gt.shape[2],:gt.shape[3],:gt.shape[4]]
 
@@ -303,4 +371,9 @@ class IFNet(nn.Module):
             # res = tmp[:, :3] * 2 - 1
             # merged[2] = torch.clamp(merged[2] + res, 0, 1)
             print("refined")
-        return flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill # mask_list[2]
+        # return flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill # mask_list[2]
+        if student_teacher:
+            return flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill
+            # return flow_list, mask_list, merged, warped_img0, flow_teacher, merged_teacher, loss_distill
+        else:
+            return flow_list, mask_list, merged

@@ -79,8 +79,6 @@ def load_data(dataset, factor, mode):
             # filename += "LatticeBoltzmannSim/lbs2d_skip5_11K.pkl"
             # filename += "LatticeBoltzmannSim/lbs2d_skip3_combi.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_combi_cyl_tau.pkl"
-            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ens7.pkl"
-            # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble10.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/Spare_members/lbs2d_skip3_ensemble21.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_ensemble16m_f32.pkl"
             # filename = "../../../DataSSD/Datasets/LBS/lbs2d_skip3_Cy1r1t1.pkl"

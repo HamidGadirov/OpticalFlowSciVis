@@ -12,6 +12,10 @@ import pickle
 import random
 import argparse
 from skimage.transform import rescale, resize, downscale_local_mean
+from matplotlib import pyplot as plt
+import yt
+from mpl_toolkits.axes_grid1 import ImageGrid
+from memory_profiler import profile
 
 import sys
 import inspect
@@ -26,13 +30,16 @@ from utils import visualize_ind, visualize_series, visualize_series_flow, visual
 # 16777216
 # 6480000
 
-def load_data(dataset, mode):
+# @profile
+def load_data(dataset, factor, mode):
     combined_data_train = []
     combined_data_val = []
     if dataset == 'rectangle3d':
         datasets = ["rectangle3d"]
     if dataset == 'jets3d':
         datasets = ["jets3d"]
+    if dataset == 'pool3d':
+        datasets = ["pool3d"]
     if dataset == 'droplet3d':
         datasets = ["droplet3d"]
     elif dataset == 'tangaroa3d':
@@ -40,6 +47,8 @@ def load_data(dataset, mode):
     elif dataset == 'tornado3d':
         datasets = ["tornado3d"]
     
+
+
     for dataset in datasets:
         print(dataset)
         filename = "../Datasets/"
@@ -49,12 +58,20 @@ def load_data(dataset, mode):
         if dataset == 'jets3d':
             filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow.pkl"
             flow_fln = "../../../DataSSD/Datasets/5Jets/5jets3d_flow.pkl"
-            pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_train.pkl"
-            pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_val.pkl"
-            pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_test.pkl"
+            # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_train.pkl"
+            pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_500_train.pkl"
+            pkl_train_filename_1 = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_500_train_1.pkl"
+            # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_val.pkl"
+            pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_50_val.pkl"
+            # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_test.pkl"
+            pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_300_test.pkl"
             # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_train.pkl"
             # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_val.pkl"
             # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_test.pkl"
+        if dataset == 'pool3d':
+            pkl_train_filename = "../Datasets/pool3D/pool3d_triplets_W12_2K_train.pkl"
+            pkl_val_filename = "../Datasets/pool3D/pool3d_triplets_W12_300_val.pkl"
+            pkl_test_filename = "../Datasets/pool3D/pool3d_300_test.pkl"
         if dataset == "droplet3d":
             filename_train = filename + "droplet3d_64_train.pkl"
             filename_val = filename + "droplet3d_64_val.pkl"
@@ -127,54 +144,6 @@ def load_data(dataset, mode):
             print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
             print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
             # input("Data range")
-        if dataset == "jets3d":
-            # just load data, all steps were done in data creation (read_data.py) to save time
-            # with open(flow_fln, 'rb') as flow_file:
-            #     data = pickle.load(flow_file)
-            with open(pkl_train_filename, 'rb') as flow_file:
-                data_train = pickle.load(flow_file)
-            with open(pkl_val_filename, 'rb') as flow_file:
-                data_val = pickle.load(flow_file)
-            with open(pkl_test_filename, 'rb') as flow_file:
-                data_test = pickle.load(flow_file)
-
-            print(len(data_train))
-            # data_train = data_train[:180] # test
-
-            data = np.array(data_train)
-            # data = data[:, :, :, :128, :124, :120]
-            # data_val = np.array(data_val[:, :, :, :128, :124, :120])
-            data_train = data
-            print(data.shape)
-
-            factor = 2
-            dir_res = "Results"
-            dir_res = os.path.join(dir_res, dataset)
-            dir_res = os.path.join(dir_res, str(factor) + "x")
-            visualize_series(data_train[:, 1, 0, ..., 64], factor, dataset, dir_res, title="Density", show=False, save=True)
-
-            """
-            # data = np.float32(data)
-            print("Density range %f to %f" % (np.min(data[:, :, 0]), np.max(data[:, :, 0])))
-            # print("Density range %f to %f" % (np.min(data[..., 0]), np.max(data[..., 0]))) # 0.000000 to 255.000000
-            # print("Vel x range %f to %f" % (np.min(data[..., 1]), np.max(data[..., 1]))) # 0.000000 to 255.000000
-            # print("dens:", data[..., 0])
-            # print("vel:", data[..., 1])
-            # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
-            print(data.shape)
-            # input("Data range")
-            data[:, :, 0] = cv2.normalize(data[:, :, 0], data[:, :, 0], 0., 1., cv2.NORM_MINMAX)
-            print("Density scaled to [0, 1] range!")
-            data[:, :, 1] = cv2.normalize(data[:, :, 1], data[:, :, 1], 0., 1., cv2.NORM_MINMAX)
-            data[:, :, 2] = cv2.normalize(data[:, :, 2], data[:, :, 2], 0., 1., cv2.NORM_MINMAX)
-            data[:, :, 3] = cv2.normalize(data[:, :, 3], data[:, :, 3], 0., 1., cv2.NORM_MINMAX)
-            print("Velocities scaled to [0, 1] range!")
-            print("Density range %f to %f" % (np.min(data[:, :, 0]), np.max(data[:, :, 0])))
-            print("Vel x range %f to %f" % (np.min(data[:, :, 1]), np.max(data[:, :, 1])))
-            print("Vel y range %f to %f" % (np.min(data[:, :, 2]), np.max(data[:, :, 2])))
-            print("Vel z range %f to %f" % (np.min(data[:, :, 3]), np.max(data[:, :, 3])))
-            input("Data range")
-            """
         
         if dataset == "rectangle3d": # or dataset == "jets3d": # expand dims for later concatenating
             data = np.expand_dims(data, axis=1)
@@ -222,6 +191,84 @@ def load_data(dataset, mode):
         # input("x")
 
         if mode == "train":
+            if dataset == "jets3d":
+                # just load data, all steps were done in data creation (read_data.py) to save time
+                # with open(flow_fln, 'rb') as flow_file:
+                #     data = pickle.load(flow_file)
+                with open(pkl_train_filename, 'rb') as flow_file:
+                    data_train = pickle.load(flow_file)
+                    print("data_train loaded!")
+                with open(pkl_train_filename_1, 'rb') as flow_file:
+                    data_train_1 = pickle.load(flow_file)
+                    print("data_train_1 loaded!")
+                with open(pkl_val_filename, 'rb') as flow_file:
+                    data_val = pickle.load(flow_file)
+                    print("data_val loaded!")
+
+                # concatenate
+                data_train = np.concatenate((data_train, data_train_1), axis=0)
+                del data_train_1
+                # input("cat")
+
+                print(len(data_train))
+                # data_train = data_train[:180] # test
+
+                # data_train = np.transpose(data_train, (0, 1, 2, 5, 3, 4)) # 3rd is dim0
+                # data_val = np.transpose(data_val, (0, 1, 2, 5, 3, 4)) # 3rd is dim0
+
+                # data_train = np.array(data_train)
+                data_train = np.array(data_train) # [..., :128, :120, :112]
+                data_val = np.array(data_val) # [..., :128, :120, :112]
+                # print(data_train.shape)
+
+                # factor = 2
+                # dir_res = "Results"
+                # dir_res = os.path.join(dir_res, dataset)
+                # dir_res = os.path.join(dir_res, str(factor) + "x")
+                # slice_num = 40
+                # visualize_series(data_train[:, 1, 0, slice_num, :, :], factor, dataset, dir_res, title="Density_train", show=False, save=True)
+
+                """
+                # data = np.float32(data)
+                print("Density range %f to %f" % (np.min(data[:, :, 0]), np.max(data[:, :, 0])))
+                # print("Density range %f to %f" % (np.min(data[..., 0]), np.max(data[..., 0]))) # 0.000000 to 255.000000
+                # print("Vel x range %f to %f" % (np.min(data[..., 1]), np.max(data[..., 1]))) # 0.000000 to 255.000000
+                # print("dens:", data[..., 0])
+                # print("vel:", data[..., 1])
+                # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
+                print(data.shape)
+                # input("Data range")
+                data[:, :, 0] = cv2.normalize(data[:, :, 0], data[:, :, 0], 0., 1., cv2.NORM_MINMAX)
+                print("Density scaled to [0, 1] range!")
+                data[:, :, 1] = cv2.normalize(data[:, :, 1], data[:, :, 1], 0., 1., cv2.NORM_MINMAX)
+                data[:, :, 2] = cv2.normalize(data[:, :, 2], data[:, :, 2], 0., 1., cv2.NORM_MINMAX)
+                data[:, :, 3] = cv2.normalize(data[:, :, 3], data[:, :, 3], 0., 1., cv2.NORM_MINMAX)
+                print("Velocities scaled to [0, 1] range!")
+                print("Density range %f to %f" % (np.min(data[:, :, 0]), np.max(data[:, :, 0])))
+                print("Vel x range %f to %f" % (np.min(data[:, :, 1]), np.max(data[:, :, 1])))
+                print("Vel y range %f to %f" % (np.min(data[:, :, 2]), np.max(data[:, :, 2])))
+                print("Vel z range %f to %f" % (np.min(data[:, :, 3]), np.max(data[:, :, 3])))
+                input("Data range")
+                """
+
+            if dataset == "pool3d":
+                with open(pkl_train_filename, 'rb') as flow_file:
+                    data_train = pickle.load(flow_file)
+                    print("data_train loaded!")
+                with open(pkl_val_filename, 'rb') as flow_file:
+                    data_val = pickle.load(flow_file)
+                    print("data_val loaded!")
+
+                print(len(data_train))
+                # data_train = data_train[:180] # test
+
+                # data_train = np.transpose(data_train, (0, 1, 2, 5, 3, 4)) # 3rd is dim0
+                # data_val = np.transpose(data_val, (0, 1, 2, 5, 3, 4)) # 3rd is dim0
+
+                # data_train = np.array(data_train)
+                data_train = np.array(data_train) # [..., :128, :120, :112]
+                data_val = np.array(data_val) # [..., :128, :120, :112]
+
             if "rectangle3d" in filename:
                 data_train = data[:750] #
                 data_val = data[750:870] #
@@ -280,7 +327,119 @@ def load_data(dataset, mode):
         
             return combined_data_train, combined_data_val
             # return data_train, data_val
-        else:
+        else: # inference
+            if dataset == "jets3d" or dataset == "pool3d":
+                with open(pkl_test_filename, 'rb') as flow_file:
+                    data_test = pickle.load(flow_file)
+
+                print(len(data_test))
+                data_test = np.array(data_test)
+                print(data_test.shape)
+
+                yt_viz = False
+                if yt_viz:
+                    data_test_vis = data_test[150, 0]
+                    ds = yt.load_uniform_grid({"density": data_test_vis}, data_test_vis.shape)
+                    # Create a scene
+                    sc = yt.create_scene(ds, lens_type="perspective")
+                    # Get a reference to the VolumeSource associated with this scene
+                    source = sc[0]
+                    # Set the bounds of the transfer function based on your data
+                    source.tfh.set_bounds((data_test_vis.min(), data_test_vis.max()))
+                    # Make underdense regions appear opaque
+                    source.tfh.grey_opacity = True
+                    # Plot the transfer function
+                    source.tfh.plot("Results/transfer_function_pool.png", profile_field=("gas", "density"))
+                    # Save the rendered image
+                    sc.save("Results/yt_rendering_pool.png", sigma_clip=6.0)
+                    # input("yt_rendering_grid")
+
+                    """
+                    # Create a list to store scenes
+                    scenes = []
+                    num_volumes = 25
+                    step_size = data_test.shape[0] // num_volumes
+                    for i in range(0, data_test.shape[0], step_size):
+                        # Extract the i-th volume and select the density field
+                        data_test_vis = data_test[i, 0]
+                        # Create a yt data object
+                        ds = yt.load_uniform_grid({"density": data_test_vis}, data_test_vis.shape)
+                        # Create a scene
+                        sc = yt.create_scene(ds, lens_type="perspective")
+                        # Get a reference to the VolumeSource associated with this scene
+                        source = sc[0]
+                        # Set the bounds of the transfer function based on your data
+                        source.tfh.set_bounds((data_test_vis.min(), data_test_vis.max()))
+                        # Make underdense regions appear opaque
+                        source.tfh.grey_opacity = True
+                        # Append the scene to the list
+                        scenes.append(sc)
+                    # Create a grid of renderings (5x5)
+                    num_rows = 5
+                    num_cols = 5
+                    # Create a figure and an array of subplots
+                    fig = plt.figure(figsize=(10, 10))
+                    grid = ImageGrid(fig, 111,  # similar to subplot(111)
+                                    nrows_ncols=(num_rows, num_cols),  # creates 2x2 grid of axes
+                                    axes_pad=0.1,  # pad between axes in inch.
+                                    )
+                    # Iterate through scenes and display them in subplots
+                    for i, (scene, ax) in enumerate(zip(scenes, grid)):
+                        ax.imshow(scene.render(), origin='lower')
+                        ax.set_title(f"Rendering {i + 1}")
+                    # Save the rendered image
+                    grid.save("Results/yt_rendering_grid.png", sigma_clip=6.0)
+                    input("yt_rendering_grid")
+                    """
+
+                # data_test = np.transpose(data_test, (0, 1, 4, 2, 3)) # 3rd is dim0
+
+                data_test = np.array(data_test) # [..., :128, :120, :112] # test
+                # data_test = np.array(data_test)[200:] # jets
+                data_test = np.array(data_test)[30:]
+                # print(data_test.shape)
+
+                # factor = 2
+                # dir_res = "Results"
+                # dir_res = os.path.join(dir_res, dataset)
+                # dir_res = os.path.join(dir_res, str(factor) + "x")
+                # slice_num = 32
+                # visualize_series(data_test[:, 0, slice_num, :, :], factor, dataset, dir_res, title="Density", show=False, save=True)
+                # visualize_series(data_test[:, 1, slice_num, :, :], factor, dataset, dir_res, title="Velocity x", show=False, save=True)
+                # input("viz")
+        
+            print(data_test.shape)
+        
+            data_test_non_overlap = np.squeeze(data_test)
+            print("data_test_non_overlap:", data_test_non_overlap.shape)
+            # input("data_test_non_overlap")
+
+            random_triplets = False
+            if random_triplets == False:
+                # data_test = np.squeeze(data_test)
+                data_test_combined = []
+                n = factor  # or any desired value for interpolation factor
+                print(f"preparing data for {n}x interpolation")
+
+                for i in range(0, data_test.shape[0], n):
+                    try:
+                        concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
+                        concat_in_between = np.concatenate(concat_in_between, axis=0)
+                        # ensure same number of dimensions
+                        data_test_i = np.expand_dims(data_test[i], axis=0)
+                        data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
+                        # print(np.array(concat_in_between).shape)
+                        # print(np.array(data_test_i).shape)
+                        # print(np.array(data_test_i_n).shape)
+                        data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
+                    except:
+                        print("done")
+
+                data_test = np.array(data_test_combined)
+                data_test = np.squeeze(data_test)
+                print("data_test combined:", data_test.shape)
+                # input("n")
+
             if "tangaroa3d" in filename:
                 data_test = data[150:201]
 
@@ -319,4 +478,5 @@ def load_data(dataset, mode):
                 # visualize_3d(data_test, dataset, dir_res="Results", title="droplet3d.html")
                 # input("3d")
 
-            return data_test
+            # return data_test
+            return data_test, data_test_non_overlap

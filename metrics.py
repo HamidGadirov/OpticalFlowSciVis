@@ -90,7 +90,17 @@ def calculate_avg_psnr(original_data_gt, interpol_data, dir_model, factor):
     interpol_data = (interpol_data - interpol_data.min()) / (interpol_data.max() - interpol_data.min())
 
     # Calculate the squared error between the two arrays
+    # mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2))
+    print("original_data_gt.ndim", original_data_gt.ndim)
     mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2))
+    # if original_data_gt.ndim == 2:
+    #     # 2D data
+    #     mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2))
+    # elif original_data_gt.ndim == 3:
+    #     # 3D data
+    #     mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2, 3))
+    # else:
+    #     raise ValueError("Unsupported data dimensionality")
 
     # Calculate the maximum possible pixel value
     max_pixel_value = 1.0
@@ -186,6 +196,25 @@ def calculate_avg_epe(flow_gt, flow_pred, dir_model, factor):
 
     # print(error.shape)
     # input("error")
+    # Save the EPE scores to a pickle file
+    epe = np.mean(error, axis=(1, 2))
+    print(epe.shape)
+    # print(dir_model)
+    # input("x")
+    # filename = os.path.join(dir_model, "epe_LREST_" + str(factor) + "x.pkl")
+    # filename = os.path.join(dir_model, "epe_RIFE_" + str(factor) + "x.pkl")
+    # with open(filename, 'wb') as f:
+    #     pickle.dump(epe, f)
+    # input("epe saved")
+
+    mean_error = np.mean(error)
+    print('avg EPE: {:.4f}'.format(mean_error))
+    return mean_error
+
+def calculate_avg_epe_3d(flow_gt, flow_pred, dir_model, factor):
+    # Calculate the Euclidean distance (L2 norm) between flow_pred and flow_gt
+    error = np.sqrt(np.sum((flow_pred - flow_gt) ** 2, axis=(3, 4, 5)))
+
     # Save the EPE scores to a pickle file
     epe = np.mean(error, axis=(1, 2))
     print(epe.shape)

@@ -17,6 +17,8 @@ from model.refine import *
 device = torch.device("cuda")
 
 flow_available = True # True False
+
+student_teacher = True # True False
     
 class Model:
     def __init__(self, local_rank=-1, arbitrary=False):
@@ -67,22 +69,34 @@ class Model:
             torch.save(self.flownet.state_dict(),'{}/{}'.format(path, model_name))
             print("saved {}".format(model_name))
 
-    def inference(self, img0, img1, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # [4, 2, 1]
-        print("in RIFE, inference")
-        # print(self.flownet) # IFNet summary
-        # input("x")
+    # def inference(self, img0, img1, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # [4, 2, 1]
+    def inference(self, img0, img1, t_mask, TTA=False): # t=0.5
+        # print("in RIFE, inference")
+        # # print(self.flownet) # IFNet summary
+        # # input("x")
+        # imgs = torch.cat((img0, img1), 1)
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
+        # print("back to RIFE from IFNet")
+
         imgs = torch.cat((img0, img1), 1)
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
-        print("back to RIFE from IFNet")
+        gt = img0.clone() * 0 # no GT during inference
+        if student_teacher:
+            flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
+            # flow, mask, merged, warped_img0, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
+        else:
+            flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1))
+
         if TTA == False:
             # return merged[2], flow, mask # get the flow too
             return merged, flow, mask # get all 3 frames
+            # return merged, flow, mask, warped_img0
         else:
             print("not implemented")
             # flow2, mask2, merged2, flow_teacher2, merged_teacher2, loss_distill2 = self.flownet(imgs.flip(2).flip(3), scale_list, timestep=timestep)
             # return (merged[2] + merged2[2].flip(2).flip(3)) / 2
 
-    def update(self, imgs, gt, dataset, learning_rate=0, mul=1, training=True, flow_gt=None):
+    # def update(self, imgs, gt, dataset, learning_rate=0, mul=1, training=True, flow_gt=None):
+    def update(self, imgs, gt, t_mask, dataset, learning_rate=0, mul=1, training=True, flow_gt=None):
 
         # torch.autograd.detect_anomaly(True) 
         # torch.autograd.anomaly_mode(True)
@@ -92,7 +106,7 @@ class Model:
 
         # print("imgs, gt:", imgs.shape, gt.shape) # imgs, gt: torch.Size([30, 2, 64, 64, 64]) torch.Size([30, 1, 64, 64, 64])
 
-        if dataset == "rectangle3d" or dataset == "jets3d":
+        if "3d" in dataset:
             gt_data = gt[:, 0, :1]
             gt_flow = gt[:, 0, 1:4]
             img0 = imgs[:, :1]
@@ -101,12 +115,21 @@ class Model:
             img0_flow = img0[:, 0, 1:4]
             img1_data = img1[:, 0, :1]
             img1_flow = img1[:, 0, 1:4]
+            t_mask = t_mask[:, 0, :1]
 
             # using density:
             img0 = img0_data
             img1 = img1_data
             imgs = torch.cat((img0, img1), 1)
             gt = gt_data
+
+            imgs_ = imgs.detach().cpu().numpy()
+            gt_ = gt.detach().cpu().numpy()
+            t_mask_ = t_mask.detach().cpu().numpy()
+            # print("imgs_ is in range %f to %f" % (np.min(imgs_), np.max(imgs_)))
+            # print("gt_ is in range %f to %f" % (np.min(gt_), np.max(gt_)))
+            # print("t_mask_ is in range %f to %f" % (np.min(t_mask_), np.max(t_mask_)))
+
         else:
             img0 = imgs[:, :1]
             img1 = imgs[:, 1:2]
@@ -127,7 +150,12 @@ class Model:
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
         # print("imgs, gt:", imgs.shape, gt.shape)
         # with torch.cuda.amp.autocast(True):
-        flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
+        # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
+        if student_teacher:
+            flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
+        else:
+            flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1)) # # try without student-teacher: gt is not used
+        
         # print(np.isfinite(flow.detach().cpu().numpy()).all())
         # print(np.isfinite(mask.detach().cpu().numpy()).all())
         # print(np.isfinite(merged.detach().cpu().numpy()).all())
@@ -135,7 +163,8 @@ class Model:
         # print(np.isfinite(merged_teacher.detach().cpu().numpy()).all())
         # print(np.isfinite(loss_distill.detach().cpu().numpy()).all())
         # input("x")
-        mask = mask[2] # only gt (pred) durig training
+        # mask = mask[2] # only gt (pred) durig training
+        mask = mask[-1] # n blocks
         # correct shapes
         max_shape_2 = min(img0.shape[2], mask.shape[2])
         max_shape_3 = min(img0.shape[3], mask.shape[3])
@@ -169,6 +198,12 @@ class Model:
         # loss_flow += (flow_teacher[:, 3:6] - gt_flow).abs().mean() * 1.
         # # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
         # # loss_flow /= 2.
+
+        # flow_pred = flow[-1].detach().cpu().numpy()
+        # flow_gt = gt_flow.detach().cpu().numpy()
+        # print("flow pred is in range %f to %f" % (np.min(flow_pred), np.max(flow_pred)))
+        # print("flow gt is in range %f to %f" % (np.min(flow_gt), np.max(flow_gt)))
+        # input("flow")
 
         if flow_available:
             loss_flow = 0.
@@ -233,8 +268,7 @@ class Model:
         # loss_smooth = smoothness_loss(flow)
         # # smooth_lambda = 0.001 # 0.01
         # # loss_smooth = smooth_lambda * smooth
-
-
+        # TODO: check this if using 3D photometric loss!
         def generate_grid(B, H, W, Z, device):
             # xx = torch.arange(0, W, Z).view(1, W, Z).repeat(H, 1, 1)
             # yy = torch.arange(H, 0, Z).view(H, 1, Z).repeat(1, W, 1)
@@ -255,6 +289,17 @@ class Model:
             grid = torch.transpose(grid, 3, 4)
             grid = grid.to(device)
             return grid
+        
+        # def generate_grid(B, D, H, W, device):
+        #     xx = torch.arange(0, W).view(1, 1, -1).repeat(B, H, 1)
+        #     yy = torch.arange(0, H).view(1, -1, 1).repeat(B, 1, W)
+        #     zz = torch.arange(0, D).view(-1, 1, 1).repeat(1, H, W)
+
+        #     grid = torch.cat((xx, yy, zz), 0).float()
+        #     grid = torch.transpose(grid, 1, 2)
+        #     grid = torch.transpose(grid, 0, 2)
+        #     grid = grid.to(device)
+        #     return grid
 
         def backwrd_warp(flow, frame):
             # frame is img2
@@ -319,7 +364,7 @@ class Model:
         lambda_l1 = 1 # 1
         lambda_tea = 1 # 1
         if flow_available:
-            lambda_flow = 0.2 # 0.01 0.2 1; 0.5 best on rectangle
+            lambda_flow = 2e-1 # 0.01 0.2 1; 0.5 best on rectangle
             lambda_distill = 0
             lambda_reg = 0
             lambda_photo = 0
@@ -358,21 +403,27 @@ class Model:
             # input("x")
             loss_G.backward()
             self.optimG.step()
-        else: # evaluate
-            flow_teacher = flow[2]
-            merged_teacher = merged[2]
+        else:
+            flow_teacher = flow[-1] # [2]
+            merged_teacher = merged[-1] # [2]
 
-        return merged[2], {
+        if student_teacher == False:
+            merged_teacher = torch.tensor(0.)
+            flow_teacher = torch.tensor(0.)
+
+        # return merged[2], {
+        return merged[-1], {
             'merged_tea': merged_teacher,
             'mask': mask,
             'mask_tea': mask,
-            'flow': flow[2],
+            'flow': flow[-1][:, :3], # sup_flow[2],
             'flow_tea': flow_teacher,
             'loss_l1': loss_l1 * lambda_l1,
             'loss_tea': loss_tea * lambda_tea,
             'loss_distill': loss_distill * lambda_distill,
             'l1_reg': l1_reg * lambda_reg,
             'loss_photo': loss_photo * lambda_photo,
+            # 'loss_smooth': loss_smooth * lambda_smooth,
             'loss_flow': loss_flow * lambda_flow,
             'loss_G': loss_G
             }

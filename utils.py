@@ -81,8 +81,8 @@ def visualize_ind(image, dir_res="Results", title="img", show=True, save=False):
     fig = plt.figure()
     plt.axis('off')
 
-    plt.imshow(image.astype('uint8'))
-    # plt.show()
+    # plt.imshow(image.astype('uint8'))
+    plt.imshow(image, cmap='viridis')
     plt.suptitle(title)
     if show:
         plt.show() 
@@ -267,6 +267,9 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         elif dataset == "jets3d":
             ax_title = "t=" + str(index + shift + 25)
             ax.set_title(ax_title, fontsize=12, pad=10)
+        elif dataset == "pool3d":
+            ax_title = "t=" + str(index + shift + 30)
+            ax.set_title(ax_title, fontsize=12, pad=10)
         ax.axis('off')
 
         # Second row: interpolated data
@@ -369,6 +372,8 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
             ax_title = "t=" + str(index + shift + 25)
         elif dataset == "jets3d":
             ax_title = "t=" + str(index + shift + 25)
+        elif dataset == "pool3d":
+            ax_title = "t=" + str(index + shift + 30)
         ax.set_title(ax_title, fontsize=20)
         ax.axis('off')
 
@@ -454,6 +459,11 @@ def visualize_large(original_data, interpol_data, diffs,
         columns = 20
     elif dataset == "vimeo2d":
         columns = 28
+    elif dataset == "jets3d":
+        columns = 10
+    elif dataset == "pool3d":
+        columns = 19
+
     rows = 7 # 4
     skip = 1
     # if factor == 8:
@@ -519,15 +529,22 @@ def visualize_large(original_data, interpol_data, diffs,
         cmap ='gray'
         quiver_steps = 4
         # scale = None
-
         # magnitude = np.sqrt(flow_u**2 + flow_v**2)
         # max_magnitude = np.max(magnitude)
         # scale = 0.5 / max_magnitude  # Adjust the scale factor as needed
         scale = 0.5
-
     elif "jets3d" in dataset:
         quiver_steps = 4
         max_flow_gt = flow_gt.max() # None # 0.1
+        # max_flow_pred = 0.5
+        scale = None
+        vmin = 0
+        print("vis range:", vmin, data_to_vis.max())
+        cmap ='turbo'
+    elif "pool3d" in dataset:
+        quiver_steps = 4
+        max_flow_gt = flow_gt.max() # None # 0.1
+        min_flow_gt = flow_gt.min() # None # 0.1
         # max_flow_pred = 0.5
         scale = None
         vmin = 0
@@ -553,6 +570,8 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "lbs2d":
                 plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
                 # plt.imshow(img, vmin=original_data.std()-original_data.mean(), vmax=data_to_vis.max())
+            elif dataset == "jets3d" or dataset == "pool3d":
+                plt.imshow(img, vmin=interpol_data.min(), vmax=interpol_data.max(), cmap=cmap)
             else:
                 plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
             # print("original_data:", original_data[round(index)])
@@ -572,6 +591,9 @@ def visualize_large(original_data, interpol_data, diffs,
             elif dataset == "jets3d":
                 ax_title = "t=" + str(index + 25)
                 ax.set_title(ax_title, fontsize=5, pad=-8)
+            elif dataset == "pool3d":
+                ax_title = "t=" + str(index + 30)
+                ax.set_title(ax_title, fontsize=5, pad=-8)
             if index % factor != 0: # if index % 3 == 1:
                 ax_title += "*"
         if int((i-1)/columns) == 1 and round(index) % factor != 0: # interpol
@@ -580,6 +602,8 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "lbs2d":
                 plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
                 # plt.imshow(img, vmin=interpol_data.std()-interpol_data.mean(), vmax=data_to_vis.max())
+            elif dataset == "jets3d" or dataset == "pool3d":
+                plt.imshow(img, vmin=interpol_data.min(), vmax=interpol_data.max(), cmap=cmap)
             else:
                 plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
             # print("index:", index)
@@ -703,7 +727,8 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "lbs2d":
                 index_pred += 3
             # print("flow pred, index_pred", index_pred)
-        if int((i-1)/columns) == 5 and round(index) % factor != 0 and dataset == "lbs2d": # flow diff vec
+        if int((i-1)/columns) == 5 and round(index) % factor != 0 and (dataset == "lbs2d" or dataset == "jets3d" or dataset == "pool3d"): # flow diff vec
+        # if int((i-1)/columns) == 5 and round(index) % factor != 0 and dataset == "lbs2d": # flow diff vec
             u_diff = flow_u_diff[round(index_pred)]
             v_diff = flow_v_diff[round(index_pred)]
             norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff) # / norm_coeff
@@ -715,6 +740,9 @@ def visualize_large(original_data, interpol_data, diffs,
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
+            if dataset == "jets3d" or dataset == "pool3d":
+                # max_flow_gt = diffs_flow.max() 
+                scale = 0.1
             pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap=cmap, scale = scale, bg_cmap='gray', step=quiver_steps)
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
             data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
@@ -758,7 +786,7 @@ def visualize_large(original_data, interpol_data, diffs,
         if round(index) == round(columns * skip):
             index = 0
 
-    if dataset == "lbs2d":
+    if dataset == "lbs2d" or dataset == "jets3d" or dataset == "pool3d":
         # each image has a different vmin and vmax
         # cmap=cm.get_cmap('viridis')
         # colorbar for density
@@ -772,12 +800,16 @@ def visualize_large(original_data, interpol_data, diffs,
             cb_ax = fig.add_axes([0.75, 0.59, 0.005, 0.28]) 
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
+        elif "pool3d" in dataset:
+            cb_ax = fig.add_axes([0.7, 0.5, 0.005, 0.4])
         # cb.ax.tick_params(labelsize=font_size)
         fmt = lambda x, pos: '{:0.1f}'.format(x)
         bar = np.linspace(vmin, data_to_vis.max(), 5, endpoint=True)
         plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
         # colorbar for flow
         normalizer=Normalize(vmin=0., vmax=max_flow_gt)
+        if "pool3d" in dataset:
+            normalizer=Normalize(vmin=min_flow_gt, vmax=max_flow_gt)
         im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
         if "lbs2d" in dataset:
             # cb_ax = fig.add_axes([0.91, 0.2, 0.005, 0.25])
@@ -786,7 +818,11 @@ def visualize_large(original_data, interpol_data, diffs,
             cb_ax = fig.add_axes([0.75, 0.23, 0.005, 0.3])
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.12, 0.005, 0.3])
+        elif "pool3d" in dataset:
+            cb_ax = fig.add_axes([0.7, 0.12, 0.005, 0.3])
         bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
+        if "pool3d" in dataset:
+            bar = np.linspace(min_flow_gt, max_flow_gt, 4, endpoint=True)
         fmt = lambda x, pos: '{:0.2f}'.format(x)
         plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
 
@@ -850,8 +886,13 @@ def visualize_large(original_data, interpol_data, diffs,
         y = 0.8
         step = (y - 0.15) / 6.
     elif "jets3d" in dataset:
-        plt.subplots_adjust(wspace=-0.95, hspace=0.01)
+        plt.subplots_adjust(wspace=-0.96, hspace=0.01)
         x = 0.25
+        y = 0.8
+        step = (y - 0.15) / 6.
+    elif "pool3d" in dataset:
+        plt.subplots_adjust(wspace=-0.963, hspace=0.01)
+        x = 0.3
         y = 0.8
         step = (y - 0.15) / 6.
 

@@ -88,17 +88,6 @@ def get_learning_rate(step):
     # mul = np.cos((step) / (args.epoch * args.step_per_epoch) * math.pi) * 0.5 + 0.5
     # return (1e-4 - 1e-5) * mul + 1e-5
 
-    # return 1e-6 # worse
-    # return 2e-7 # no
-    # return 2e-6 # no
-    # mul = step / 2000.
-    # return 3e-4 * mul
-    # return 3e-5
-    # return 3e-6
-    # return 3e-3
-    # mul = np.cos((step) / (args.epoch * args.step_per_epoch) * math.pi) * 0.5 + 0.5
-    # return (1e-4 - 1e-5) * mul + 1e-5
-
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
     rgb_map = np.ones((h, w, 3)).astype(np.float32)
@@ -359,7 +348,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # data_test_combined = []
         print(f"inference for {factor}x interpolation")
         for i, data in enumerate(data_test):
-            # print("data:", data.shape)
+            print("data:", data.shape)
             # input("x")
             # data = np.expand_dims(data, axis=0)
             if dataset == "vimeo2d":
@@ -409,9 +398,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 imgs = imgs[:, :, 0]
                 gt = gt[:, :, 0]
 
-            # print(imgs.shape)
-            # print(gt.shape)
-            # input("imgs gt")
+            print(imgs.shape)
+            print(gt.shape)
+            input("imgs gt")
             I0 = imgs[:, :1]
             I1 = imgs[:, 1:2]
 
@@ -448,7 +437,10 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                     # # input("x")
 
                     for b in range(data_gpu.shape[0]):
+                        print("merged_last[b]:", merged_last[b].shape)
                         interpol_data.append(merged_last[b].transpose((1,2,0)))
+                        print("interpol_data:", interpol_data.shape)
+
 
                     flow_last = np.asarray(flow[-1].detach().cpu().numpy())
                     for b in range(data_gpu.shape[0]):
@@ -789,7 +781,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=150, type=int) # 200 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
