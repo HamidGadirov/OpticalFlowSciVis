@@ -902,7 +902,7 @@ if __name__ == "__main__":
     """ pool3d """
     ### +++
     model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
-    # 2x: 46.21 0.126
+    # 2x: 46.21 0.126; 3x: PSNR: 44.07 0.126
     ### +++
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow5e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 45.09 0.125
@@ -911,7 +911,13 @@ if __name__ == "__main__":
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 42.68 0.125
     model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
-    # 2x: 45.50 0.127
+    # 2x: 45.50 0.127 # this was wrong - flow for 3 blocks!
+    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4_1.pkl"
+    # 2x: 45.24 0.122 3x: 42.98 0.122
+    # no student-teacher
+    # model_name = "flownet_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 46.14 0.125 3x: 44.29 0.125
+    # TODO: remove teacher completely, add ?
 
     """ tangaroa """
     # model_name = "flownet_lapl_tangaroa3d.pkl"
@@ -925,9 +931,6 @@ if __name__ == "__main__":
     # model_name = "flownet_l1_modif90_drop3d.pkl" #
     # model_name = "flownet_l1_64_drop3d.pkl" # not empty but bad
     # model_name = "flownet_l1_distill_64_drop3d.pkl" # not nan but bad
-    # model_name = "flownet_l1_distill1_64_drop3d.pkl" # not nan but bad
-    # model_name = "flownet_l1_distill2_64_drop3d.pkl" # not nan but bad
-    # model_name = "flownet_l1_distill3_64_drop3d.pkl" # not nan but bad
     # model_name = "flownet_l1_distill_64_500ep_drop3d.pkl"
     # model_name = "flownet16_l1_64_drop3d.pkl" # nan loss
 
@@ -1195,8 +1198,10 @@ if __name__ == "__main__":
             data_original_interpol = data_original_interpol[..., slice_num, :, :]
             interpol_data = interpol_data[..., slice_num, :, :]
             diffs = diffs[..., slice_num, :, :]
-            flow = flow[..., slice_num, :, :]
-            flow_original_pred = flow_original_pred[..., slice_num, :, :]
+            # flow = flow[..., slice_num, :, :]
+            flow = flow[..., slice_num, :]
+            # flow_original_pred = flow_original_pred[..., slice_num, :, :]
+            flow_original_pred = flow_original_pred[..., slice_num, :]
             diffs_flow = diffs_flow[..., slice_num, :, :]
             u_diff = u_diff[..., slice_num, :, :]
             v_diff = v_diff[..., slice_num, :, :]
@@ -1213,6 +1218,7 @@ if __name__ == "__main__":
             #     factor, dataset, dir_model, title=title, show=False, save=True)
 
             visualize_series(interpol_data, factor, dataset, dir_res, title="Density_pred", show=False, save=True)
+            visualize_series(flow[:, 0], factor, dataset, dir_res, title="Velocity_x_GT", show=False, save=True)
             visualize_series(flow[:, 0], factor, dataset, dir_res, title="Velocity_x", show=False, save=True)
 
             title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"

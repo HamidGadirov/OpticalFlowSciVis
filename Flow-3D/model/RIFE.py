@@ -207,12 +207,13 @@ class Model:
 
         if flow_available:
             loss_flow = 0.
-            num_blocks = 3 # 3 4 5
+            num_blocks = 4 # 3 4 5
             gamma_coeff = 0.8 # 0.7 0.8 0.9
             for i in range(num_blocks):
                 gamma = gamma_coeff ** i
                 loss_flow += (flow[num_blocks - i - 1][:, 3:6] - gt_flow).abs().mean() * gamma
-            loss_flow += (flow_teacher[:, 3:6] - gt_flow).abs().mean() * 1.
+            if student_teacher:
+                loss_flow += (flow_teacher[:, 3:6] - gt_flow).abs().mean() * 1.
         else:
             loss_flow = torch.tensor(0.)
 
@@ -220,7 +221,10 @@ class Model:
         loss_l1 = torch.nn.functional.l1_loss(merged[-1], gt) # l1
         # loss_tea = (self.lap(merged_teacher, gt)).mean()
         # loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt)
-        loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1
+        if student_teacher:
+            loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1 
+        else:
+            loss_tea = torch.tensor(0.) # no student-teacher
         # print(merged_teacher.shape, gt.shape)
         # input("loss")
 
@@ -236,7 +240,7 @@ class Model:
             for param_tensor in self.flownet.state_dict():
                 # print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
                 # if "block2" in param_tensor or "block_tea" in param_tensor:
-                if "block2" in param_tensor or "block_tea" in param_tensor: # last block block2
+                if "block3" in param_tensor or "block_tea" in param_tensor: # last block block3
                     block_params = self.flownet.state_dict()[param_tensor]
                     block_params_norm += torch.norm(block_params, 1)
             # print(block2_params_norm)
@@ -376,8 +380,11 @@ class Model:
         lambda_smooth = 0 # 1e-8 not important
 
         # check if distill los is nan or overflow
-        if math.isnan(loss_distill) or loss_distill > 10.:
-            loss_distill = torch.tensor(0.)
+        if student_teacher:
+            if math.isnan(loss_distill) or loss_distill > 10.:
+                loss_distill = torch.tensor(0.)
+        else:
+            loss_distill = torch.tensor(0.) 
 
         loss_G = loss_l1 * lambda_l1 + loss_tea * lambda_tea + loss_distill * lambda_distill + \
                 l1_reg * lambda_reg + loss_photo * lambda_photo + loss_flow * lambda_flow # + loss_smooth * lambda_smooth

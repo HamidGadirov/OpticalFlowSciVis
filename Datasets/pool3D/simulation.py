@@ -22,16 +22,15 @@ import pyvista as pv
 import imageio
 
 # output_path = './output' #@param {type:"string"}
-output_path = './output_1e1_64_3' #@param {type:"string"}
+output_path = './output_1e5_128_1' #@param {type:"string"}
 
-run_simulation = True # True
- # False True
+run_simulation = False # False True
 if run_simulation:
     print("starting simulation...")
     ''' TAICHI SETTINGS '''
     # ti.init(arch=ti.cpu)
+    # ti.init(arch=ti.metal)
     ti.init(arch=ti.cuda,device_memory_GB=20)
-    # ti.init(arch=ti.cuda,device_memory_GB=15)
     # ti.init(arch=ti.cuda,device_memory_GB=10)
 
     ''' SETTINGS OUTPUT DATA '''
@@ -41,10 +40,10 @@ if run_simulation:
     output_frame_num = 310 #@param {type:"raw"}
 
     ''' SETTINGS SIMULATION '''
-    scaling_factor = 2
-    # scaling_factor = 3.2 # 128
+    # scaling_factor = 2 # 64
+    scaling_factor = 3.2 # 128
     # size of the particle
-    part_size = 0.05
+    part_size = 0.07
      # change to 0.06 faster + 0.05 default
     #  0.07 128
     # larger the particle larger the grid, smaller the simulation inside of the grid
@@ -52,17 +51,20 @@ if run_simulation:
 
     # max time step size
     max_time_step = part_size / 100. # 50 - might make unstable
-    sense_cell_size = part_size * 2.5 # 2.5
-    # 2.0 for 128
+    # sense_cell_size = part_size * 2.5 # 2.5 64
+    sense_cell_size = part_size * 1.4 # 128 1.4
+    # 2.0 for 128 safe ratio
     # kinematic viscosity of fluid
-    kinematic_viscosity_fluid = 1e-1 # 1e-4 default
+    kinematic_viscosity_fluid = 1e-1
+    
+     # 1e-4 default
     # 1e-4 - water; 1e-2 1e-3 
     print("kinematic_viscosity_fluid", kinematic_viscosity_fluid)
 
     ''' INIT SIMULATION WORLD '''
     # create a 3D world
-    world = tsph.World(dim=3)
-    # world = tsph.World(dim=3, lb=-11, rt=11) # 128
+    # world = tsph.World(dim=3)
+    world = tsph.World(dim=3, lb=-11, rt=11) # 128
     # set the particle diameter
     world.setWorldPartSize(part_size)
     # set the max time step size
@@ -72,13 +74,13 @@ if run_simulation:
     # generate the fluid particle data as a hollowed sphere, rotating irrotationally
     # x, y, z -> width, height, depth
     # fluid_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_CELL_SIZE, lb=tsph.vec3f(-0.5,-0.5,-0.5)*scaling_factor, rt=tsph.vec3f(0.5,1.5,0.5)*scaling_factor, span=world.getPartSize())
-    fluid_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_CELL_SIZE, lb=tsph.vec3f(-0.5,-0.5,-0.25)*scaling_factor, rt=tsph.vec3f(0.5,1.5,0.75)*scaling_factor, span=world.getPartSize())
-    # fluid_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_CELL_SIZE, lb=tsph.vec3f(-0.5,-0.5,0.)*scaling_factor, rt=tsph.vec3f(0.5,1.5,1.0)*scaling_factor, span=world.getPartSize())
+    # fluid_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_CELL_SIZE, lb=tsph.vec3f(-0.5,-0.5,-0.25)*scaling_factor, rt=tsph.vec3f(0.5,1.5,0.75)*scaling_factor, span=world.getPartSize())
+    fluid_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_CELL_SIZE, lb=tsph.vec3f(-0.5,-0.5,0.)*scaling_factor, rt=tsph.vec3f(0.5,1.5,1.0)*scaling_factor, span=world.getPartSize())
     # fluid_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_CELL_SIZE, lb=tsph.vec3f(-0.5,-0.5,0.5)*scaling_factor, rt=tsph.vec3f(0.5,1.5,1.5)*scaling_factor, span=world.getPartSize())
     # change the cube shape as a hyperpapram
     pool_data = tsph.Squared_pool_3D_data(container_height=6*scaling_factor, container_size=4*scaling_factor, fluid_height=2*scaling_factor, span=world.getPartSize(), layer = 3)
-    sense_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_GRID_RES, span=sense_cell_size, grid_res=tsph.vec3i(64,64,64),grid_center=tsph.vec3f(0,-2,0))
-    # sense_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_GRID_RES, span=sense_cell_size, grid_res=tsph.vec3i(127,127,127),grid_center=tsph.vec3f(0,-2,0))
+    # sense_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_GRID_RES, span=sense_cell_size, grid_res=tsph.vec3i(64,64,64),grid_center=tsph.vec3f(0,-2,0))
+    sense_cube_data = tsph.Cube_data(type=tsph.Cube_data.FIXED_GRID_RES, span=sense_cell_size, grid_res=tsph.vec3i(127,127,127),grid_center=tsph.vec3f(0,-2,0))
  
     # particle number of fluid/boundary
     fluid_part_num = pool_data.fluid_part_num + fluid_cube_data.num
@@ -317,6 +319,7 @@ if run_simulation:
 
 else:
     print("starting creating organized output...")
+    # end_index = 249 # 299
     end_index = 299
     # """
     #@title [Data Organization] Organize the output raw data to 3D shape
@@ -324,12 +327,15 @@ else:
     ti.init(arch=ti.gpu)
 
     # input_path = './output' #@param {type:"string"}
-    input_path = './output_1e1_64_3' #@param {type:"string"}
+    input_path = './output_1e5_128_1' #@param {type:"string"}
     # output_path = './organized_output' #@param {type:"string"}
-    output_path = './organized_output_1e1_64_3' #@param {type:"string"}
+    output_path = './organized_output_1e5_128_1' #@param {type:"string"}
 
     input_compressed = True
     output_compressed = True
+
+
+
     attr_list = ['vel', 'pos', 'sensed_density', 'strainRate']
     output_attr_list = ['velocity', 'position', 'density', 'strainRate']
 
@@ -349,14 +355,14 @@ else:
     pv.start_xvfb()
 
     # input_path = './organized_output'#@param {type:"string"}
-    input_path = './organized_output_1e1_64_3'#@param {type:"string"}
+    input_path = './organized_output_1e5_128_1'#@param {type:"string"}
 
     plotter_vel = pv.Plotter(off_screen=True)
-    vel_animation = "animation_vel_1e1_64_3.gif" #@param {type:"string"}
+    vel_animation = "animation_vel_1e5_128_1.gif" #@param {type:"string"}
     plotter_vel.open_gif(vel_animation)
 
     plotter_density = pv.Plotter(off_screen=True)
-    density_animation = "animation_density_1e1_64_3.gif" #@param {type:"string"}
+    density_animation = "animation_density_1e5_128_1.gif" #@param {type:"string"}
     plotter_density.open_gif(density_animation)
 
     start_index = 0 #@param {type:"raw"}

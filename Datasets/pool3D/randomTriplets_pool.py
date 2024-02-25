@@ -118,12 +118,16 @@ def getListOfFiles(dirName):
 
 # dirNames = ['Velocity'] # 'Density', 
 # dirNames = ['./organized_output_1e1', './organized_output_1e2', './organized_output_1e3']
+dirNames = ['./organized_output_1e1_128', './organized_output_1e2_128', './organized_output_1e3_128',
+            './organized_output_1e1_128_1', './organized_output_1e2_128_1', './organized_output_1e3_128_1',
+            './organized_output_1e1_128_2', './organized_output_1e2_128_2', './organized_output_1e3_128_2']
 # dirNames = ['./organized_output_1e4']
-dirNames = ['./organized_output_1e5']
+# dirNames = ['./organized_output_1e5']
 # dirName = '5Jets_density_uchar' # uint8
 
 # data_ensemble = []
-data_ensemble = np.zeros((0, 64, 64, 64, 4), dtype=np.float32) # (20000, 4, 3, 100, 400)
+# data_ensemble = np.zeros((0, 64, 64, 64, 4), dtype=np.float32) # (2000, 4, 3, 64, 64, 64)
+data_ensemble = np.zeros((0, 128, 128, 128, 4), dtype=np.float32) # (2000, 4, 3, 128, 128, 128)
 
 for dirName in dirNames:
     # for dirName in dirNames:
@@ -133,9 +137,6 @@ for dirName in dirNames:
     listOfFiles = getListOfFiles(dirName)
     # listOfFiles.sort()
     listOfFiles.sort(key=lambda f: int(''.join(filter(str.isdigit, f))))
-    # listOfFiles.sort(key=numerical_sort)
-    # listOfFiles = sorted(listOfFiles, key=lambda x: int(re.findall(r'\d+', x)[0]))
-    # listOfFiles.sort()
     print("listOfFiles is sorted!")
 
     # for k in range(10):
@@ -164,9 +165,10 @@ for dirName in dirNames:
                 # tmp_data = np.fromfile(elem, dtype='uint8').reshape((128, 128, 128)) # 'uint8' np.uint8
                 # print(tmp_data.shape) # 8388608 dens; 25165824 vel
                 # input("x")
-                tmp_data.resize(65, 65, 65, 1) # density
+                # tmp_data.resize(65, 65, 65, 1) # density
+                tmp_data.resize(128, 128, 128, 1) # density
                 # print(tmp_data.shape)
-                tmp_data = tmp_data[:64, :64, :64]
+                # tmp_data = tmp_data[:64, :64, :64]
                 tmp_data = np.flip(tmp_data, 1)
                 # tmp_data.resize(128, 128, 128, 3) # vel
                 # print(tmp_data.shape)
@@ -214,9 +216,10 @@ for dirName in dirNames:
                 # tmp_data = np.fromfile(elem, dtype='uint8').reshape((128, 128, 128)) # 'uint8' np.uint8
                 # print(tmp_data.shape) # 8388608 dens; 25165824 vel
                 # input("x")
-                tmp_data.resize(65, 65, 65, 3) # vel
+                # tmp_data.resize(65, 65, 65, 3) # vel
+                tmp_data.resize(128, 128, 128, 3) # vel
                 # print(tmp_data.shape)
-                tmp_data = tmp_data[:64, :64, :64]
+                # tmp_data = tmp_data[:64, :64, :64]
                 tmp_data = np.flip(tmp_data, 1)
                 # tmp_data.resize(128, 128, 128, 3) # vel
                 # print(tmp_data.shape)
@@ -259,7 +262,7 @@ del data_ensemble
 # data = np.hstack((data, velocities_x))
 # data = np.hstack((data, velocities_y))
 # print(data.shape)
-# input("x")
+input("x")
 
 data = np.float32(data)
 
