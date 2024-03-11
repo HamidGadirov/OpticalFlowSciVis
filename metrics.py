@@ -92,15 +92,15 @@ def calculate_avg_psnr(original_data_gt, interpol_data, dir_model, factor):
     # Calculate the squared error between the two arrays
     # mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2))
     print("original_data_gt.ndim", original_data_gt.ndim)
-    mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2))
-    # if original_data_gt.ndim == 2:
-    #     # 2D data
-    #     mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2))
-    # elif original_data_gt.ndim == 3:
-    #     # 3D data
-    #     mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2, 3))
-    # else:
-    #     raise ValueError("Unsupported data dimensionality")
+    # print(original_data_gt.shape)
+    # input("x")
+    # mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2))
+    if original_data_gt.ndim == 3: # 2D data
+        mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2))
+    elif original_data_gt.ndim == 4: # 3D data
+        mse = np.mean(np.square(original_data_gt - interpol_data), axis=(1, 2, 3))
+    else:
+        raise ValueError("Unsupported data dimensionality")
 
     # Calculate the maximum possible pixel value
     max_pixel_value = 1.0
@@ -193,12 +193,22 @@ def calculate_avg_lpips(original_data_gt, interpol_data, dir_model, factor, batc
 def calculate_avg_epe(flow_gt, flow_pred, dir_model, factor):
     # return torch.norm(flow_pred - flow_gt, p=2, dim=1).mean()
     error = np.sqrt(np.sum((flow_pred - flow_gt) ** 2, axis=1))
-
-    # print(error.shape)
+    # print("error:", error.shape)
     # input("error")
     # Save the EPE scores to a pickle file
-    epe = np.mean(error, axis=(1, 2))
-    print(epe.shape)
+    # epe = np.mean(error, axis=(1, 2))
+    # print("in EPE...", flow_gt.shape)
+    # epe = np.mean(error, axis=(1, 2))
+    # 2D or 3D data
+    axis = tuple(range(1, error.ndim))
+    # print(axis)
+    epe = np.mean(error, axis=axis)
+    # print("epe range:", epe.shape)
+    # if flow_gt.ndim == 4: # 2D data
+    #     epe = np.mean(error, axis=(1, 2))
+    # elif flow_gt.ndim == 5: # 3D data
+    #     epe = np.mean(error, axis=(1, 2, 3))
+    # print("epe if:", epe.shape)
     # print(dir_model)
     # input("x")
     # filename = os.path.join(dir_model, "epe_LREST_" + str(factor) + "x.pkl")

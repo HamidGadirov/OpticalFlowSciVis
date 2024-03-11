@@ -59,7 +59,8 @@ def get_learning_rate(step):
         mul = step / 2000.
         # return 1e-4 * mul
         # return 3e-4 * mul
-        return 6e-4 * mul # 2D
+        # return 6e-4 * mul # 2D
+        return 6e-5 * mul
         # return 1e-5 * mul
         # return 6e-6 * mul
         # return 1e-6 * mul 
@@ -69,7 +70,8 @@ def get_learning_rate(step):
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
         # return (1e-4 - 1e-6) * mul + 1e-6
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (6e-4 - 6e-6) * mul + 6e-6 # 2D
+        # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
+        return (6e-5 - 6e-7) * mul + 6e-7
         # return (1e-5 - 1e-7) * mul + 1e-7
         # return (6e-6 - 6e-7) * mul + 6e-7
         # return (1e-6 - 1e-8) * mul + 1e-8
@@ -116,7 +118,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     step = 0
     nr_eval = 0
     early_stopper = EarlyStopper(patience=50, min_delta=0.01) # 30
-    batch_size_inf = 3 # 6 3
+    batch_size_inf = 2 # 6 3
 
     num_workers = 1 # 8
     if mode == "train":
@@ -199,6 +201,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 # imgs = data_gpu[:, :2] # :6
                 # gt = data_gpu[:, 2:3] # 6:9 this is GT for teacher network
 
+                # data_gpu = data_gpu.float() # to float32
+                # print("Data type of the tensor:", data_gpu.dtype)
+
                 # random triplets:
                 img0 = data_gpu[:, :1]
                 gt = data_gpu[:, 1:2]
@@ -229,6 +234,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 # model.half()
                     # with torch.cuda.amp.autocast(True):
                 pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
+
+                # with torch.cuda.amp.autocast(True):
+                #     pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
                 
                 # print("pred:", pred.shape, gt.shape, info['mask'].shape)
                 # pred = pred.permute(0, 1, 3, 4, 2) # (0, 1, 3, 4, 2)
@@ -317,6 +325,8 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             data_gpu = data
 
             # data_gpu = data_gpu.permute(0, 1, 2, 5, 3, 4) # 3rd is dim0
+
+            # data_gpu = data_gpu.float() # to float32
 
             imgs = data_gpu[:, :2, 0]
             gt = data_gpu[:, 2:3, 0]
@@ -644,6 +654,8 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
         # imgs = data_gpu[:, :2]
         # gt = data_gpu[:, 2:3]
 
+        # data_gpu = data_gpu.float() # to float32
+
         img0 = data_gpu[:, :1]
         gt = data_gpu[:, 1:2]
         img1 = data_gpu[:, 2:3]
@@ -807,7 +819,7 @@ if __name__ == "__main__":
     if args.dataset == "jets3d":
         args.batch_size = 4 # 3 6 8
     if args.dataset == "pool3d":
-        args.batch_size = 32
+        args.batch_size = 2 # 2 4 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -900,24 +912,92 @@ if __name__ == "__main__":
     # 2x: 55.55 0.0034; 3x: PSNR: 52.98 0.0034; 5x: 46.73 .00341; 8x: 47.09 0.0034; 16x: PSNR: 44.50 0.0034; 
 
     """ pool3d """
+    # untrained: 2x: 35.01 0.506
     ### +++
     model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
-    # 2x: 46.21 0.126; 3x: PSNR: 44.07 0.126
+    # 2x: 46.21 0.126; 3x: 44.07 0.126
+    # 128 - 2x: 34.77 0.167; 3x: 33.24 0.167
     ### +++
+    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_4K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 42.17 0.108
+    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_4K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 46.09 0.120
+    # W8
+    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W8_2K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 47.26 0.125
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W8_2K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 46.84 0.125
+
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_pool_triplets_W12_4K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 45.82 0.125 exploded -
+
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow5e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 45.09 0.125
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr1e-5.pkl"
     # 2x: 40.32 0.135
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 42.68 0.125
-    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 45.50 0.127 # this was wrong - flow for 3 blocks!
-    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4_1.pkl"
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4_1.pkl"
     # 2x: 45.24 0.122 3x: 42.98 0.122
     # no student-teacher
     # model_name = "flownet_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 46.14 0.125 3x: 44.29 0.125
     # TODO: remove teacher completely, add ?
+    # 128
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool128_triplets_W12_1K_gamma_eqRes_deconv_lr6e-4.pkl" # explode
+    # 2x: 35.37 0.154
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool128_triplets_W12_1K_gamma_eqRes_deconv_lr1e-5.pkl"
+    # 2x: 34.71 0.122
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_pool128_triplets_W12_1K_gamma_eqRes_deconv_lr1e-5.pkl"
+    # 2x: 33.75 0.136
+    # this won't work - not enough data
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool128_triplets_W12_1500_gamma_eqRes_deconv_lr1e-5.pkl"
+    # 2x: 32.97 0.153 # 30 ep 2x: 34.85 0.132 200 ep
+
+    # float 16 with amp
+    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_float16amp_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # diverge -
+    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool128_float16amp_triplets_W12_1K_gamma_eqRes_deconv_lr1e-5.pkl"
+    # diverge -
+    # float 16 withput amp
+    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool_float16_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 39.64 0.136 lr 1e-5
+    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool128_float16_triplets_W12_500_gamma_eqRes_deconv_lr1e-5.pkl"
+    # 2x: 32.36 0.209
+    # PSNR: 32.359 32.365 # float16, convert to 32 vs float32
+    # LPIPS: 0.019055
+    # EPE: 0.20927 0.20929
+    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool128_float16_triplets_W12_2K_gamma_eqRes_deconv_lr1e-5.pkl"
+    # 2x: 33.86 0.207 30ep
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_pool128_float16_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # diverge - # 2x: 33.75 3x: 0.216
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool128_float16_triplets_W12_2K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool128_float16_triplets_W12_2K_gamma_eqRes_deconv_lr1e-5.pkl"
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool64to128_triplets_W12_1K_gamma_eqRes_deconv_lr6e-4.pkl"
+    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool128_triplets_W12_500_gamma_eqRes_deconv_lr6e-5.pkl"
+    # 2x: 35.19 0.205
+    # untrained: 2x: 34.47 0.557
+
+    ###
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool64to128_triplets_W12_1K_gamma_eqRes_deconv_lr6e-4_1.pkl"
+    # 35.025 0.166 trained on upsamled, inf on 128 orig; 
+    # vs:
+    # 50.49 0.1248 trained on upsamled, inf on upsamled 5x: 44.00 0.1245 90ep
+    ###
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_pool64to128_triplets_W12_1K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # diverege -
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool64to128_triplets_W12_1K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 50.65 0.1254 5x: 44.38 0.12496 3 blocks 170ep
+    # ~100 ep is enough!
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_pool64to128_triplets_W12_1K_gamma_eqRes_deconv_lr6e-4_1.pkl"
+    # diverege -
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_90_pool64to128_triplets_W12_1K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # diverege -
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_32_pool64to128_triplets_W12_1K_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 2x: 48.70 0.123
+
 
     """ tangaroa """
     # model_name = "flownet_lapl_tangaroa3d.pkl"
@@ -1170,10 +1250,28 @@ if __name__ == "__main__":
                 # # input("yt_rendering_grid")
                 # print("density rendered")
 
+                def linramp(vals, minval, maxval):
+                    return (vals - vals.min()) / (vals.max() - vals.min())
+
                 data_test_vis = flow[0, 0]
                 ds = yt.load_uniform_grid({"density": data_test_vis}, data_test_vis.shape)
                 # Create a scene
                 sc = yt.create_scene(ds, lens_type="perspective")
+                """
+                # sc = yt.create_scene(ds, field=("gas", "density"))
+                        source = sc.get_source()
+                source.transfer_function.map_to_colormap(
+                    1e-10, 1007.0, scale=15, colormap="cmyt.arbre", scale_func=linramp
+                )
+                source.transfer_function.grey_opacity = True
+                cam = sc.camera
+                cam.resolution = 256
+                cam.zoom(0.8)
+
+                im = sc.render()
+                im.write_png(os.path.join(save_path, f'{file_name[:-4]}_{frame}.png'), background=[0.0, 0.0, 0.0, 0.0], sigma_clip=6.0)
+                """
+
                 # Get a reference to the VolumeSource associated with this scene
                 source = sc[0]
                 # Set the bounds of the transfer function based on your data
@@ -1191,6 +1289,17 @@ if __name__ == "__main__":
                 # input("yt_rendering_grid")
                 print("flow rendered")
 
+            data_original_interpol = data_original_interpol[:interpol_data.shape[0]]
+            flow_original_pred = flow_original_pred[:flow.shape[0]]
+
+            # 3D metrics
+            avg_psnr = calculate_avg_psnr(data_original_interpol, interpol_data, dir_model, factor)
+            if "3d" in dataset:
+                # Flow metric
+                # print(flow_gt.shape, flow.shape)
+                print(flow_original_pred.shape, flow.shape)
+                avg_epe = calculate_avg_epe(flow_original_pred, flow, dir_model, factor)
+
             # 2D for VIS
             # TODO check dims
             slice_num = 40
@@ -1198,10 +1307,10 @@ if __name__ == "__main__":
             data_original_interpol = data_original_interpol[..., slice_num, :, :]
             interpol_data = interpol_data[..., slice_num, :, :]
             diffs = diffs[..., slice_num, :, :]
-            # flow = flow[..., slice_num, :, :]
-            flow = flow[..., slice_num, :]
-            # flow_original_pred = flow_original_pred[..., slice_num, :, :]
-            flow_original_pred = flow_original_pred[..., slice_num, :]
+            flow = flow[..., slice_num, :, :]
+            # flow = flow[..., slice_num, :]
+            flow_original_pred = flow_original_pred[..., slice_num, :, :]
+            # flow_original_pred = flow_original_pred[..., slice_num, :]
             diffs_flow = diffs_flow[..., slice_num, :, :]
             u_diff = u_diff[..., slice_num, :, :]
             v_diff = v_diff[..., slice_num, :, :]
@@ -1217,9 +1326,9 @@ if __name__ == "__main__":
             #     flow, flow_gt, diffs_flow, u_diff, v_diff, mask,
             #     factor, dataset, dir_model, title=title, show=False, save=True)
 
-            visualize_series(interpol_data, factor, dataset, dir_res, title="Density_pred", show=False, save=True)
-            visualize_series(flow[:, 0], factor, dataset, dir_res, title="Velocity_x_GT", show=False, save=True)
-            visualize_series(flow[:, 0], factor, dataset, dir_res, title="Velocity_x", show=False, save=True)
+            # visualize_series(interpol_data, factor, dataset, dir_res, title="Density_pred", show=False, save=True)
+            # visualize_series(flow[:, 0], factor, dataset, dir_res, title="Velocity_x_GT", show=False, save=True)
+            # visualize_series(flow[:, 0], factor, dataset, dir_res, title="Velocity_x", show=False, save=True)
 
             title = "GT_Interpol_Diff_Flow_" + str(factor) + "x"
             # if factor == 2:
@@ -1240,17 +1349,14 @@ if __name__ == "__main__":
             #     with open(flow_filename, 'wb') as f:
             #         pickle.dump(flow, f)
 
-            data_original_interpol = data_original_interpol[:interpol_data.shape[0]]
-            flow_original_pred = flow_original_pred[:flow.shape[0]]
-
-            avg_psnr = calculate_avg_psnr(data_original_interpol, interpol_data, dir_model, factor)
+            # avg_psnr = calculate_avg_psnr(data_original_interpol, interpol_data, dir_model, factor)
             # avg_ssim = calculate_avg_ssim(original_data_gt, interpol_data)
             avg_lpips = calculate_avg_lpips(data_original_interpol, interpol_data, dir_model, factor)
-            if dataset == "jets3d" or dataset == "pool3d": 
-                # Flow metric
-                # print(flow_gt.shape, flow.shape)
-                print(flow_original_pred.shape, flow.shape)
-                avg_epe = calculate_avg_epe(flow_original_pred, flow, dir_model, factor)
+            # if dataset == "jets3d" or dataset == "pool3d": 
+            #     # Flow metric
+            #     # print(flow_gt.shape, flow.shape)
+            #     print(flow_original_pred.shape, flow.shape)
+            #     avg_epe = calculate_avg_epe(flow_original_pred, flow, dir_model, factor)
             # save metrics score
             filename = os.path.join(dir_model, 'metrics.txt')
             with open(filename, 'w') as f:

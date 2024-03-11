@@ -19,7 +19,7 @@ def warp(tenInput, tenFlow): # img0, flow[:, :3]
             1, 1, tenFlow.shape[2], 1, 1).expand(tenFlow.shape[0], -1, -1, tenFlow.shape[3], tenFlow.shape[4])
         tenDepth = torch.linspace(-1.0, 1.0, tenFlow.shape[4], device=device).view(
             1, 1, 1, 1, tenFlow.shape[4]).expand(tenFlow.shape[0], -1, tenFlow.shape[2], tenFlow.shape[3], -1)
-        # backwarp_tenGrid[k] = torch.cat([tenHorizontal, tenVertical, tenDepth], 1).to(device)
+        # backwarp_tenGrid[k] = torch.cat([tenHorizontal, tenVertical, tenDepth], 1).to(device) # bug
         backwarp_tenGrid[k] = torch.cat([tenDepth, tenHorizontal, tenVertical], 1).to(device)
         
     # TODO: experiment with modified dims so that to check the order of d, h, w

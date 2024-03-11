@@ -69,9 +69,20 @@ def load_data(dataset, factor, mode):
             # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_val.pkl"
             # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_test.pkl"
         if dataset == 'pool3d':
-            pkl_train_filename = "../Datasets/pool3D/pool3d_triplets_W12_2K_train.pkl"
-            pkl_val_filename = "../Datasets/pool3D/pool3d_triplets_W12_300_val.pkl"
-            pkl_test_filename = "../Datasets/pool3D/pool3d_300_test.pkl"
+            # pkl_train_filename = "../Datasets/pool3D/pool3d_triplets_W12_2K_train.pkl"
+            # pkl_train_filename = "../Datasets/pool3D/pool3d_triplets_W8_2K_train.pkl"
+            # pkl_train_filename_1 = "../Datasets/pool3D/pool3d_triplets_W12_2K_train_1.pkl"
+            pkl_train_filename = "../Datasets/pool3D/pool3d_128_triplets_W12_500_train.pkl"
+            pkl_train_filename_1 = "../Datasets/pool3D/pool3d_128_triplets_W12_500_train_1.pkl"
+            # pkl_train_filename_2 = "../Datasets/pool3D/pool3d_128_triplets_W12_500_train_2.pkl"
+            # pkl_train_filename = "../Datasets/pool3D/pool3d_128_float16_triplets_W12_1K_train.pkl"
+            # pkl_train_filename_1 = "../Datasets/pool3D/pool3d_128_float16_triplets_W12_1K_train_1.pkl"
+
+            # pkl_val_filename = "../Datasets/pool3D/pool3d_triplets_W12_300_val.pkl"
+            pkl_val_filename = "../Datasets/pool3D/pool3d_128_triplets_W12_150_val.pkl"
+
+            # pkl_test_filename = "../Datasets/pool3D/pool3d_300_test.pkl"
+            pkl_test_filename = "../Datasets/pool3D/pool3d_128_150_test.pkl"
         if dataset == "droplet3d":
             filename_train = filename + "droplet3d_64_train.pkl"
             filename_val = filename + "droplet3d_64_val.pkl"
@@ -255,6 +266,17 @@ def load_data(dataset, factor, mode):
                 with open(pkl_train_filename, 'rb') as flow_file:
                     data_train = pickle.load(flow_file)
                     print("data_train loaded!")
+                # with open(pkl_train_filename_1, 'rb') as flow_file:
+                #     data_train_1 = pickle.load(flow_file)
+                #     print("data_train_1 loaded!")
+                # data_train = np.concatenate((data_train, data_train_1), axis=0)
+                # del data_train_1
+                # with open(pkl_train_filename_2, 'rb') as flow_file:
+                #     data_train_1 = pickle.load(flow_file)
+                #     print("data_train_2 loaded!")
+                # data_train = np.concatenate((data_train, data_train_1), axis=0)
+                # del data_train_1
+                # print("data_train concatenated!")
                 with open(pkl_val_filename, 'rb') as flow_file:
                     data_val = pickle.load(flow_file)
                     print("data_val loaded!")
@@ -268,6 +290,33 @@ def load_data(dataset, factor, mode):
                 # data_train = np.array(data_train)
                 data_train = np.array(data_train) # [..., :128, :120, :112]
                 data_val = np.array(data_val) # [..., :128, :120, :112]
+
+                """
+                # TEST UPSAMPLING 
+                data_train = data_train[:1000]
+                print(data_train.shape)
+                data_train = torch.tensor(data_train)
+                data_train_up = np.zeros((1000, 4, 4, 128, 128, 128), dtype=np.float32)
+                for i in range(4):
+                    data_train_up[:, i] = torch.nn.functional.interpolate(data_train[:, i], size=(128, 128, 128), mode='trilinear', align_corners=False)
+                print("upsampled!")
+                data_train = data_train_up
+                del data_train_up
+                print(data_train.shape)
+
+                data_val = torch.tensor(data_val)
+                data_val_up = np.zeros((300, 4, 4, 128, 128, 128), dtype=np.float32)
+                for i in range(4):
+                    data_val_up[:, i] = torch.nn.functional.interpolate(data_val[:, i], size=(128, 128, 128), mode='trilinear', align_corners=False)
+                print("upsampled!")
+                data_val = data_val_up
+                del data_val_up
+                print(data_val.shape)
+                # input("x")
+                """
+
+                # data_train = np.float16(data_train)
+                # data_val = np.float16(data_val)
 
             if "rectangle3d" in filename:
                 data_train = data[:750] #
@@ -397,7 +446,18 @@ def load_data(dataset, factor, mode):
                 data_test = np.array(data_test) # [..., :128, :120, :112] # test
                 # data_test = np.array(data_test)[200:] # jets
                 data_test = np.array(data_test)[30:]
-                # print(data_test.shape)
+                print("before", data_test.shape)
+
+                # data_test = np.float16(data_test)
+
+                # data_test = torch.tensor(data_test)
+                # data_test_up = np.zeros((data_test.shape[0], 4, 128, 128, 128), dtype=np.float32)
+                # data_test_up = torch.nn.functional.interpolate(data_test, size=(128, 128, 128), mode='trilinear', align_corners=False)
+                # print("upsampled!")
+                # data_test = data_test_up
+                # del data_test_up
+                # data_test = np.array(data_test)
+                # print("after", data_test.shape)
 
                 # factor = 2
                 # dir_res = "Results"

@@ -118,11 +118,17 @@ def getListOfFiles(dirName):
 
 # dirNames = ['Velocity'] # 'Density', 
 # dirNames = ['./organized_output_1e1', './organized_output_1e2', './organized_output_1e3']
-dirNames = ['./organized_output_1e1_128', './organized_output_1e2_128', './organized_output_1e3_128',
-            './organized_output_1e1_128_1', './organized_output_1e2_128_1', './organized_output_1e3_128_1',
-            './organized_output_1e1_128_2', './organized_output_1e2_128_2', './organized_output_1e3_128_2']
+# dirNames = ['./organized_output_1e1_64_3', './organized_output_1e3_64_3', './organized_output_1e4_64_3']
+# train
+dirNames = ['./organized_output_1e1_128', './organized_output_1e3_128', './organized_output_1e5_128']
+# dirNames = ['./organized_output_1e1_128_1', './organized_output_1e3_128_1', './organized_output_1e5_128_1']
+# dirNames = ['./organized_output_1e1_128_2', './organized_output_1e3_128_2', './organized_output_1e5_128_2']
+# val
 # dirNames = ['./organized_output_1e4']
+# dirNames = ['./organized_output_1e2_128', './organized_output_1e2_128_1', './organized_output_1e2_128_2']
+# test
 # dirNames = ['./organized_output_1e5']
+# dirNames = ['./organized_output_1e4_128']
 # dirName = '5Jets_density_uchar' # uint8
 
 # data_ensemble = []
@@ -262,9 +268,10 @@ del data_ensemble
 # data = np.hstack((data, velocities_x))
 # data = np.hstack((data, velocities_y))
 # print(data.shape)
-input("x")
+# input("x")
 
-data = np.float32(data)
+# data = np.float32(data)
+data = np.float16(data)
 
 # print(data.shape)
 data = np.transpose(data, (0, 4, 1, 2, 3))
@@ -319,19 +326,23 @@ print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 # visualize_flow(flow_u_gt, flow_v_gt, dir_res="Results", title="5Jets_FlowScaled_300_xy_2D", show=False, save=True)
 # input("viz")
 
-print(data.shape)
-filename = "pool3d_300_test.pkl"
-with open(filename, 'wb') as f:
-    pickle.dump(data[:300], f, protocol=4)
-print('Test data saved!')
-input("test")
+# print(data.shape)
+# data = data[30:180]
+# # filename = "pool3d_128_150_test.pkl"
+# filename = "pool3d_300_test_1.pkl" # 1e4
+# with open(filename, 'wb') as f:
+#     pickle.dump(data[:300], f, protocol=4)
+# print('Test data saved!')
+# input("test")
 
 num_members = len(dirNames)
 member_size = 300
-num_triplets = 300 # 50 500 1000
+num_triplets = 1000 # 150 300 500 1000
+window = 12 # 8 12
 
 # Create an empty array to store the triplets and corresponding t values
-triplet_data = np.zeros((num_triplets, 4, *data.shape[1:]), dtype=np.float32) # (2000, 4, 4, 128, 128, 128)
+# triplet_data = np.zeros((num_triplets, 4, *data.shape[1:]), dtype=np.float32) # (2000, 4, 4, 128, 128, 128)
+triplet_data = np.zeros((num_triplets, 4, *data.shape[1:]), dtype=np.float16) # (2000, 4, 4, 128, 128, 128)
 # size, triplets + t, dens + vel, x, y, z
 print("triplet_data:", triplet_data.shape)
 print("triplet_data type:", triplet_data.dtype)
@@ -347,7 +358,6 @@ with Bar("Loading the data...", max=num_triplets) as bar:
 
             member_idx = np.random.randint(num_members) + 1
 
-            window = 12
             # Randomly select k
             k = np.random.randint(0, member_size - 1 - window)
             k = k * member_idx # rand select member
@@ -386,8 +396,11 @@ print('Triplet data shape:', triplet_data.shape)
 print(triplet_data.dtype)
 # input("triplet_data")
 
-# filename = "pool3d_triplets_W12_2K_train.pkl"
-filename = "pool3d_triplets_W12_300_val.pkl"
+# filename = "pool3d_triplets_W12_2K_train_1.pkl"
+# filename = "pool3d_triplets_W8_2K_train.pkl"
+# filename = "pool3d_128_triplets_W12_2K_train.pkl"
+filename = "pool3d_128_float16_triplets_W12_1K_train_1.pkl"
+# filename = "pool3d_128_triplets_W12_150_val.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 # chunk_size = 500  # Set an appropriate chunk size
@@ -399,6 +412,8 @@ with open(filename, 'wb') as f:
 # with open(filename, 'wb') as f:
 #     pickle.dump(triplet_data, f, protocol=4)
 print('Saved!')
+input("data_train")
+
 
 # print(data.shape)
 data_to_vis = data[:, 0, :, :, 64]

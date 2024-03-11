@@ -34,8 +34,8 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 
 version = 1
 two_blocks = False
-three_blocks = False
-four_blocks = True # True
+three_blocks = True
+four_blocks = False # True
 five_blocks = False
 six_blocks = False
 refine = False # True
@@ -164,7 +164,9 @@ class IFBlock(nn.Module):
             x = self.convblock0(x) + x
             # print("convblock0", x.shape)
             x = self.convblock1(x) + x
+            # print("convblock1", x.shape)
             x = self.convblock2(x) + x
+            # print("convblock2", x.shape)
             x = self.convblock3(x) + x   
             # print("convblock3", x.shape)
             flow = self.conv1(x)
@@ -182,9 +184,9 @@ class IFNet(nn.Module):
             # self.block0 = IFBlock(2, c=128) # 240
             # self.block1 = IFBlock(5+6, c=96) # 150
             # self.block2 = IFBlock(5+6, c=64) # 90
-            self.block0 = IFBlock(3, c=128) # 6 c=240 128 256
-            self.block1 = IFBlock(6+6, c=96) # 13 c=150 96 192
-            self.block2 = IFBlock(6+6, c=64) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=256) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=192) # 13 c=150 96 192
+            self.block2 = IFBlock(6+6, c=128) # 13 c=90 96 64 128
 
         if four_blocks:
             self.block0 = IFBlock(3, c=128) # 128 256 320 400
@@ -194,7 +196,7 @@ class IFNet(nn.Module):
 
         # self.block_tea = IFBlock(6+6, c=64) # 6 from cat, 6 from flow  c=90
         if student_teacher:
-            self.block_tea = IFBlock(7+6, c=64) # 90 128 192 256
+            self.block_tea = IFBlock(7+6, c=128) # 90 128 192 256
         # modified
         if refine:
             self.contextnet = Contextnet()

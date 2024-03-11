@@ -22,7 +22,8 @@ import pyvista as pv
 import imageio
 
 # output_path = './output' #@param {type:"string"}
-output_path = './output_1e5_128_1' #@param {type:"string"}
+output_path = './output_1e4_64_3' #@param {type:"string"}
+
 
 run_simulation = False # False True
 if run_simulation:
@@ -327,14 +328,12 @@ else:
     ti.init(arch=ti.gpu)
 
     # input_path = './output' #@param {type:"string"}
-    input_path = './output_1e5_128_1' #@param {type:"string"}
+    input_path = './output_1e4_64_3' #@param {type:"string"}
     # output_path = './organized_output' #@param {type:"string"}
-    output_path = './organized_output_1e5_128_1' #@param {type:"string"}
+    output_path = './organized_output_1e4_64_3' #@param {type:"string"}
 
     input_compressed = True
     output_compressed = True
-
-
 
     attr_list = ['vel', 'pos', 'sensed_density', 'strainRate']
     output_attr_list = ['velocity', 'position', 'density', 'strainRate']
@@ -355,14 +354,14 @@ else:
     pv.start_xvfb()
 
     # input_path = './organized_output'#@param {type:"string"}
-    input_path = './organized_output_1e5_128_1'#@param {type:"string"}
+    input_path = './organized_output_1e4_64_3'#@param {type:"string"}
 
     plotter_vel = pv.Plotter(off_screen=True)
-    vel_animation = "animation_vel_1e5_128_1.gif" #@param {type:"string"}
+    vel_animation = "animation_vel_1e4_64_3.gif" #@param {type:"string"}
     plotter_vel.open_gif(vel_animation)
 
     plotter_density = pv.Plotter(off_screen=True)
-    density_animation = "animation_density_1e5_128_1.gif" #@param {type:"string"}
+    density_animation = "animation_density_1e4_64_3.gif" #@param {type:"string"}
     plotter_density.open_gif(density_animation)
 
     start_index = 0 #@param {type:"raw"}
