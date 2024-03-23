@@ -37,6 +37,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
     skip = 1
     if factor == 16:
         skip = 3
+        skip_flow = 8
 
     # factor = factor // skip + 1
     # print('factor', factor)
@@ -126,7 +127,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             #     ax.set_title('t=2')
             # print('index', index)
             if dataset == "lbs2d" and index == 18:
-                ax_title = "t=" + str(3000 + 1621)
+                ax_title = "t=" + str(3000 + 1623)
                 ax.set_title(ax_title, fontsize=6, pad=-10)
             else:
                 if dataset == "lbs2d":
@@ -178,7 +179,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             index_pred += skip
 
         if int((i-1)/columns) == 5 and round(index) % factor != 0: # flow gt
-            print('index_pred', index_pred)
+            print('flow gt index_pred', index_pred)
             if dataset == "vimeo2d" or dataset == "droplet2d": # show pred flow in hsv-rgb instead of gt
                 hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
                 hsv[:,:,1] = 255
@@ -209,14 +210,14 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
                 # print("norm_gt is in range %f to %f" % (np.min(norm_gt), np.max(norm_gt)))
                 #  pyimof.display.quiver(u, v, c, ax=ax, clim=(-5, 5)) --- use clim
                 # pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap='jet', bg_cmap='gray', step=quiver_steps)
-                if dataset == "lbs2d" and index_pred < 25:
+                if dataset == "lbs2d" and index_pred < 33:
                     pyimof.display.quiver(u_gt, v_gt, c=norm_gt, bg=img, ax=ax, cmap=cmap, clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
 
                 data_range = min(original_data.shape[0], interpol_data.shape[0], flow_u_gt.shape[0])
-                # print(data_range)
-                if round(index) >= data_range:
-                    break
-                index_pred += 6
+                print("data_range", data_range)
+                # if round(index) >= data_range:
+                #     break
+                index_pred += skip_flow
                 # print("flow gt, index_pred", index_pred)
         if int((i-1)/columns) == 6 and round(index) % factor != 0: # flow pred; only for interpolated!
             # print("index_pred", index_pred)
@@ -229,7 +230,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             plt.axis('off')
             # ax = plt.gca()
             # print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
-            if dataset == "lbs2d" and index_pred < 25:
+            if dataset == "lbs2d" and index_pred < 33:
                 pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
 
             data_range = min(original_data.shape[0], interpol_data.shape[0], flow_u.shape[0])
@@ -239,7 +240,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             if dataset == "droplet2d":
                 index_pred += skip
             if dataset == "lbs2d":
-                index_pred += 6
+                index_pred += skip_flow
             # print("flow pred, index_pred", index_pred)
         if int((i-1)/columns) == 7 and round(index) % factor != 0 and dataset == "lbs2d": # flow diff vec
             u_diff = flow_u_diff[round(index_pred)]
@@ -250,17 +251,17 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
-            if dataset == "lbs2d" and index_pred < 25:
+            if dataset == "lbs2d" and index_pred < 33:
                 pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap=cmap, scale = scale, bg_cmap='gray', step=quiver_steps)
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
             data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
             # print(data_range)
 
-            if round(index) >= data_range:
-                break
+            # if round(index) >= data_range:
+            #     break
             
-            print('index_pred')
-            index_pred += 6
+            print('index_pred', index_pred)
+            index_pred += skip_flow
 
         if int((i-1)/columns) == 8 and round(index) % factor != 0: # flow pred RIFE; only for interpolated!
             # print("index_pred", index_pred)
@@ -273,17 +274,17 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             plt.axis('off')
             # ax = plt.gca()
             # print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
-            if dataset == "lbs2d" and index_pred < 25:
+            if dataset == "lbs2d" and index_pred < 33:
                 pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, bg_cmap='gray', step=quiver_steps)
 
             data_range = min(original_data.shape[0], interpol_data.shape[0], flow_u.shape[0])
             # print(data_range)
-            if round(index) >= data_range:
-                break
+            # if round(index) >= data_range:
+            #     break
             if dataset == "droplet2d":
                 index_pred += skip
             if dataset == "lbs2d":
-                index_pred += 6
+                index_pred += skip_flow
 
         if int((i-1)/columns) == 9 and round(index) % factor != 0 and dataset == "lbs2d": # flow diff vec
             u_diff = flow_u_diff_RIFE[round(index_pred)]
@@ -294,16 +295,16 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
-            if dataset == "lbs2d" and index_pred < 25:
+            if dataset == "lbs2d" and index_pred < 33:
                 pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap=cmap, scale = scale, bg_cmap='gray', step=quiver_steps)
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
             data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
             # print(data_range)
 
-            if round(index) >= data_range:
-                break
+            # if round(index) >= data_range:
+            #     break
 
-            index_pred += 6
+            index_pred += skip_flow
 
         plt.axis('off')
         # cmap='viridis'

@@ -6,7 +6,7 @@ import numpy as np
 from natsort import natsorted
 # from utils import cond_mkdir
 
-dir = './Simulation_OmM_012_OmB_00235_h_07'
+dir = './Simulation_OmM_0155_OmB_00215_h_07'
 save_dir = dir + '_npy'
 # cond_mkdir(save_dir)
 if not os.path.isdir(save_dir):

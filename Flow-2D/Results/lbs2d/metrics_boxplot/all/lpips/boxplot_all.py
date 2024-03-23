@@ -11,9 +11,8 @@ colors = {
 
 # Load and process LPIPS data for each model and factor
 data = {}
-models = ['LREST']
-# models = ['LREST', 'RIFE', 'Linear']
-factors = ['2x', '3x', '4x', '5x', '8x', '12x', '16x', '24x', '32x', '48x', '64x']
+models = ['LREST', 'RIFE', 'Linear']
+factors = ['3x', '5x', '8x', '12x', '16x', '32x', '48x', '64x']
 
 for model in models:
     data[model] = []
@@ -25,9 +24,14 @@ for model in models:
 
 # Create a figure and axis
 fig, ax1 = plt.subplots()
-ax1.set_title('Methods Comparison')
-ax1.set_xlabel('Factor')
-ax1.set_ylabel('LPIPS score')
+
+# Increase font size for all text elements
+font_size = 14
+plt.rcParams.update({'font.size': font_size})
+
+# ax1.set_title('Methods Comparison')
+# ax1.set_xlabel('Factor')
+# ax1.set_ylabel('LPIPS score')
 
 # Create boxplots for each model's data
 boxplots = []
@@ -42,16 +46,23 @@ for i, model in enumerate(models):
         box.set(color='black', linewidth=1)
         box.set_facecolor(colors[model])
 
+    # Change median line color to black
+    for median in boxplots[i]['medians']:
+        median.set_color('black')
+
 # Set the labels for the x-axis
 ax1.set_xticks(positions + 0.25)
 ax1.set_xticklabels(factors)
 
+# Increase font size for axis labels and numbers on the axes
+ax1.tick_params(axis='both', which='both', labelsize=font_size)
+
 # Create a legend
 legend_labels = [plt.Rectangle((0, 0), 1, 1, color=colors[model], label=model) for model in models]
-ax1.legend(handles=legend_labels, loc='upper right')
+ax1.legend(handles=legend_labels, loc='upper left')
 
 # Save the plot as an image file
-plt.savefig('lpips_boxplot_droplet.pdf')
+plt.savefig('lpips_boxplot_lbs.pdf')
 
 # Show the plot
 plt.show()

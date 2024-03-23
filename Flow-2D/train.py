@@ -398,9 +398,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 imgs = imgs[:, :, 0]
                 gt = gt[:, :, 0]
 
-            print(imgs.shape)
-            print(gt.shape)
-            input("imgs gt")
+            # print(imgs.shape)
+            # print(gt.shape)
+            # input("imgs gt")
             I0 = imgs[:, :1]
             I1 = imgs[:, 1:2]
 
@@ -437,10 +437,8 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                     # # input("x")
 
                     for b in range(data_gpu.shape[0]):
-                        print("merged_last[b]:", merged_last[b].shape)
+                        # print("merged_last[b]:", merged_last[b].shape)
                         interpol_data.append(merged_last[b].transpose((1,2,0)))
-                        print("interpol_data:", interpol_data.shape)
-
 
                     flow_last = np.asarray(flow[-1].detach().cpu().numpy())
                     for b in range(data_gpu.shape[0]):
@@ -781,7 +779,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=150, type=int) # 200 300 500 1000
     parser.add_argument('--batch_size', default=64, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # =local_rank local-rank
+    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # =local_rank local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1507,7 +1505,7 @@ if __name__ == "__main__":
     # 2x: 40.96 0.0111; 3x: 39.11 0.0189; 5x: 36.76 0.0301; 8x: 34.36 0.0377; 16x: 30.97 0.060
 
     ### +++
-    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
     # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; 5x: 36.60 0.0293; 8x: 34.26 0.0367; 16x: 30.93 0.0585 +++
     ### +++
 
@@ -1538,7 +1536,7 @@ if __name__ == "__main__":
     # early stop after 50 -
 
     # Baseline Baseline Baseline
-    model_name = "flownet_lapl_dist_v1_240_drop40KrandTripl_W6_lr3e-4_RIFEbaseline_v2.pkl"
+    # model_name = "flownet_lapl_dist_v1_240_drop40KrandTripl_W6_lr3e-4_RIFEbaseline_v2.pkl"
     # baseline 5x: 35.31 0.0331
     # Baseline Baseline Baseline
 
@@ -1761,7 +1759,7 @@ if __name__ == "__main__":
         elif dataset == "lbs2d":
             # factors = [2, 3, 4, 5, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
             # factors = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-            factors = [6, 8, 16]
+            factors = [18]
         # factors = [8, 16, 32]
         for factor in factors:
             dir_res = "Results"

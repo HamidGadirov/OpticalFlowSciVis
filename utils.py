@@ -15,9 +15,10 @@ from matplotlib.ticker import FuncFormatter
 import pyimof
 import math
 import plotly.graph_objects as go
-
+import yt
 import io 
 from PIL import Image
+from matplotlib.colors import LogNorm
 
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
@@ -270,6 +271,9 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         elif dataset == "pool3d":
             ax_title = "t=" + str(index + shift + 30)
             ax.set_title(ax_title, fontsize=12, pad=10)
+        elif dataset == "nyx3d":
+            ax_title = "t=" + str(index + shift + 600)
+            ax.set_title(ax_title, fontsize=12, pad=10)
         ax.axis('off')
 
         # Second row: interpolated data
@@ -317,12 +321,12 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         original_data_filename = os.path.join(dir_res, 'original_data.pkl')
         with open(original_data_filename, 'wb') as f:
             pickle.dump(original_data, f)
-        # interpol_data_filename = os.path.join(dir_res, 'interpol_data_LREST.pkl')
-        interpol_data_filename = os.path.join(dir_res, 'interpol_data_RIFE.pkl')
+        interpol_data_filename = os.path.join(dir_res, 'interpol_data_LREST.pkl')
+        # interpol_data_filename = os.path.join(dir_res, 'interpol_data_RIFE.pkl')
         with open(interpol_data_filename, 'wb') as f:
             pickle.dump(interpol_data, f)
-        # diffs_filename = os.path.join(dir_res, 'diffs_LREST.pkl')
-        diffs_filename = os.path.join(dir_res, 'diffs_RIFE.pkl')
+        diffs_filename = os.path.join(dir_res, 'diffs_LREST.pkl')
+        # diffs_filename = os.path.join(dir_res, 'diffs_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
             pickle.dump(diffs, f)
         # """
@@ -374,6 +378,8 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
             ax_title = "t=" + str(index + shift + 25)
         elif dataset == "pool3d":
             ax_title = "t=" + str(index + shift + 30)
+        elif dataset == "nyx3d":
+            ax_title = "t=" + str(index + shift + 600)
         ax.set_title(ax_title, fontsize=20)
         ax.axis('off')
 
@@ -460,8 +466,10 @@ def visualize_large(original_data, interpol_data, diffs,
     elif dataset == "vimeo2d":
         columns = 28
     elif dataset == "jets3d":
-        columns = 10
+        columns = 19
     elif dataset == "pool3d":
+        columns = 19
+    elif dataset == "nyx3d":
         columns = 19
 
     rows = 7 # 4
@@ -536,12 +544,13 @@ def visualize_large(original_data, interpol_data, diffs,
     elif "jets3d" in dataset:
         quiver_steps = 4
         max_flow_gt = flow_gt.max() # None # 0.1
+        min_flow_gt = flow_gt.min() # None # 0.1
         # max_flow_pred = 0.5
         scale = None
         vmin = 0
         print("vis range:", vmin, data_to_vis.max())
         cmap ='turbo'
-    elif "pool3d" in dataset:
+    elif "pool3d" in dataset or "nyx3d" in dataset:
         quiver_steps = 4
         max_flow_gt = flow_gt.max() # None # 0.1
         min_flow_gt = flow_gt.min() # None # 0.1
@@ -570,7 +579,7 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "lbs2d":
                 plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
                 # plt.imshow(img, vmin=original_data.std()-original_data.mean(), vmax=data_to_vis.max())
-            elif dataset == "jets3d" or dataset == "pool3d":
+            elif "3d" in dataset:
                 plt.imshow(img, vmin=interpol_data.min(), vmax=interpol_data.max(), cmap=cmap)
             else:
                 plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
@@ -594,6 +603,9 @@ def visualize_large(original_data, interpol_data, diffs,
             elif dataset == "pool3d":
                 ax_title = "t=" + str(index + 30)
                 ax.set_title(ax_title, fontsize=5, pad=-8)
+            elif dataset == "nyx3d":
+                ax_title = "t=" + str(index + 600)
+                ax.set_title(ax_title, fontsize=5, pad=-8)
             if index % factor != 0: # if index % 3 == 1:
                 ax_title += "*"
         if int((i-1)/columns) == 1 and round(index) % factor != 0: # interpol
@@ -602,7 +614,7 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "lbs2d":
                 plt.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
                 # plt.imshow(img, vmin=interpol_data.std()-interpol_data.mean(), vmax=data_to_vis.max())
-            elif dataset == "jets3d" or dataset == "pool3d":
+            elif "3d" in dataset:
                 plt.imshow(img, vmin=interpol_data.min(), vmax=interpol_data.max(), cmap=cmap)
             else:
                 plt.imshow(img, vmin=data_to_vis.min(), vmax=data_to_vis.max(), cmap=cmap)
@@ -727,7 +739,7 @@ def visualize_large(original_data, interpol_data, diffs,
             if dataset == "lbs2d":
                 index_pred += 3
             # print("flow pred, index_pred", index_pred)
-        if int((i-1)/columns) == 5 and round(index) % factor != 0 and (dataset == "lbs2d" or dataset == "jets3d" or dataset == "pool3d"): # flow diff vec
+        if int((i-1)/columns) == 5 and round(index) % factor != 0 and (dataset == "lbs2d" or "3d" in dataset): # flow diff vec
         # if int((i-1)/columns) == 5 and round(index) % factor != 0 and dataset == "lbs2d": # flow diff vec
             u_diff = flow_u_diff[round(index_pred)]
             v_diff = flow_v_diff[round(index_pred)]
@@ -740,7 +752,7 @@ def visualize_large(original_data, interpol_data, diffs,
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
-            if dataset == "jets3d" or dataset == "pool3d":
+            if "3d" in dataset:
                 # max_flow_gt = diffs_flow.max() 
                 scale = 0.1
             pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap=cmap, scale = scale, bg_cmap='gray', step=quiver_steps)
@@ -786,7 +798,7 @@ def visualize_large(original_data, interpol_data, diffs,
         if round(index) == round(columns * skip):
             index = 0
 
-    if dataset == "lbs2d" or dataset == "jets3d" or dataset == "pool3d":
+    if dataset == "lbs2d" or "3d" in dataset:
         # each image has a different vmin and vmax
         # cmap=cm.get_cmap('viridis')
         # colorbar for density
@@ -800,15 +812,15 @@ def visualize_large(original_data, interpol_data, diffs,
             cb_ax = fig.add_axes([0.75, 0.59, 0.005, 0.28]) 
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
-        elif "pool3d" in dataset:
-            cb_ax = fig.add_axes([0.7, 0.5, 0.005, 0.4])
+        elif "3d" in dataset:
+            cb_ax = fig.add_axes([0.68, 0.57, 0.003, 0.3]) # 3d
         # cb.ax.tick_params(labelsize=font_size)
         fmt = lambda x, pos: '{:0.1f}'.format(x)
         bar = np.linspace(vmin, data_to_vis.max(), 5, endpoint=True)
         plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
         # colorbar for flow
         normalizer=Normalize(vmin=0., vmax=max_flow_gt)
-        if "pool3d" in dataset:
+        if "3d" in dataset:
             normalizer=Normalize(vmin=min_flow_gt, vmax=max_flow_gt)
         im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
         if "lbs2d" in dataset:
@@ -818,10 +830,10 @@ def visualize_large(original_data, interpol_data, diffs,
             cb_ax = fig.add_axes([0.75, 0.23, 0.005, 0.3])
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.12, 0.005, 0.3])
-        elif "pool3d" in dataset:
-            cb_ax = fig.add_axes([0.7, 0.12, 0.005, 0.3])
+        elif "3d" in dataset:
+            cb_ax = fig.add_axes([0.68, 0.22, 0.003, 0.3]) # 3d
         bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
-        if "pool3d" in dataset:
+        if "3d" in dataset:
             bar = np.linspace(min_flow_gt, max_flow_gt, 4, endpoint=True)
         fmt = lambda x, pos: '{:0.2f}'.format(x)
         plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
@@ -885,12 +897,7 @@ def visualize_large(original_data, interpol_data, diffs,
         x = 0.075
         y = 0.8
         step = (y - 0.15) / 6.
-    elif "jets3d" in dataset:
-        plt.subplots_adjust(wspace=-0.96, hspace=0.01)
-        x = 0.25
-        y = 0.8
-        step = (y - 0.15) / 6.
-    elif "pool3d" in dataset:
+    elif "3d" in dataset:
         plt.subplots_adjust(wspace=-0.963, hspace=0.01)
         x = 0.3
         y = 0.8
@@ -1157,3 +1164,210 @@ def visualize_large_3d(original_vols, interpol_vols, diffs,
     # # fig.show()
     # image_path = os.path.join(dir_res, title)
     # fig.write_image(image_path) 
+
+def render_volume_yt(volume, save_path, file_name):
+
+    ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
+    sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+    source = sc[0]
+
+    source.set_log(True)
+    bounds = (1e6, 1e15)
+    tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+
+    tf.sample_colormap(np.log10(1e7), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
+    tf.sample_colormap(np.log10(1e8), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
+    tf.sample_colormap(np.log10(1e9), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
+    tf.sample_colormap(np.log10(1e10), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
+
+    source.tfh.tf = tf
+    source.tfh.bounds = bounds
+
+    cam = sc.camera
+    cam.resolution = 512
+    cam.zoom(0.5)
+    im = sc.render()
+    im.write_png(os.path.join(save_path, file_name), background=[0.0, 0.0, 0.0, 1.0], sigma_clip=4.0) # 2.0
+    print("rendered!")
+    # omega - overall brightness, to see more details
+
+
+def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
+                          dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
+    
+    columns = 5
+    rows = 4
+    skip = 2
+    data_to_vis = original_data
+    index = 0
+    shift = 1
+
+    if "3d" in dataset:
+        vmin = 0
+        print("vis range:", vmin, data_to_vis.max())
+        hspace = 0.01
+        wspace = -0.01
+        cmap ='gray'
+
+    u_gt = flow_gt[:, 0, ...] 
+    v_gt = flow_gt[:, 1, ...] 
+    w_gt = flow_gt[:, 2, ...] 
+    flow_norm_gt = np.sqrt(u_gt * u_gt + v_gt * v_gt + w_gt * w_gt)
+
+    u = flow[:, 0, ...] 
+    v = flow[:, 1, ...] 
+    w = flow[:, 2, ...] 
+    flow_norm = np.sqrt(u * u + v * v + w * w)
+
+    # wspace is x; hspace is y
+    fig, axs = plt.subplots(nrows=rows, ncols=columns, figsize=(10, 4), gridspec_kw={'hspace': hspace, 'wspace': wspace})
+
+    # bounds = (105.0, 160.0)
+    # tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+    # tf.add_gaussian(np.log10(1e2), width=2e-4, height=[0.0, 0.25, 1.0, 1e3])
+
+    bounds = (0.1, 0.9)
+    
+    # 100-200 t:
+    # density
+    tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+    # tf.add_gaussian(np.log10(0.3), width=1e-4, height=[1.0, 0.1, 0.3, 1e2]) # red 100-200
+    # tf.add_gaussian(np.log10(0.4), width=4e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 100-200
+    tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 700-800
+    # velocity
+    tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+    # tf_vel.add_gaussian(np.log10(0.5), width=1e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 100-200
+    # tf_vel.add_gaussian(np.log10(0.7), width=4e-4, height=[0.8, 0.6, 0.1, 1e2]) # orange 100-200
+    tf_vel.add_gaussian(np.log10(0.7), width=2e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 700-800
+
+    # print("min, max: ", np.min(original_data), np.max(original_data))
+    # print("mean: ", np.mean(original_data))
+    # print("std: ", np.std(original_data))
+
+    for i in range(columns):
+        volume = original_data[round(index)]
+        # print("volume", volume)
+        ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+        source = sc[0]
+        source.set_log(True)
+        source.tfh.tf = tf
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "dens_gt_tf.png"), profile_field=("gas", "density"))
+
+        cam = sc.camera
+        cam.resolution = 256
+        cam.zoom(1.25)
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        # print("im", im)
+        im.write_png(os.path.join(dir_res, "Dens_seq.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        # First row: original data
+        ax = axs[0][i]
+        # img = original_data[round(index)]
+        img = plt.imread(os.path.join(dir_res, "Dens_seq.png"))
+        ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap) # data_to_vis
+        if dataset == "jets3d":
+            ax_title = "t=" + str(index + shift + 100)
+            ax.set_title(ax_title, fontsize=12, pad=10)
+        elif dataset == "pool3d":
+            ax_title = "t=" + str(index + shift + 30)
+            ax.set_title(ax_title, fontsize=12, pad=10)
+        elif dataset == "nyx3d":
+            ax_title = "t=" + str(index + shift + 600)
+            ax.set_title(ax_title, fontsize=12, pad=10)
+        ax.axis('off')
+
+
+        # Second row: interpolated data
+        volume = interpol_data[round(index)]
+        # print("volume", volume)
+        ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+        source = sc[0]
+        source.set_log(True)
+        source.tfh.tf = tf
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "dens_tf.png"), profile_field=("gas", "density"))
+
+        cam = sc.camera
+        cam.resolution = 256
+        cam.zoom(1.25)
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        # print("im", im)
+        im.write_png(os.path.join(dir_res, "Dens_seq.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        ax = axs[1][i]
+        # img = interpol_data[round(index)]
+        img = plt.imread(os.path.join(dir_res, "Dens_seq.png"))
+        ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
+        ax.axis('off')
+
+
+        # Third row: flow gt
+        volume = flow_norm_gt[round(index)]
+        # print("volume", volume)
+        ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+        source = sc[0]
+        source.set_log(True)
+        source.tfh.tf = tf_vel
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "flow_gt_tf.png"), profile_field=("gas", "density"))
+
+        cam = sc.camera
+        cam.resolution = 256
+        cam.zoom(1.25)
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        # print("im", im)
+        im.write_png(os.path.join(dir_res, "Flow.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        ax = axs[2][i]
+        # img = interpol_data[round(index)]
+        img = plt.imread(os.path.join(dir_res, "Flow.png"))
+        ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
+        ax.axis('off')
+
+        # Fourth row: flow
+        volume = flow_norm[round(index)]
+        # print("volume", volume)
+        ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+        source = sc[0]
+        source.set_log(True)
+        source.tfh.tf = tf_vel
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "flow_tf.png"), profile_field=("gas", "density"))
+
+        cam = sc.camera
+        cam.resolution = 256
+        cam.zoom(1.25)
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        # print("im", im)
+        im.write_png(os.path.join(dir_res, "Flow.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        ax = axs[3][i]
+        # img = interpol_data[round(index)]
+        img = plt.imread(os.path.join(dir_res, "Flow.png"))
+        ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
+        ax.axis('off')
+
+        index += skip
+
+    if show:
+        plt.show() 
+    if save:
+        title += ".pdf"
+        if not os.path.isdir(dir_res):
+            os.makedirs(dir_res)
+        fig.savefig(os.path.join(dir_res, title), dpi = 300)
+
+

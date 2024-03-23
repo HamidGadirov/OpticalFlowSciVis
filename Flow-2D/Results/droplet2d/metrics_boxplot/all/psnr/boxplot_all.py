@@ -26,9 +26,14 @@ for model in models:
 
 # Create a figure and axis
 fig, ax1 = plt.subplots()
-ax1.set_title('Methods Comparison')
-ax1.set_xlabel('Factor')
-ax1.set_ylabel('PSNR score')
+
+# Increase font size for all text elements
+font_size = 14
+plt.rcParams.update({'font.size': font_size})
+
+# ax1.set_title('Methods Comparison')
+# ax1.set_xlabel('Factor')
+# ax1.set_ylabel('PSNR score')
 
 # Create boxplots for each model's data
 boxplots = []
@@ -43,9 +48,16 @@ for i, model in enumerate(models):
         box.set(color='black', linewidth=1)
         box.set_facecolor(colors[model])
 
+    # Change median line color to black
+    for median in boxplots[i]['medians']:
+        median.set_color('black')
+
 # Set the labels for the x-axis
 ax1.set_xticks(positions + 0.25)
 ax1.set_xticklabels(factors)
+
+# Increase font size for axis labels and numbers on the axes
+ax1.tick_params(axis='both', which='both', labelsize=font_size)
 
 # Create a legend
 legend_labels = [plt.Rectangle((0, 0), 1, 1, color=colors[model], label=model) for model in models]

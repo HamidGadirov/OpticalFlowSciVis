@@ -243,6 +243,7 @@ for dirName in dirNames:
     # visualize_series(data_to_vis, dir_res="Results", title="pool_2D_vel", show=False, save=True)
     # input("viz")
 
+
     print("combining density and vel")
     data = np.concatenate((data, data_vel), axis=-1)
     print(len(data))
@@ -270,8 +271,8 @@ del data_ensemble
 # print(data.shape)
 # input("x")
 
-# data = np.float32(data)
-data = np.float16(data)
+data = np.float32(data)
+# data = np.float16(data)
 
 # print(data.shape)
 data = np.transpose(data, (0, 4, 1, 2, 3))
@@ -337,12 +338,12 @@ print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 
 num_members = len(dirNames)
 member_size = 300
-num_triplets = 1000 # 150 300 500 1000
+num_triplets = 500 # 150 300 500 1000
 window = 12 # 8 12
 
 # Create an empty array to store the triplets and corresponding t values
-# triplet_data = np.zeros((num_triplets, 4, *data.shape[1:]), dtype=np.float32) # (2000, 4, 4, 128, 128, 128)
-triplet_data = np.zeros((num_triplets, 4, *data.shape[1:]), dtype=np.float16) # (2000, 4, 4, 128, 128, 128)
+triplet_data = np.zeros((num_triplets, 4, *data.shape[1:]), dtype=np.float32) # (2000, 4, 4, 128, 128, 128)
+# triplet_data = np.zeros((num_triplets, 4, *data.shape[1:]), dtype=np.float16) # (2000, 4, 4, 128, 128, 128)
 # size, triplets + t, dens + vel, x, y, z
 print("triplet_data:", triplet_data.shape)
 print("triplet_data type:", triplet_data.dtype)
@@ -396,10 +397,13 @@ print('Triplet data shape:', triplet_data.shape)
 print(triplet_data.dtype)
 # input("triplet_data")
 
+# TODO: npy instead of pkl
 # filename = "pool3d_triplets_W12_2K_train_1.pkl"
 # filename = "pool3d_triplets_W8_2K_train.pkl"
 # filename = "pool3d_128_triplets_W12_2K_train.pkl"
-filename = "pool3d_128_float16_triplets_W12_1K_train_1.pkl"
+# filename = "pool3d_128_triplets_W12_1K_train.npy"
+filename = "pool3d_128_triplets_W12_500_train.npz"
+# filename = "pool3d_128_float16_triplets_W12_1K_train_1.pkl"
 # filename = "pool3d_128_triplets_W12_150_val.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)

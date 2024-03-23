@@ -41,6 +41,10 @@ for i, model in enumerate(models):
     for box in boxplots[i]['boxes']:
         box.set(color='black', linewidth=1)
         box.set_facecolor(colors[model])
+    
+    # Change median line color to black
+    for median in boxplots[i]['medians']:
+        median.set_color('black')
 
 # Set the labels for the x-axis
 ax1.set_xticks(positions + 0.25)

@@ -15,14 +15,16 @@ from skimage.transform import rescale, resize, downscale_local_mean
 from matplotlib import pyplot as plt
 import yt
 from mpl_toolkits.axes_grid1 import ImageGrid
-from memory_profiler import profile
+# from memory_profiler import profile
 
 import sys
 import inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
-from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large, visualize_large_3d
+from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large, visualize_large_3d, \
+    render_volume_yt, visualize_seq_dens_3d
+
 
 # TODO:
 # normalize +-
@@ -40,6 +42,8 @@ def load_data(dataset, factor, mode):
         datasets = ["jets3d"]
     if dataset == 'pool3d':
         datasets = ["pool3d"]
+    if dataset == 'nyx3d':
+        datasets = ["nyx3d"]
     if dataset == 'droplet3d':
         datasets = ["droplet3d"]
     elif dataset == 'tangaroa3d':
@@ -47,8 +51,6 @@ def load_data(dataset, factor, mode):
     elif dataset == 'tornado3d':
         datasets = ["tornado3d"]
     
-
-
     for dataset in datasets:
         print(dataset)
         filename = "../Datasets/"
@@ -59,15 +61,25 @@ def load_data(dataset, factor, mode):
             filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow.pkl"
             flow_fln = "../../../DataSSD/Datasets/5Jets/5jets3d_flow.pkl"
             # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_train.pkl"
-            pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_500_train.pkl"
-            pkl_train_filename_1 = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_500_train_1.pkl"
+            # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_500_train.pkl"
+            # pkl_train_filename_1 = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_500_train_1.pkl"
+            # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip20_triplets_W12_200_train.pkl"
+            pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1000_triplets_W12_200_train.pkl"
+            # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1800_triplets_W5_250_train.pkl"
             # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_val.pkl"
-            pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_50_val.pkl"
+            # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_50_val.pkl"
+            # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip20_triplets_W12_50_val.pkl"
+            pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1000_triplets_W12_50_val.pkl"
+            # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1800_triplets_W5_50_val.pkl"
             # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_test.pkl"
-            pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_300_test.pkl"
+            # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_300_test.pkl"
+            # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_100_test.pkl"
+            pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_700_800_test.pkl"
+            # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_100_800_test.pkl"
             # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_train.pkl"
             # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_val.pkl"
             # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_test.pkl"
+
         if dataset == 'pool3d':
             # pkl_train_filename = "../Datasets/pool3D/pool3d_triplets_W12_2K_train.pkl"
             # pkl_train_filename = "../Datasets/pool3D/pool3d_triplets_W8_2K_train.pkl"
@@ -83,6 +95,18 @@ def load_data(dataset, factor, mode):
 
             # pkl_test_filename = "../Datasets/pool3D/pool3d_300_test.pkl"
             pkl_test_filename = "../Datasets/pool3D/pool3d_128_150_test.pkl"
+
+        if dataset == 'nyx3d':
+            # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_triplets_W12_500_train.npy"
+            pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_triplets_W12_500_train.pkl"
+            # pkl_train_filename_1 = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_triplets_W12_500_train_1.npy"
+
+            # pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_triplets_W12_100_val.pkl"
+            pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_triplets_W12_100_val.pkl"
+
+            # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_150_test_1.npy"
+            pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_test.pkl"
+
         if dataset == "droplet3d":
             filename_train = filename + "droplet3d_64_train.pkl"
             filename_val = filename + "droplet3d_64_val.pkl"
@@ -207,19 +231,16 @@ def load_data(dataset, factor, mode):
                 # with open(flow_fln, 'rb') as flow_file:
                 #     data = pickle.load(flow_file)
                 with open(pkl_train_filename, 'rb') as flow_file:
-                    data_train = pickle.load(flow_file)
+                    data_train = pickle.load(flow_file) # [:200]
                     print("data_train loaded!")
-                with open(pkl_train_filename_1, 'rb') as flow_file:
-                    data_train_1 = pickle.load(flow_file)
-                    print("data_train_1 loaded!")
+                # with open(pkl_train_filename_1, 'rb') as flow_file:
+                #     data_train_1 = pickle.load(flow_file)
+                #     print("data_train_1 loaded!")
+                    # data_train = np.concatenate((data_train, data_train_1), axis=0)
+                    # del data_train_1
                 with open(pkl_val_filename, 'rb') as flow_file:
                     data_val = pickle.load(flow_file)
                     print("data_val loaded!")
-
-                # concatenate
-                data_train = np.concatenate((data_train, data_train_1), axis=0)
-                del data_train_1
-                # input("cat")
 
                 print(len(data_train))
                 # data_train = data_train[:180] # test
@@ -261,6 +282,25 @@ def load_data(dataset, factor, mode):
                 print("Vel z range %f to %f" % (np.min(data[:, :, 3]), np.max(data[:, :, 3])))
                 input("Data range")
                 """
+
+            if dataset == "nyx3d":
+                with open(pkl_train_filename, 'rb') as flow_file:
+                    data_train = pickle.load(flow_file)
+                    print("data_train loaded!")
+                # with open(pkl_train_filename_1, 'rb') as flow_file:
+                #     data_train_1 = pickle.load(flow_file)
+                #     print("data_train_1 loaded!")
+                # data_train = np.concatenate((data_train, data_train_1), axis=0)
+                # del data_train_1
+                with open(pkl_val_filename, 'rb') as flow_file:
+                    data_val = pickle.load(flow_file)
+                    print("data_val loaded!")
+
+                data_train = np.array(data_train) # [..., :128, :120, :112]
+                data_val = np.array(data_val) # [..., :128, :120, :112]
+
+                # print("Density range %f to %f" % (np.min(data_train[:, 0]), np.max(data_train[:, 0])))
+                # print("Vel x range %f to %f" % (np.min(data_train[:, 1]), np.max(data_train[:, 1])))
 
             if dataset == "pool3d":
                 with open(pkl_train_filename, 'rb') as flow_file:
@@ -370,20 +410,36 @@ def load_data(dataset, factor, mode):
                 data_val = data_val[:data_val.shape[0]:3]
                 print("data_val in three:", data_val.shape)
                 
-
             combined_data_train = torch.utils.data.ConcatDataset([combined_data_train, data_train])
             combined_data_val = torch.utils.data.ConcatDataset([combined_data_val, data_val])
         
             return combined_data_train, combined_data_val
             # return data_train, data_val
         else: # inference
-            if dataset == "jets3d" or dataset == "pool3d":
+            if "3d" in dataset:
                 with open(pkl_test_filename, 'rb') as flow_file:
                     data_test = pickle.load(flow_file)
+                # data_test = np.load(pkl_test_filename)
+
+                # data_test = np.array(data_test)[:, 0] # dens test for viz
 
                 print(len(data_test))
-                data_test = np.array(data_test)
+                data_test = np.array(data_test) # [70:]
                 print(data_test.shape)
+
+                # print("Density range %f to %f" % (np.min(data_test[:, 0]), np.max(data_test[:, 0])))
+                # print("Vel x range %f to %f" % (np.min(data_test[:, 1]), np.max(data_test[:, 1])))
+
+                # print("first 100")
+                # print("Density range %f to %f" % (np.min(data_test[:100, 0]), np.max(data_test[:100, 0])))
+                # print("Vel x range %f to %f" % (np.min(data_test[:100, 1]), np.max(data_test[:100, 1])))
+
+                # for i in range(5):
+                #     fn = "GT_dens_" + str(i) + ".png"
+                #     render_volume_yt(data_test[i, 0], 'Results/', fn)
+
+                # render_volumes(data_test[:3, 0], 'Results/')
+                # input("rendered!")
 
                 yt_viz = False
                 if yt_viz:
@@ -443,10 +499,19 @@ def load_data(dataset, factor, mode):
 
                 # data_test = np.transpose(data_test, (0, 1, 4, 2, 3)) # 3rd is dim0
 
-                data_test = np.array(data_test) # [..., :128, :120, :112] # test
+                # data_test = np.array(data_test) # [..., :128, :120, :112] # test
                 # data_test = np.array(data_test)[200:] # jets
-                data_test = np.array(data_test)[30:]
-                print("before", data_test.shape)
+                # data_test = np.array(data_test)[30:] # pool
+                # print("before", data_test.shape)
+
+                # original_min = 0.
+                # original_max = 255.
+                # # Scale the data back to the original range
+                # data_test = (data_test * (original_max - original_min)) + original_min
+                # print("Density range %f to %f" % (np.min(data_test), np.max(data_test)))
+
+                # visualize_seq_dens_3d(data_test[:, 0], dataset, dir_res="Results/jets3d", title="Dens_seq", show=False, save=True)
+                # input("viz")
 
                 # data_test = np.float16(data_test)
 

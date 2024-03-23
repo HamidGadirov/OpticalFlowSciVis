@@ -34,8 +34,8 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
 
 version = 1
 two_blocks = False
-three_blocks = True
-four_blocks = False # True
+three_blocks = False
+four_blocks = True # True
 five_blocks = False
 six_blocks = False
 refine = False # True
@@ -184,15 +184,15 @@ class IFNet(nn.Module):
             # self.block0 = IFBlock(2, c=128) # 240
             # self.block1 = IFBlock(5+6, c=96) # 150
             # self.block2 = IFBlock(5+6, c=64) # 90
-            self.block0 = IFBlock(3, c=256) # 6 c=240 128 256
-            self.block1 = IFBlock(6+6, c=192) # 13 c=150 96 192
-            self.block2 = IFBlock(6+6, c=128) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=128) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=96) # 13 c=150 96 192
+            self.block2 = IFBlock(6+6, c=64) # 13 c=90 96 64 128
 
         if four_blocks:
-            self.block0 = IFBlock(3, c=128) # 128 256 320 400
-            self.block1 = IFBlock(6+6, c=96) # 96 192 256 320
-            self.block2 = IFBlock(6+6, c=96) # 96 192 256 320
-            self.block3 = IFBlock(6+6, c=64) # 64 128 192 256
+            self.block0 = IFBlock(3, c=256) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=192) # 96 192 256 320
+            self.block2 = IFBlock(6+6, c=192) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=128) # 64 128 192 256
 
         # self.block_tea = IFBlock(6+6, c=64) # 6 from cat, 6 from flow  c=90
         if student_teacher:
@@ -318,6 +318,7 @@ class IFNet(nn.Module):
                 # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
                 # print("flow:", flow.shape)
 
+                # """
                 # print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
                 # flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
                 flow_d, mask_d = self.block_tea(torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
@@ -331,6 +332,9 @@ class IFNet(nn.Module):
                 warped_img1_teacher = warp(img1, flow_teacher[:, 3:6])
                 mask_teacher = torch.sigmoid(mask + mask_d)
                 merged_teacher = warped_img0_teacher * mask_teacher + warped_img1_teacher * (1 - mask_teacher)
+                # """
+                # flow_teacher = 0
+                # merged_teacher = 0
             else:
                 # print("flow_teacher = None")
                 flow_teacher = None
@@ -351,6 +355,7 @@ class IFNet(nn.Module):
             #         pass
             # input("x")
             
+            # """
             if student_teacher:
                 if gt.shape[1] == 1: # 3
                     flow_list[i] = flow_list[i][:,:,:flow_teacher.shape[2],:flow_teacher.shape[3],:flow_teacher.shape[4]]
@@ -368,6 +373,7 @@ class IFNet(nn.Module):
                     # print( (((flow_teacher.detach() - flow_list[i]) ** 2).mean(1, True) ** 0.5).mean() )
                     # print(loss_mask.mean())
                     # input("loss_distill")
+            # """
 
         # print("in IFNet, forward")
         if refine:

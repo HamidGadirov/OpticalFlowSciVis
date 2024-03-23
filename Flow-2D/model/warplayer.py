@@ -25,7 +25,7 @@ def warp(tenInput, tenFlow):
 
     g = (backwarp_tenGrid[k] + tenFlow).permute(0, 2, 3, 1)
 
-    print("g:", g.shape)
+    # print("g:", g.shape)
     # input("warp")
 
     if tenInput.dtype==torch.float16:
