@@ -194,6 +194,13 @@ class IFNet(nn.Module):
             self.block2 = IFBlock(6+6, c=192) # 96 192 256 320
             self.block3 = IFBlock(6+6, c=128) # 64 128 192 256
 
+        if five_blocks:
+            self.block0 = IFBlock(3, c=128) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=96) # 96 192 256 320
+            self.block2 = IFBlock(6+6, c=96) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=64) # 64 128 192 256
+            self.block4 = IFBlock(6+6, c=64) # 64 128 192 256
+
         # self.block_tea = IFBlock(6+6, c=64) # 6 from cat, 6 from flow  c=90
         if student_teacher:
             self.block_tea = IFBlock(7+6, c=128) # 90 128 192 256
@@ -233,6 +240,10 @@ class IFNet(nn.Module):
             stu = [self.block0, self.block1, self.block2, self.block3]
             # scale = [1, 1, 1, 1] if use_deconv else [8, 4, 2, 1]
             scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
+        elif five_blocks:
+            blocks_range = 5
+            stu = [self.block0, self.block1, self.block2, self.block3, self.block4]
+            scale = [1, 1, 1, 1, 1] if use_deconv else [4, 2, 2, 1, 1]
         # stu = [self.block0, self.block1, self.block2]
         # stu = [self.block0, self.block2]
         for i in range(blocks_range):

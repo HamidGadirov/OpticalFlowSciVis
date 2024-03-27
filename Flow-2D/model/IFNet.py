@@ -284,7 +284,7 @@ class IFNet(nn.Module):
             stu = [self.block0, self.block1, self.block2, self.block3]
             # scale = [1, 1, 1, 1] if use_deconv else [8, 4, 2, 1]
             scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
-        elif five_blocks: # TODO try [4, 4, 2, 2, 1]
+        elif five_blocks:
             blocks_range = 5
             stu = [self.block0, self.block1, self.block2, self.block3, self.block4]
             scale = [1, 1, 1, 1, 1] if use_deconv else [4, 2, 2, 1, 1]

@@ -208,7 +208,7 @@ class Model:
         if flow_available:
             loss_flow = 0.
             num_blocks = 4 # 3 4 5
-            gamma_coeff = 0.8 # 0.7 0.8 0.9
+            gamma_coeff = 0.6 # 0.7 0.8 0.9
             for i in range(num_blocks):
                 gamma = gamma_coeff ** i
                 loss_flow += (flow[num_blocks - i - 1][:, 3:6] - gt_flow).abs().mean() * gamma
@@ -219,10 +219,12 @@ class Model:
 
         # loss_l1 = torch.nn.functional.l1_loss(merged[2], gt)
         loss_l1 = torch.nn.functional.l1_loss(merged[-1], gt) # l1
+        # loss_l1 = (self.lap(merged[-1], gt)).mean() # laplacian
         # loss_tea = (self.lap(merged_teacher, gt)).mean()
         # loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt)
         if student_teacher:
             loss_tea = torch.nn.functional.l1_loss(merged_teacher, gt) # l1 
+            # loss_tea = (self.lap(merged_teacher, gt)).mean() # laplacian
         else:
             loss_tea = torch.tensor(0.) # no student-teacher
         # print(merged_teacher.shape, gt.shape)
@@ -365,8 +367,8 @@ class Model:
             loss_photo += photometric_loss(warped_frame2, frame3)
             loss_photo /= 2.
 
-        lambda_l1 = 1 # 1
-        lambda_tea = 1 # 1
+        lambda_l1 = 1. # 1
+        lambda_tea = 1. # 1
         if flow_available:
             lambda_flow = 2e-1 # 0.01 0.2 1; 0.5 best on rectangle
             lambda_distill = 0

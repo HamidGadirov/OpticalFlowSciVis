@@ -9,6 +9,7 @@ import pickle
 # matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 import matplotlib.patches as patches
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib.colors import Normalize
 import matplotlib.cm as cm
 from matplotlib.ticker import FuncFormatter
@@ -19,6 +20,8 @@ import yt
 import io 
 from PIL import Image
 from matplotlib.colors import LogNorm
+import glob
+from natsort import natsorted
 
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
@@ -1195,9 +1198,9 @@ def render_volume_yt(volume, save_path, file_name):
 def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
                           dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
     
-    columns = 5
+    columns = 6
     rows = 4
-    skip = 2
+    skip = 10
     data_to_vis = original_data
     index = 0
     shift = 1
@@ -1206,7 +1209,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         vmin = 0
         print("vis range:", vmin, data_to_vis.max())
         hspace = 0.01
-        wspace = -0.01
+        wspace = -0.7
         cmap ='gray'
 
     u_gt = flow_gt[:, 0, ...] 
@@ -1220,7 +1223,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
     flow_norm = np.sqrt(u * u + v * v + w * w)
 
     # wspace is x; hspace is y
-    fig, axs = plt.subplots(nrows=rows, ncols=columns, figsize=(10, 4), gridspec_kw={'hspace': hspace, 'wspace': wspace})
+    fig, axs = plt.subplots(nrows=rows, ncols=columns, figsize=(20, 8), gridspec_kw={'hspace': hspace, 'wspace': wspace})
 
     # bounds = (105.0, 160.0)
     # tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
@@ -1233,22 +1236,59 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
     tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
     # tf.add_gaussian(np.log10(0.3), width=1e-4, height=[1.0, 0.1, 0.3, 1e2]) # red 100-200
     # tf.add_gaussian(np.log10(0.4), width=4e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 100-200
-    tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 700-800
+    # tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 700-800
+    tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.05, 0.1, 1.0, 1e2]) # blue 700-800
     # velocity
     tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
     # tf_vel.add_gaussian(np.log10(0.5), width=1e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 100-200
     # tf_vel.add_gaussian(np.log10(0.7), width=4e-4, height=[0.8, 0.6, 0.1, 1e2]) # orange 100-200
-    tf_vel.add_gaussian(np.log10(0.7), width=2e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 700-800
+    # tf_vel.add_gaussian(np.log10(0.7), width=2e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 700-800
+    tf_vel.add_gaussian(np.log10(0.55), width=1e-4, height=[1.0, 0.6, 0.1, 1e2]) # orange 700-800
 
     # print("min, max: ", np.min(original_data), np.max(original_data))
     # print("mean: ", np.mean(original_data))
     # print("std: ", np.std(original_data))
 
+    cam_resolution = 256
+
+    def add_zoom(ax):
+        # Define the coordinates and size of the region to be zoomed in
+        x1, y1, width1, height1 = 55, 120, 40, 40  # For the top left zoomed-in version
+        x2, y2, width2, height2 = 108, 80, 40, 40  # For the top right zoomed-in version
+
+        # Create a rectangle patch to highlight the region for the top right zoomed-in version
+        rect1 = patches.Rectangle((x1, y1), width1, height1, linewidth=1.5, edgecolor='purple', facecolor='none')
+        ax.add_patch(rect1)
+
+        # Create a rectangle patch to highlight the region for the top left zoomed-in version
+        rect2 = patches.Rectangle((x2, y2), width2, height2, linewidth=1.5, edgecolor='orange', facecolor='none')
+        ax.add_patch(rect2)
+
+        # Create inset axes for the zoomed-in version on the top right
+        ax_zoom1 = inset_axes(ax, width="35%", height="35%", loc='upper left')
+        ax_zoom1.imshow(img[y1:y1+height1, x1:x1+width1], vmin=0, vmax=1.0, cmap='turbo')
+        ax_zoom1.axis('off')
+
+        # Create inset axes for the zoomed-in version on the top left
+        ax_zoom2 = inset_axes(ax, width="35%", height="35%", loc='upper right')
+        ax_zoom2.imshow(img[y2:y2+height2, x2:x2+width2], vmin=0, vmax=1.0, cmap='turbo')
+        ax_zoom2.axis('off')
+
+        # Define the coordinates and size of the frames to match the zoomed-in plots
+        frame_width, frame_height = width1 * 0.98, height1 * 0.98  # Adjust the scale factor as needed
+
+        frame1 = patches.Rectangle((0, 0), frame_width, frame_height, linewidth=1.5, edgecolor='purple', facecolor='none')
+        frame2 = patches.Rectangle((0, 0), frame_width, frame_height, linewidth=1.5, edgecolor='orange', facecolor='none')
+
+        ax_zoom1.add_patch(frame1)
+        ax_zoom2.add_patch(frame2)
+
+
     for i in range(columns):
         volume = original_data[round(index)]
         # print("volume", volume)
-        ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
-        sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+        ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("gas", "density"))
         source = sc[0]
         source.set_log(True)
         source.tfh.tf = tf
@@ -1256,8 +1296,9 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         source.tfh.plot(os.path.join(dir_res, "dens_gt_tf.png"), profile_field=("gas", "density"))
 
         cam = sc.camera
-        cam.resolution = 256
-        cam.zoom(1.25)
+        cam.resolution = cam_resolution
+        cam.zoom(1.75)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
         # print("im", im)
@@ -1270,7 +1311,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         img = plt.imread(os.path.join(dir_res, "Dens_seq.png"))
         ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap) # data_to_vis
         if dataset == "jets3d":
-            ax_title = "t=" + str(index + shift + 100)
+            ax_title = "t=" + str(index + shift + 730)
             ax.set_title(ax_title, fontsize=12, pad=10)
         elif dataset == "pool3d":
             ax_title = "t=" + str(index + shift + 30)
@@ -1280,12 +1321,15 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
             ax.set_title(ax_title, fontsize=12, pad=10)
         ax.axis('off')
 
+        # add zoomings
+        add_zoom(ax)
+
 
         # Second row: interpolated data
         volume = interpol_data[round(index)]
         # print("volume", volume)
-        ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
-        sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+        ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("gas", "density"))
         source = sc[0]
         source.set_log(True)
         source.tfh.tf = tf
@@ -1293,8 +1337,9 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         source.tfh.plot(os.path.join(dir_res, "dens_tf.png"), profile_field=("gas", "density"))
 
         cam = sc.camera
-        cam.resolution = 256
-        cam.zoom(1.25)
+        cam.resolution = cam_resolution
+        cam.zoom(1.75)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
         # print("im", im)
@@ -1307,12 +1352,15 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
         ax.axis('off')
 
+        # add zoomings
+        add_zoom(ax)
+
 
         # Third row: flow gt
         volume = flow_norm_gt[round(index)]
         # print("volume", volume)
-        ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
-        sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+        ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("gas", "density"))
         source = sc[0]
         source.set_log(True)
         source.tfh.tf = tf_vel
@@ -1320,11 +1368,11 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         source.tfh.plot(os.path.join(dir_res, "flow_gt_tf.png"), profile_field=("gas", "density"))
 
         cam = sc.camera
-        cam.resolution = 256
-        cam.zoom(1.25)
+        cam.resolution = cam_resolution
+        cam.zoom(1.75)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
-        # print("im", im)
         im.write_png(os.path.join(dir_res, "Flow.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
         print("rendered!")
 
@@ -1337,8 +1385,8 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         # Fourth row: flow
         volume = flow_norm[round(index)]
         # print("volume", volume)
-        ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
-        sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+        ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("gas", "density"))
         source = sc[0]
         source.set_log(True)
         source.tfh.tf = tf_vel
@@ -1346,11 +1394,11 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         source.tfh.plot(os.path.join(dir_res, "flow_tf.png"), profile_field=("gas", "density"))
 
         cam = sc.camera
-        cam.resolution = 256
-        cam.zoom(1.25)
+        cam.resolution = cam_resolution
+        cam.zoom(1.75)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
-        # print("im", im)
         im.write_png(os.path.join(dir_res, "Flow.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
         print("rendered!")
 
@@ -1369,5 +1417,93 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         if not os.path.isdir(dir_res):
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
+
+def render_density(gt, interpol, dir_res="Results"):
+
+    bounds = (0.1, 0.9)
+    tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+    # density
+    tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.05, 0.1, 1.0, 1e2]) # blue 700-800
+
+    # pickle_file = "data_original_interpol.pkl"
+    # with open(os.path.join(dir_res, pickle_file), 'rb') as dens_file:
+    #     data_test = pickle.load(dens_file)
+    data_density = np.array(gt) # [:, 0]  # density
+    # data_velocity = np.array(data_test)[:, 1:]  # velocity
+    # print(data_velocity.shape)
+
+    save_path = dir_res + "/Renderings_GT"
+    if not os.path.isdir(save_path):
+        os.makedirs(save_path)
+
+    # render density
+    for idx in range(len(data_density)):
+        volume = data_density[idx]
+        ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("gas", "density"))
+        source = sc[0]
+        source.set_log(True)
+        source.tfh.tf = tf
+        source.tfh.bounds = bounds
+        # source.tfh.plot(f"{save_path}/transfer_function.png", profile_field=("gas", "density"))
+        cam = sc.camera
+        cam.resolution = 256
+        cam.zoom(1.75)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
+        # cam.rotate(30 / 180 * np.pi, rot_vector=np.array([1.0, 0.0, 0.0]))
+        im = sc.render()
+        im.write_png(os.path.join(save_path, f'density_{700+idx}.png'), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+
+    # pickle_file = "interpol_data.pkl"
+    # with open(os.path.join(dir_res, pickle_file), 'rb') as dens_file:
+    #     data_test = pickle.load(dens_file)
+    data_density = np.array(interpol) # [:, 0]  # density
+    # data_velocity = np.array(data_test)[:, 1:]  # velocity
+    # print(data_velocity.shape)
+
+    save_path = dir_res + "/Renderings_interpol"
+    if not os.path.isdir(save_path):
+        os.makedirs(save_path)
+
+    # render density
+    for idx in range(len(data_density)):
+        volume = data_density[idx]
+        ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("gas", "density"))
+        source = sc[0]
+        source.set_log(True)
+        source.tfh.tf = tf
+        source.tfh.bounds = bounds
+        # source.tfh.plot(f"{save_path}/transfer_function.png", profile_field=("gas", "density"))
+        cam = sc.camera
+        cam.resolution = 256
+        cam.zoom(1.75)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
+        # cam.rotate(30 / 180 * np.pi, rot_vector=np.array([1.0, 0.0, 0.0]))
+        im = sc.render()
+        im.write_png(os.path.join(save_path, f'density_{700+idx}.png'), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+
+def make_video(dir_res):
+
+    data_path_gt = dir_res + "/Renderings_GT"
+    data_path_rec = dir_res + "/Renderings_interpol"
+    image_files_gt = natsorted(glob.glob(f'{data_path_gt}/density_*.png'))
+    image_files_rec = natsorted(glob.glob(f'{data_path_rec}/density_*.png'))
+    print(len(image_files_gt), len(image_files_rec))
+    images_gt = []
+    images_rec = []
+    for i in range(len(image_files_rec)):
+        images_gt.append(cv2.imread(image_files_gt[i]))
+        images_rec.append(cv2.imread(image_files_rec[i]))
+    video = cv2.VideoWriter(os.path.join(dir_res, f'./GT_interpol.mp4'), cv2.VideoWriter_fourcc(*'mp4v'), 15, (np.array(images_gt[0]).shape[1] * 2, np.array(images_gt[0]).shape[0]))
+
+    for idx, (img1, img2) in enumerate(zip(images_gt, images_rec)):
+        img1 = cv2.putText(img1, 'GT', (240, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        img2 = cv2.putText(img2, 'LREST', (140, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        concatenated_img = np.concatenate((img1, img2), axis=1)
+        concatenated_img = cv2.putText(concatenated_img, f'{idx}', (900, 500), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        video.write(concatenated_img)
+    video.release()
+    # cv2.destroyAllWindows()
 
 

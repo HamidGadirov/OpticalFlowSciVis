@@ -23,7 +23,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large, visualize_large_3d, \
-    render_volume_yt, visualize_seq_dens_3d
+    render_volume_yt, visualize_seq_dens_3d, render_density
 
 
 # TODO:
@@ -64,7 +64,7 @@ def load_data(dataset, factor, mode):
             # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_500_train.pkl"
             # pkl_train_filename_1 = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_500_train_1.pkl"
             # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip20_triplets_W12_200_train.pkl"
-            pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1000_triplets_W12_200_train.pkl"
+            pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1000_triplets_W12_500_train.pkl"
             # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1800_triplets_W5_250_train.pkl"
             # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_val.pkl"
             # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_50_val.pkl"
@@ -75,7 +75,7 @@ def load_data(dataset, factor, mode):
             # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_300_test.pkl"
             # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_100_test.pkl"
             pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_700_800_test.pkl"
-            # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_100_800_test.pkl"
+            # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_100_800_test.pkl" # 100-800
             # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_train.pkl"
             # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_val.pkl"
             # pkl_test_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_flow_aug_test.pkl"
@@ -424,8 +424,16 @@ def load_data(dataset, factor, mode):
                 # data_test = np.array(data_test)[:, 0] # dens test for viz
 
                 print(len(data_test))
-                data_test = np.array(data_test) # [70:]
+
+                if "100_800" in pkl_test_filename:
+                    data_part1 = data_test[0:100]
+                    # data_part2 = data_test[300:400]
+                    data_part3 = data_test[600:700]
+                    data_test = np.concatenate([data_part1, data_part3], axis=0)
+
+                data_test = np.array(data_test)[30:]
                 print(data_test.shape)
+                # input("x")
 
                 # print("Density range %f to %f" % (np.min(data_test[:, 0]), np.max(data_test[:, 0])))
                 # print("Vel x range %f to %f" % (np.min(data_test[:, 1]), np.max(data_test[:, 1])))
@@ -548,22 +556,27 @@ def load_data(dataset, factor, mode):
 
                 for i in range(0, data_test.shape[0], n):
                     try:
-                        concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
-                        concat_in_between = np.concatenate(concat_in_between, axis=0)
+                        # we don't need GT for inference!
+                        # concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
+                        # concat_in_between = np.concatenate(concat_in_between, axis=0)
                         # ensure same number of dimensions
                         data_test_i = np.expand_dims(data_test[i], axis=0)
                         data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
                         # print(np.array(concat_in_between).shape)
                         # print(np.array(data_test_i).shape)
                         # print(np.array(data_test_i_n).shape)
-                        data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
+                        # data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
+                        data_test_combined.append(np.concatenate((data_test_i, data_test_i_n), axis=0))
                     except:
                         print("done")
 
                 data_test = np.array(data_test_combined)
                 data_test = np.squeeze(data_test)
                 print("data_test combined:", data_test.shape)
-                # input("n")
+
+                # save_path = "Results/jets3d"
+                # render_density(data_test[:, 0, 0], data_test[:, 1, 0], save_path)
+                # input("data test")
 
             if "tangaroa3d" in filename:
                 data_test = data[150:201]

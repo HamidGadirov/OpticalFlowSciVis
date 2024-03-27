@@ -165,10 +165,10 @@ with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
         #     count += 1
         #     bar.next()
         #     continue
-        if count >= 800: # 1500 1870: # skip last t.s. with broken seq.
+        if count >= 1000: # 1500 1870: # skip last t.s. with broken seq.
             break
         
-        if count >= 100: # 870
+        if count >= 0: # 870
             # tmp_data = np.fromfile(elem, dtype='uint8')
             tmp_data = np.fromfile(elem, dtype='float32')
             # tmp_data = np.fromfile(elem, dtype='uint8').reshape((128, 128, 128)) # 'uint8' np.uint8
@@ -214,6 +214,7 @@ data_vel = []
 count = 0
 # dims = 128 * 128 * 128
 
+"""
 # Print the files
 with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
     for elem in listOfFiles:
@@ -224,10 +225,10 @@ with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
         #     count += 1
         #     bar.next()
         #     continue
-        if count >= 800: # 1500 1870: # skip last t.s. with broken seq.
+        if count >= 1000: # 1500 1870: # skip last t.s. with broken seq.
             break
 
-        if count >= 100: # 870
+        if count >= 0: # 870
             tmp_data = np.fromfile(elem, dtype='float32')
             # print(tmp_data.shape) # 8388608 dens; 25165824 vel
             # input("x")
@@ -253,6 +254,7 @@ print(np.array(data).shape)
 
 del data_vel
 # input("data_dens_vel")
+"""
 
 # pkl_filename = "5jets3d" + "_dens" + ".pkl" 
 # pkl_filename = "5jets3d" + "_flow" + ".pkl" 
@@ -290,9 +292,9 @@ data = np.transpose(data, (0, 4, 1, 2, 3))
 
 # Normalize/scale
 print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
-print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
-print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
-print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
+# print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+# print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+# print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 # print("Data is in range %f to %f" % (np.min(data), np.max(data)))
 # input(data.shape)
 # input("Data range")
@@ -305,14 +307,14 @@ print("Density scaled to [0, 1] range!")
 # data = (data - np.min(data[:, 1])) / (np.max(data[:, 1]) - np.min(data[:, 1]))
 # data[:, 2] = cv2.normalize(data[:, 2], data[:, 2], 0., 1., cv2.NORM_MINMAX)
 # data[:, 3] = cv2.normalize(data[:, 3], data[:, 3], 0., 1., cv2.NORM_MINMAX)
-for i in range(1, 4):
-    data[:, i] = (2 * (data[:, i] - np.min(data[:, i])) / (np.max(data[:, i]) - np.min(data[:, i]))) - 1
-# print("Velocities scaled to [0, 1] range!")
-print("Velocities scaled to [-1, 1] range!")
-print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
-print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
-print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
-print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
+# for i in range(1, 4):
+#     data[:, i] = (2 * (data[:, i] - np.min(data[:, i])) / (np.max(data[:, i]) - np.min(data[:, i]))) - 1
+# # print("Velocities scaled to [0, 1] range!")
+# print("Velocities scaled to [-1, 1] range!")
+# print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
+# print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
+# print("Vel y range %f to %f" % (np.min(data[:, 2]), np.max(data[:, 2])))
+# print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 
 # flow_u_gt = data[300:, 1, :, :, 64]
 # flow_v_gt = data[300:, 2, :, :, 64]
@@ -334,21 +336,22 @@ print(data.shape) # 969
 
 # # filename = "5jets3d_300_test.pkl"
 # # filename = "5jets3d_skip5_test.pkl"
-filename = "5jets3d_100_800_test.pkl"
-with open(filename, 'wb') as f:
-    # pickle.dump(data[700:800], f, protocol=4)
-    pickle.dump(data, f, protocol=4)
-print('Test data saved!')
-input("test")
-
-# # CoordNet, only density
-# filename = "5jets3d_skip10_180_train_coordnet.pkl"
+# filename = "5jets3d_100_800_test.pkl"
 # with open(filename, 'wb') as f:
-#     pickle.dump(data[:, 0], f, protocol=4)
-# print('Data CoordNet saved!')
-# input("CoordNet")
+#     # pickle.dump(data[700:800], f, protocol=4)
+#     pickle.dump(data, f, protocol=4)
+# print('Test data saved!')
+# input("test")
 
-num_triplets = 500 # 50 500 1000
+# CoordNet, only density
+# filename = "5jets3d_skip10_180_train_coordnet.pkl"
+filename = "5jets3d_1000_coordnet.pkl"
+with open(filename, 'wb') as f:
+    pickle.dump(data[:, 0], f, protocol=4)
+print('Data CoordNet saved!')
+input("CoordNet")
+
+num_triplets = 50 # 50 500 1000
 window = 12 # * 5 12
 print("window:", window)
 
@@ -406,9 +409,9 @@ print(triplet_data.dtype)
 
 # filename = "5jets3d_triplets_W60_500_train.pkl"
 # filename = "5jets3d_triplets_W60_500_train_1.pkl"
-filename = "5jets3d_skip10_1000_triplets_W12_500_train.pkl"
+# filename = "5jets3d_skip10_1000_triplets_W12_500_train.pkl"
 # filename = "5jets3d_triplets_W60_50_val.pkl"
-# filename = "5jets3d_skip10_1000_triplets_W12_50_val.pkl"
+filename = "5jets3d_skip10_1000_triplets_W12_50_val.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 # chunk_size = 500  # Set an appropriate chunk size

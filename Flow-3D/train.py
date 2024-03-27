@@ -33,7 +33,7 @@ from load_datasets import load_data
 from metrics import calculate_diff, calculate_avg_epe
 from metrics import calculate_avg_psnr, calculate_avg_ssim, calculate_avg_lpips, calculate_psnr
 from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_ind_flow, visualize_series, visualize_series_flow, visualize_large, \
-    visualize_seq_dens, visualize_seq_flow, render_volume_yt, visualize_seq_dens_3d
+    visualize_seq_dens, visualize_seq_flow, render_volume_yt, visualize_seq_dens_3d, render_density, make_video
 from baseline_interpol import *
 
 # If your model is returning NaNs, you could set 
@@ -59,6 +59,7 @@ def get_learning_rate(step):
         mul = step / 2000.
         # return 1e-3 * mul
         # return 6e-4 * mul # 2D
+        # return 3e-4 * mul
         return 1e-4 * mul
         # return 6e-5 * mul
         # return 1e-5 * mul
@@ -70,6 +71,7 @@ def get_learning_rate(step):
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
+        # return (3e-4 - 3e-6) * mul + 3e-6
         return (1e-4 - 1e-6) * mul + 1e-6
         # return (6e-5 - 6e-7) * mul + 6e-7
         # return (1e-5 - 1e-7) * mul + 1e-7
@@ -118,7 +120,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     step = 0
     nr_eval = 0
     early_stopper = EarlyStopper(patience=50, min_delta=0.01) # 30
-    batch_size_inf = 2 # 6 3 2
+    batch_size_inf = 1 # 6 3 2
 
     num_workers = 1 # 8
     if mode == "train":
@@ -325,11 +327,11 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             data_gpu = data
 
             # data_gpu = data_gpu.permute(0, 1, 2, 5, 3, 4) # 3rd is dim0
-
+            
             # data_gpu = data_gpu.float() # to float32
 
             imgs = data_gpu[:, :2, 0]
-            gt = data_gpu[:, 2:3, 0]
+            # gt = data_gpu[:, 2:3, 0]
             # print(imgs.shape)
             # print(gt.shape)
             # input("imgs gt")
@@ -428,7 +430,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # input("x")
 
         # reorder based on factor
-        if factor > 2:
+        if factor > 100:
             interpol_data_new = []
             batch_size = batch_size_inf # what was used for inference
             try:
@@ -448,7 +450,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # input("flow")
 
         # reorder based on factor
-        if factor > 2:
+        if factor > 100:
             flow_combined_new = []
             batch_size = batch_size_inf # what was used for inference
             try:
@@ -793,11 +795,12 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     # writer_val.add_scalar('psnr', np.array(psnr_list).mean(), nr_eval)
     # writer_val.add_scalar('psnr_teacher', np.array(psnr_list_teacher).mean(), nr_eval)
 
+
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=120, type=int) # 300 500
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # local-rank
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -817,7 +820,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle3d":
         args.batch_size = 40
     if args.dataset == "jets3d":
-        args.batch_size = 1 # 3 4 6 8
+        args.batch_size = 2 # 3 4 6 8
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
@@ -943,20 +946,78 @@ if __name__ == "__main__":
     model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr6e-4.pkl"
     # diverge
     # 128 96 64, check 256 - 128 !
-    ### 
+    ### +++
     model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 45.67 0.08512; 10x: 46.72 0.0853
-    ###
-    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 64 model, 128 in teacher block
+    # 100-800 (200): 43.08 0.7346
+    ### +++
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow3e-1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 700-800: 2x: 36.15 0.3112 10x: 34.12 0.3112
+    # 64 might be best
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 64 model, 128 in teacher block
+    # 700-800: 2x: 36.00 0.0841; 10x: 33.26 0.0843;
+
+    # 4 blocks: 256 192 192 128 
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 32.76 0.0877; 10x: 33.96 0.0869
+
+    ### +++
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 40.45 0.7363; 10x: 46.05 0.7364; 15x: 45.41 0.7365; 20x: 39.36 0.7366
+    ### +++ flow to 3 blocks...
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr3e-4.pkl"
+    # Early stop.
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma06_eqRes_deconv_lr1e-4.pkl"
+    # 10x: 42.12 0.7361 20x: 45.33 0.7345
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma07_eqRes_deconv_lr1e-4.pkl"
+    # 10x: 46.08 0.7384; 15x: avg PSNR: 45.04 0.7385; 20x: 42.65 0.7386
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma09_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 49.32 0.7326; 10x: 37.84 0.7327; 15x: 33.73 0.7334; 20x: 35.93 0.7335
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_lapl_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 34.89 0.7382; 10x: 35.82 0.7387 20x: 38.92 0.7392
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W6_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 46.39 0.732; 10x: 41.76 0.7326; 15x: 41.11 0.7328; 20x: 47.32 0.7328
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_best.pkl"
+    # 
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_flow2.pkl"
+    # 10x: 35.44 0.7315 15x: 44.41 0.7311 20x: 42.07 0.7305
+
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 34.42 0.7337; 10x: 37.55 0.7336; 20x: 39.89 0.7338
+    # model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 31.59 0.742; 10x: 33.70 0.742 20x: 41.50 0.7417
 
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W15_200_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 34.35 0.08498; 10x: 29.86 0.0852
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W10_200_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 33.35 0.0877; 10x: 33.31 0.0876
+    ###
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 10x: 43.30 0.082
-    # 100-200: linear 15x: 30.05 lrest: 31.96
+    # 100-200: 15x: linear: 30.05 lrest: 31.96
     # 700-800: 20x: linear: 39.39 LREST: 45.15
+    # 100-800 (300): 2x: 41.85 0.736; 10x: 41.83 0.7358 linear 49; 15x: linear 43.974 42.946 0.7351; 20x: linear: 38.393 41.9 0.7359
+    ###
+
+    # # ablations +
+    # no flow:
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 34.98 3.649; 10x: 37.80; 3.4985
+    # no rec:
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 10x: 32.32 0.7332
+    # w/o s-t:
+    # model_name = "flownet_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 10x: 41.99 0.7323
+
 
     """ pool3d """
     # untrained: 2x: 35.01 0.506
@@ -1091,7 +1152,8 @@ if __name__ == "__main__":
         if "3d" in dataset: 
             # factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
             # factors = [2, 3, 5, 8, 16, 32]
-            factors = [2, 10, 15, 20]
+            # factors = [2, 10, 15, 20] # 30, 40, 60]
+            factors = [20]
         for factor in factors:
             dir_res = "Results"
             dir_res = os.path.join(dir_res, dataset)
@@ -1148,7 +1210,6 @@ if __name__ == "__main__":
             flow_original_pred = np.array(flow_original_pred)
             print("flow_original_pred:", flow_original_pred.shape)
             # flow_gt = flow_original_interpol
-            # input("n")
 
             flow = flow[:, 3:6, ...]
             # flow = np.transpose(flow, (0, 1, 2, 4, 3)) # 3rd is dim0
@@ -1156,8 +1217,9 @@ if __name__ == "__main__":
             if not os.path.isdir(dir_model):
                 os.makedirs(dir_model)
 
-            # visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
-            #             dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
+            visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
+                        dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
+            print("visualize_seq_dens_3d done!")
 
             """
             original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]
@@ -1201,6 +1263,7 @@ if __name__ == "__main__":
             # jets: PSNR 2x: 77; 5x: 64; 10x: 60.8; 20x: 56.8
             # 100-200: 2x: 51.4; 5x: 40; 10x: 34.27; 15x: 30; 20x: 30.989
             # 700-800: 2x: 70; 5x: 59.28; 10x: 52.98; 15x: 49.94; 20x: 39.39
+            # 700-800 (200): 2x: 66.8; 10x 48.7; 15x: 44.28; 20x: 38.11; 30x: 37.09; 40x: 37.27; 60x: 37.40
             # input("baseline")
             print("Baseline evaluation")
             # visualize_seq_dens_3d(data_original_interpol, lin_interpol, flow_original_pred, flow,
@@ -1396,6 +1459,20 @@ if __name__ == "__main__":
                 # print(flow_gt.shape, flow.shape)
                 print(flow_original_pred.shape, flow.shape)
                 avg_epe = calculate_avg_epe(flow_original_pred, flow, dir_model, factor)
+
+            # # """
+            # # fn = "data_original_interpol.pkl"
+            # # with open(os.path.join(dir_model, fn), 'wb') as f:
+            # #     pickle.dump(data_original_interpol, f, protocol=4)
+            # # fn = "interpol_data.pkl"
+            # # with open(os.path.join(dir_model, fn), 'wb') as f:
+            # #     pickle.dump(interpol_data, f, protocol=4)
+            # # print("saved for renderings!")
+            # render_density(data_original_interpol, interpol_data, dir_model)
+            # make_video(dir_model)
+            # print("video created!")
+            # # input("xxx")
+            # # """
 
             """
             original_min = 17610006. # 17327866.
