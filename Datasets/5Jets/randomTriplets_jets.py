@@ -158,29 +158,29 @@ count = 0
 # Print the files
 with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
     for elem in listOfFiles:
-        # if count % 10 == 0: # downloading every 5th time step # 10th
-        print(elem)
-        # TODO: stop here; not necessarily 10th -> e.g. each or 5th; not downs; if I have to: temp.
-        # if count > 1875 and count < 1905: # skip this, check where are they
-        #     count += 1
-        #     bar.next()
-        #     continue
-        if count >= 1000: # 1500 1870: # skip last t.s. with broken seq.
-            break
-        
-        if count >= 0: # 870
-            # tmp_data = np.fromfile(elem, dtype='uint8')
-            tmp_data = np.fromfile(elem, dtype='float32')
-            # tmp_data = np.fromfile(elem, dtype='uint8').reshape((128, 128, 128)) # 'uint8' np.uint8
-            # print(tmp_data.shape) # 8388608 dens; 25165824 vel
-            # input("x")
-            tmp_data.resize(128, 128, 128, 1) # density
-            # tmp_data.resize(128, 128, 128, 3) # vel
-            # print(tmp_data.shape)
-            # input("x")
-            data.append(tmp_data)
-            # tmp_data = np.flip(tmp_data, 1)
-            # data = np.concatenate((data, tmp_data), axis=0)
+        if count % 10 == 0: # downloading every 5th time step # 10th
+            print(elem)
+            # TODO: stop here; not necessarily 10th -> e.g. each or 5th; not downs; if I have to: temp.
+            # if count > 1875 and count < 1905: # skip this, check where are they
+            #     count += 1
+            #     bar.next()
+            #     continue
+            if count >= 1000: # 1500 1870: # skip last t.s. with broken seq.
+                break
+            
+            if count >= 0: # 870
+                # tmp_data = np.fromfile(elem, dtype='uint8')
+                tmp_data = np.fromfile(elem, dtype='float32')
+                # tmp_data = np.fromfile(elem, dtype='uint8').reshape((128, 128, 128)) # 'uint8' np.uint8
+                # print(tmp_data.shape) # 8388608 dens; 25165824 vel
+                # input("x")
+                tmp_data.resize(128, 128, 128, 1) # density
+                # tmp_data.resize(128, 128, 128, 3) # vel
+                # print(tmp_data.shape)
+                # input("x")
+                data.append(tmp_data)
+                # tmp_data = np.flip(tmp_data, 1)
+                # data = np.concatenate((data, tmp_data), axis=0)
                 
         count += 1
         bar.next()
@@ -214,47 +214,45 @@ data_vel = []
 count = 0
 # dims = 128 * 128 * 128
 
-"""
 # Print the files
-with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
-    for elem in listOfFiles:
-        # if count % 10 == 0: # downloading every 5th time step # 10th
-        print(elem)
-        # TODO: stop here; not necessarily 10th -> e.g. each or 5th; not downs; if I have to: temp.
-        # if count > 1875 and count < 1905: # skip this, check where are they
-        #     count += 1
-        #     bar.next()
-        #     continue
-        if count >= 1000: # 1500 1870: # skip last t.s. with broken seq.
-            break
+# with Bar("Loading the data...", max=len(listOfFiles) ) as bar:
+#     for elem in listOfFiles:
+#         # if count % 10 == 0: # downloading every 5th time step # 10th
+#         print(elem)
+#         # TODO: stop here; not necessarily 10th -> e.g. each or 5th; not downs; if I have to: temp.
+#         # if count > 1875 and count < 1905: # skip this, check where are they
+#         #     count += 1
+#         #     bar.next()
+#         #     continue
+#         if count >= 1000: # 1500 1870: # skip last t.s. with broken seq.
+#             break
 
-        if count >= 0: # 870
-            tmp_data = np.fromfile(elem, dtype='float32')
-            # print(tmp_data.shape) # 8388608 dens; 25165824 vel
-            # input("x")
-            # tmp_data.resize(128, 128, 128, 1) # density
-            tmp_data.resize(128, 128, 128, 3) # vel
-            # print(tmp_data.shape)
-            # input("x")
-            data_vel.append(tmp_data)
-            # tmp_data = np.flip(tmp_data, 1)
-            # data = np.concatenate((data, tmp_data), axis=0)
+#         if count >= 0: # 870
+#             tmp_data = np.fromfile(elem, dtype='float32')
+#             # print(tmp_data.shape) # 8388608 dens; 25165824 vel
+#             # input("x")
+#             # tmp_data.resize(128, 128, 128, 1) # density
+#             tmp_data.resize(128, 128, 128, 3) # vel
+#             # print(tmp_data.shape)
+#             # input("x")
+#             data_vel.append(tmp_data)
+#             # tmp_data = np.flip(tmp_data, 1)
+#             # data = np.concatenate((data, tmp_data), axis=0)
                 
-        count += 1
-        bar.next()
+#         count += 1
+#         bar.next()
 
-print(len(data_vel))
-print(np.array(data_vel).shape)
-# input("data_vel")
+# print(len(data_vel))
+# print(np.array(data_vel).shape)
+# # input("data_vel")
 
-print("combining density and vel")
-data = np.concatenate((data, data_vel), axis=-1)
-print(len(data))
-print(np.array(data).shape)
+# print("combining density and vel")
+# data = np.concatenate((data, data_vel), axis=-1)
+# print(len(data))
+# print(np.array(data).shape)
 
-del data_vel
+# del data_vel
 # input("data_dens_vel")
-"""
 
 # pkl_filename = "5jets3d" + "_dens" + ".pkl" 
 # pkl_filename = "5jets3d" + "_flow" + ".pkl" 
@@ -344,14 +342,14 @@ print(data.shape) # 969
 # input("test")
 
 # CoordNet, only density
-# filename = "5jets3d_skip10_180_train_coordnet.pkl"
-filename = "5jets3d_1000_coordnet.pkl"
+filename = "5jets3d_skip10_100_density.pkl"
+# filename = "5jets3d_1000_density.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(data[:, 0], f, protocol=4)
 print('Data CoordNet saved!')
 input("CoordNet")
 
-num_triplets = 50 # 50 500 1000
+num_triplets = 500 # 50 500 1000
 window = 12 # * 5 12
 print("window:", window)
 
@@ -409,9 +407,9 @@ print(triplet_data.dtype)
 
 # filename = "5jets3d_triplets_W60_500_train.pkl"
 # filename = "5jets3d_triplets_W60_500_train_1.pkl"
-# filename = "5jets3d_skip10_1000_triplets_W12_500_train.pkl"
+filename = "5jets3d_skip10_1000_triplets_W12_500_train_1.pkl"
 # filename = "5jets3d_triplets_W60_50_val.pkl"
-filename = "5jets3d_skip10_1000_triplets_W12_50_val.pkl"
+# filename = "5jets3d_skip10_1000_triplets_W12_50_val.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 # chunk_size = 500  # Set an appropriate chunk size

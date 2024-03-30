@@ -800,7 +800,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=120, type=int) # 300 500
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # local-rank
+    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -820,7 +820,7 @@ if __name__ == "__main__":
     if args.dataset == "rectangle3d":
         args.batch_size = 40
     if args.dataset == "jets3d":
-        args.batch_size = 2 # 3 4 6 8
+        args.batch_size = 4 # 3 4 6 8
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
@@ -964,9 +964,11 @@ if __name__ == "__main__":
     # 2x: 32.76 0.0877; 10x: 33.96 0.0869
 
     ### +++
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 40.45 0.7363; 10x: 46.05 0.7364; 15x: 45.41 0.7365; 20x: 39.36 0.7366
     ### +++ flow to 3 blocks...
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_1K_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 10x: PSNR: 40.77 0.7311
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr3e-4.pkl"
     # Early stop.
@@ -983,12 +985,12 @@ if __name__ == "__main__":
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W6_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 46.39 0.732; 10x: 41.76 0.7326; 15x: 41.11 0.7328; 20x: 47.32 0.7328
+    # LREST 20x
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_best.pkl"
     # 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_flow2.pkl"
     # 10x: 35.44 0.7315 15x: 44.41 0.7311 20x: 42.07 0.7305
-
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 34.42 0.7337; 10x: 37.55 0.7336; 20x: 39.89 0.7338
@@ -1217,9 +1219,23 @@ if __name__ == "__main__":
             if not os.path.isdir(dir_model):
                 os.makedirs(dir_model)
 
-            visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
-                        dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
-            print("visualize_seq_dens_3d done!")
+            # save data for 3d figure:
+            # data = [data_original_interpol, interpol_data, flow_original_pred, flow]
+            data = [interpol_data]
+            save_path = "Results"
+            save_path = os.path.join(save_path, dataset)
+            save_path = os.path.join(save_path, "paper_figure")
+            # filenames = ["data_original_interpol.pkl", "interpol_data.pkl", "flow_original_pred.pkl", "flow.pkl"]
+            filenames = ["data_coordnet_interpol.pkl"]
+            for d, fn in zip(data, filenames):
+                with open(os.path.join(save_path, fn), 'wb') as f:
+                    pickle.dump(d, f, protocol=4)
+
+            input("x")
+
+            # visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
+            #             dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
+            # print("visualize_seq_dens_3d done!")
 
             """
             original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]
@@ -1387,67 +1403,6 @@ if __name__ == "__main__":
             print("interpol_data:", interpol_data.shape)
             print("flow_original_pred:", flow_original_pred.shape)
             print("flow:", flow.shape)
-
-            yt_viz = False
-            if yt_viz:
-                # data_test_vis = interpol_data[0]
-                # ds = yt.load_uniform_grid({"density": data_test_vis}, data_test_vis.shape)
-                # # Create a scene
-                # sc = yt.create_scene(ds, lens_type="perspective")
-                # # Get a reference to the VolumeSource associated with this scene
-                # source = sc[0]
-                # # Set the bounds of the transfer function based on your data
-                # # source.tfh.set_bounds((0., data_test_vis.max()))
-                # # Make underdense regions appear opaque
-                # # source.tfh.grey_opacity = True
-                # # Plot the transfer function
-                # # filename = os.path.join(dir_model, 'transfer_function_pool.png')
-                # # source.tfh.plot(filename, profile_field=("gas", "density"))
-                # source.set_field(("gas", "density"))
-                # # Save the rendered image
-                # filename = os.path.join(dir_model, 'yt_rendering_pool.png')
-                # sc.save(filename, sigma_clip=6.0)
-                # # input("yt_rendering_grid")
-                # print("density rendered")
-
-                def linramp(vals, minval, maxval):
-                    return (vals - vals.min()) / (vals.max() - vals.min())
-
-                data_test_vis = flow[0, 0]
-                ds = yt.load_uniform_grid({"density": data_test_vis}, data_test_vis.shape)
-                # Create a scene
-                sc = yt.create_scene(ds, lens_type="perspective")
-                """
-                # sc = yt.create_scene(ds, field=("gas", "density"))
-                        source = sc.get_source()
-                source.transfer_function.map_to_colormap(
-                    1e-10, 1007.0, scale=15, colormap="cmyt.arbre", scale_func=linramp
-                )
-                source.transfer_function.grey_opacity = True
-                cam = sc.camera
-                cam.resolution = 256
-                cam.zoom(0.8)
-
-                im = sc.render()
-                im.write_png(os.path.join(save_path, f'{file_name[:-4]}_{frame}.png'), background=[0.0, 0.0, 0.0, 0.0], sigma_clip=6.0)
-                """
-
-                # Get a reference to the VolumeSource associated with this scene
-                source = sc[0]
-                # Set the bounds of the transfer function based on your data
-                # source.tfh.set_bounds((0., data_test_vis.max()))
-                # Make underdense regions appear opaque
-                # source.tfh.grey_opacity = True
-                # Plot the transfer function
-                # filename = os.path.join(dir_model, 'transfer_function_flow_pool.png')
-                # source.tfh.plot(filename, profile_field=("gas", "density"))
-                # source.set_field(('gas', 'velocity_magnitude'))
-                source.set_field(('gas', 'density'))
-                # Save the rendered image
-                filename = os.path.join(dir_model, 'yt_rendering_flow_pool.png')
-                sc.save(filename, sigma_clip=6.0)
-                # input("yt_rendering_grid")
-                print("flow rendered")
 
             data_original_interpol = data_original_interpol[:interpol_data.shape[0]]
             flow_original_pred = flow_original_pred[:flow.shape[0]]

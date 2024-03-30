@@ -65,6 +65,7 @@ def load_data(dataset, factor, mode):
             # pkl_train_filename_1 = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_500_train_1.pkl"
             # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip20_triplets_W12_200_train.pkl"
             pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1000_triplets_W12_500_train.pkl"
+            pkl_train_filename_1 = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1000_triplets_W12_500_train_1.pkl"
             # pkl_train_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_skip10_1800_triplets_W5_250_train.pkl"
             # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_fp32_flow_aug_val.pkl"
             # pkl_val_filename = "../../../DataSSD/Datasets/5Jets/5jets3d_triplets_W60_50_val.pkl"
@@ -233,11 +234,11 @@ def load_data(dataset, factor, mode):
                 with open(pkl_train_filename, 'rb') as flow_file:
                     data_train = pickle.load(flow_file) # [:200]
                     print("data_train loaded!")
-                # with open(pkl_train_filename_1, 'rb') as flow_file:
-                #     data_train_1 = pickle.load(flow_file)
-                #     print("data_train_1 loaded!")
-                    # data_train = np.concatenate((data_train, data_train_1), axis=0)
-                    # del data_train_1
+                with open(pkl_train_filename_1, 'rb') as flow_file:
+                    data_train_1 = pickle.load(flow_file)
+                    print("data_train_1 loaded!")
+                    data_train = np.concatenate((data_train, data_train_1), axis=0)
+                    del data_train_1
                 with open(pkl_val_filename, 'rb') as flow_file:
                     data_val = pickle.load(flow_file)
                     print("data_val loaded!")
@@ -431,7 +432,7 @@ def load_data(dataset, factor, mode):
                     data_part3 = data_test[600:700]
                     data_test = np.concatenate([data_part1, data_part3], axis=0)
 
-                data_test = np.array(data_test)[30:]
+                data_test = np.array(data_test) # [30:]
                 print(data_test.shape)
                 # input("x")
 
