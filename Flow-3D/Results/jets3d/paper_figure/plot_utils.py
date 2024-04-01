@@ -29,7 +29,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
     
     columns = 5
     rows = 5
-    skip = 15
+    skip = 14
     data_to_vis = original_data
     index = 0
     shift = 0
@@ -123,6 +123,10 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
 
     for i in range(columns):
+
+        # if i == 4:
+        #     index = 70
+
         volume = original_data[round(index)]
         # print("volume", volume)
         ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
@@ -150,18 +154,19 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
         ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap) # data_to_vis
         if dataset == "jets3d":
             ax_title = "t=" + str(index + shift + 710)
-            ax.set_title(ax_title, fontsize=12, pad=10)
+            # ax_title = "t="
+            ax_title += "*"
+            ax.set_title(ax_title, fontsize=10, pad=-10)
         elif dataset == "pool3d":
             ax_title = "t=" + str(index + shift + 30)
-            ax.set_title(ax_title, fontsize=12, pad=10)
+            ax.set_title(ax_title, fontsize=10, pad=10)
         elif dataset == "nyx3d":
             ax_title = "t=" + str(index + shift + 600)
-            ax.set_title(ax_title, fontsize=12, pad=10)
+            ax.set_title(ax_title, fontsize=10, pad=10)    
         ax.axis('off')
 
         # add zoomings
         add_zoom(ax)
-
 
         # Second row: interpolated data
         volume = interpol_data[round(index)]
@@ -263,7 +268,8 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
         source.set_log(True)
         tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
         # tf_vel.add_gaussian(np.log10(0.55), width=2e-4, height=[0.84, 0.15, 0.16, 1e2]) # red
-        tf_vel.add_gaussian(np.log10(0.55), width=3e-4, height=[0.58, 0.40, 0.74, 1e2]) # purple
+        # tf_vel.add_gaussian(np.log10(0.55), width=3e-4, height=[0.58, 0.40, 0.74, 1e2]) # purple
+        tf_vel.add_gaussian(np.log10(0.55), width=3e-4, height=[1.0, 0.50, 0.05, 1e2]) # orange
         source.tfh.tf = tf_vel
         source.tfh.bounds = bounds
         source.tfh.plot(os.path.join(dir_res, "flow_x_gt_tf.png"), profile_field=("stream", "velocity_x"))
@@ -371,7 +377,8 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
         source.set_log(True)
         tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
         # tf_vel.add_gaussian(np.log10(0.4), width=2e-4, height=[1.0, 0.1, 0.1, 1e2]) # red
-        tf_vel.add_gaussian(np.log10(0.4), width=3e-4, height=[0.58, 0.40, 0.74, 1e2]) # purple
+        # tf_vel.add_gaussian(np.log10(0.4), width=3e-4, height=[0.58, 0.40, 0.74, 1e2]) # purple
+        tf_vel.add_gaussian(np.log10(0.4), width=3e-4, height=[1.0, 0.50, 0.05, 1e2]) # orange
         source.tfh.tf = tf_vel
         source.tfh.bounds = bounds
         source.tfh.plot(os.path.join(dir_res, "flow_gt_tf.png"), profile_field=("stream", "velocity_x"))
@@ -440,8 +447,8 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
         ax.imshow(blended_img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
         ax.axis('off')
 
-        index += skip
-        shift += 5
+        index += skip 
+        shift += 6
 
     if show:
         plt.show() 

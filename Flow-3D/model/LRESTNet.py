@@ -1,0 +1,402 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from model.warplayer import warp
+from model.refine import *
+import os
+import sys
+import inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
+
+from utils import plot_loss, visualize_ind, visualize_series, visualize_series_flow, visualize_large
+
+def deconv(in_planes, out_planes, kernel_size=4, stride=2, padding=1):
+    return nn.Sequential(
+        torch.nn.ConvTranspose3d(in_channels=in_planes, out_channels=out_planes, 
+                                kernel_size=kernel_size, stride=stride, padding=padding),
+        nn.PReLU(out_planes),
+        # nn.Tanh(),
+        # nn.Linear(out_planes, out_planes),
+        # nn.InstanceNorm3d(out_planes) # added
+    )
+
+def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
+    return nn.Sequential(
+        nn.Conv3d(in_planes, out_planes, kernel_size=kernel_size, stride=stride,
+                  padding=padding, dilation=dilation, bias=True),
+        nn.PReLU(out_planes),
+        # nn.Tanh(),
+        # nn.Linear(out_planes, out_planes),
+        # nn.InstanceNorm3d(out_planes) # added
+    )
+
+version = 1
+two_blocks = False
+three_blocks = True
+four_blocks = False # True
+five_blocks = False
+six_blocks = False
+refine = False # True
+use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
+student_teacher = True # True False
+
+class IFBlock(nn.Module):
+    def __init__(self, in_planes, c=64):
+        print("IFBlock init")
+        super(IFBlock, self).__init__()
+        self.conv0 = nn.Sequential( # downscale x4; c=128
+            conv(in_planes, c//2, 4, 2, 1), # stride=2 -> donwscale
+            conv(c//2, c, 4, 2, 1), # # stride=2 -> donwscale  c=128 now
+            # conv(in_planes, c//2, 3, 2, 1),
+            # # conv(c//2, c//2), # test
+            # conv(c//2, c, 3, 2, 1),
+            )
+        if version == 1:
+            self.convblock = nn.Sequential(
+                conv(c, c),
+                conv(c, c),
+                conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                conv(c, c, 3, 2, 1), # +
+                conv(c, c),
+                conv(c, c),
+                conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                deconv(c, c, 4, 2, 1), # +
+                conv(c, c),
+                conv(c, c),
+                conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+                # conv(c, c),
+            )
+            if use_deconv == False:
+                self.lastconv = nn.ConvTranspose3d(c, 7, 4, 2, 1) # (c, 5, 4, 2, 1)
+            else:
+                # add deconv instead of interpolate
+                self.deconvblock = nn.Sequential(
+                    deconv(c, c//2, 4, 2, 1),
+                    deconv(c//2, 7, 4, 2, 1),
+                    # deconv(c, c//2, 5, 2, 2),
+                    # deconv(c//2, 5, 5, 2, 2),
+                )
+        if version == 2:
+            self.convblock0 = nn.Sequential(
+                conv(c, c),
+                conv(c, c)
+            )
+            self.convblock1 = nn.Sequential(
+                conv(c, c),
+                conv(c, c)
+            )
+            self.convblock2 = nn.Sequential(
+                conv(c, c),
+                conv(c, c)
+            )
+            self.convblock3 = nn.Sequential(
+                conv(c, c),
+                conv(c, c)
+            )
+            self.conv1 = nn.Sequential(
+                nn.ConvTranspose3d(c, c//2, 4, 2, 1),
+                nn.PReLU(c//2),
+                # nn.Tanh(),
+                # nn.Linear(c//2, c//2),
+                # nn.InstanceNorm3d(c//2), # added
+                nn.ConvTranspose3d(c//2, 6, 4, 2, 1), # flow (c//2, 4, 4, 2, 1)
+            )
+            self.conv2 = nn.Sequential(
+                nn.ConvTranspose3d(c, c//2, 4, 2, 1),
+                nn.PReLU(c//2),
+                # nn.Tanh(),
+                # nn.Linear(c//2, c//2),
+                # nn.InstanceNorm3d(c//2), # added
+                nn.ConvTranspose3d(c//2, 1, 4, 2, 1), # mask
+            )
+
+    def forward(self, x, flow, scale):
+        # print("scale:", scale)
+        if scale != 1:
+            # input("here dim bug starts")
+            print("before interpolate, ", x.shape)
+            x = F.interpolate(x, scale_factor = 1. / scale, mode="trilinear", align_corners=False)
+        if flow != None:
+            # print("flow != None ", flow.shape)
+            flow = F.interpolate(flow, scale_factor = 1. / scale, mode="trilinear", align_corners=False) * 1. / scale
+            # print(flow.shape)
+            # input("flow")
+            x = torch.cat((x, flow), 1)
+        # print("IFBlock forward, ", x.shape)
+        x = self.conv0(x)
+        # print("conv0", x.shape)
+        if version == 1:
+            # print("conv0", x.shape)
+            # x = self.convblock(x) + x
+            convblock_out = self.convblock(x)
+            convblock_out = convblock_out[:,:,:x.shape[2],:x.shape[3], :x.shape[4]]
+            # print("convblock_out", convblock_out.shape)
+            x = convblock_out + x
+            # print("convblock", x.shape)
+            if use_deconv == False:
+                tmp = self.lastconv(x)
+                # print("lastconv", tmp.shape)
+                tmp = F.interpolate(tmp, scale_factor = scale * 2, mode="trilinear", align_corners=False)
+                # print("interpolate", tmp.shape)
+                # input("tmp")
+            else:
+                tmp = self.deconvblock(x) # added
+                # print("deconvblock:", tmp.shape)
+            # flow = tmp[:, :6] * scale * 2
+            # mask = tmp[:, 6:7]
+            flow = tmp[:, :6] # best, since I don't use resize
+            mask = tmp[:, 6:7]
+        if version == 2:
+            # print(x.shape, self.convblock0(x).shape)
+            x = self.convblock0(x) + x
+            # print("convblock0", x.shape)
+            x = self.convblock1(x) + x
+            # print("convblock1", x.shape)
+            x = self.convblock2(x) + x
+            # print("convblock2", x.shape)
+            x = self.convblock3(x) + x   
+            # print("convblock3", x.shape)
+            flow = self.conv1(x)
+            # print("conv1", flow.shape)
+            # input("flow")
+            mask = self.conv2(x)
+            flow = F.interpolate(flow, scale_factor=scale, mode="trilinear", align_corners=False, recompute_scale_factor=False) * scale
+            mask = F.interpolate(mask, scale_factor=scale, mode="trilinear", align_corners=False, recompute_scale_factor=False)
+        return flow, mask
+
+class IFNet(nn.Module):
+    def __init__(self):
+        super(IFNet, self).__init__()
+        if three_blocks:
+            # self.block0 = IFBlock(2, c=128) # 240
+            # self.block1 = IFBlock(5+6, c=96) # 150
+            # self.block2 = IFBlock(5+6, c=64) # 90
+            self.block0 = IFBlock(3, c=128) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=96) # 13 c=150 96 192
+            self.block2 = IFBlock(6+6, c=64) # 13 c=90 96 64 128
+
+        if four_blocks:
+            self.block0 = IFBlock(3, c=256) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=192) # 96 192 256 320
+            self.block2 = IFBlock(6+6, c=192) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=128) # 64 128 192 256
+
+        if five_blocks:
+            self.block0 = IFBlock(3, c=128) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=96) # 96 192 256 320
+            self.block2 = IFBlock(6+6, c=96) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=64) # 64 128 192 256
+            self.block4 = IFBlock(6+6, c=64) # 64 128 192 256
+
+        # self.block_tea = IFBlock(6+6, c=64) # 6 from cat, 6 from flow  c=90
+        if student_teacher:
+            self.block_tea = IFBlock(7+6, c=128) # 90 128 192 256
+        # modified
+        if refine:
+            self.contextnet = Contextnet()
+            self.unet = Unet()
+
+    # @torch.cuda.amp.autocast(True)
+    # def forward(self, x, scale=[1, 1, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
+    def forward(self, x): # scale=[4, 2, 1] scale=[1, 1, 1] t=0.5
+        # img0 = x[:, :1] 
+        # img1 = x[:, 1:2]
+        # gt = x[:, 2:3] # In inference time, gt is None
+        img0 = x[:, :1]
+        img1 = x[:, 1:2]
+        gt = x[:, 2:3]
+        t_mask = x[:, 3:4]
+
+        flow_list = [] # flow_list represents flow predictions by each IFBlock, 6 channels in 3D, Ft->0, Ft->1
+        merged = []
+        mask_list = []
+        warped_img0 = img0
+        warped_img1 = img1
+        flow = None 
+        loss_distill = 0
+        if two_blocks:
+            blocks_range = 2
+            stu = [self.block0, self.block1]
+            scale = [1, 1] if use_deconv else [2, 1]
+        elif three_blocks:
+            blocks_range = 3
+            stu = [self.block0, self.block1, self.block2]
+            scale = [1, 1, 1] if use_deconv else [4, 2, 1]
+        elif four_blocks:
+            blocks_range = 4
+            stu = [self.block0, self.block1, self.block2, self.block3]
+            # scale = [1, 1, 1, 1] if use_deconv else [8, 4, 2, 1]
+            scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
+        elif five_blocks:
+            blocks_range = 5
+            stu = [self.block0, self.block1, self.block2, self.block3, self.block4]
+            scale = [1, 1, 1, 1, 1] if use_deconv else [4, 2, 2, 1, 1]
+        # stu = [self.block0, self.block1, self.block2]
+        # stu = [self.block0, self.block2]
+        for i in range(blocks_range):
+            if flow != None:
+                # correct shapes
+                max_shape_2 = min(img0.shape[2], warped_img0.shape[2])
+                max_shape_3 = min(img0.shape[3], warped_img0.shape[3])
+                max_shape_4 = min(img0.shape[4], warped_img0.shape[4])
+                # print(max_shape_2, max_shape_3)
+                img0 = img0[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                img1 = img1[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                warped_img0 = warped_img0[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                warped_img1 = warped_img1[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                mask = mask[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                flow = flow[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                # gt = gt[:,:,:max_shape_2,:max_shape_3]
+                # print(i)
+                # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
+                # flow_d, mask_d = stu[i](torch.cat((img0, img1, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
+                flow_d, mask_d = stu[i](torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask), 1), flow, scale=scale[i])
+                flow_d = flow_d[:,:,:img0.shape[2],:img0.shape[3],:img0.shape[4]]
+                mask_d = mask_d[:,:,:img0.shape[2],:img0.shape[3],:img0.shape[4]]
+                flow = flow + flow_d
+                mask = mask + mask_d
+            else:
+                # print(i)
+                # print("cat", torch.cat((img0, img1), 1).shape)
+                # input("flow == None")
+                # flow, mask = stu[i](torch.cat((img0, img1), 1), None, scale=scale[i]) # stu[0]
+                flow, mask = stu[i](torch.cat((img0, img1, t_mask), 1), None, scale=scale[i])
+                # print(flow, mask) # nan
+                # input("flow")
+            # correct shapes
+            max_shape_2 = min(img0.shape[2], warped_img0.shape[2])
+            max_shape_3 = min(img0.shape[3], warped_img0.shape[3])
+            max_shape_4 = min(img0.shape[4], warped_img0.shape[4])
+            flow = flow[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+            mask = mask[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+            img0 = img0[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+            img1 = img1[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+            mask_list.append(torch.sigmoid(mask))
+            flow_list.append(flow)
+            # print("img0:", img0.shape)
+            # print("flow:", flow.shape)
+            # input("x")
+            warped_img0 = warp(img0, flow[:, :3]) # Ft->0
+            warped_img1 = warp(img1, flow[:, 3:6]) # Ft->1
+            # print("img0:", img0.shape)
+            # print("warped_img0:", warped_img0.shape)
+            merged_student = (warped_img0, warped_img1)
+            merged.append(merged_student)
+
+            # debug
+            # print("mask:", mask.shape)
+            # print("flow:", flow.shape)
+            # dir_res = "/home/hamid/Desktop/OpticalFlow/RIFE-3D/Results/rectangle3d/2x"
+            # # "../Results/rectangle3d/2x"
+            # visualize_ind(mask[0, ..., 50].detach().cpu().numpy().squeeze(), dir_res=dir_res, name="rect3d_mask.png", save=True)
+            # # input(flow.shape)
+            # visualize_ind(warped_img0[0, ..., 50].detach().cpu().numpy().squeeze(), dir_res=dir_res, name="warped_img0.png", save=True)
+            # # visualize_ind(warped_img1[0, ..., 50].detach().cpu().numpy().squeeze(), dir_res=dir_res, name="warped_img1.png", save=True)
+            # visualize_ind(flow[0, 0, ..., 50].detach().cpu().numpy().squeeze(), dir_res=dir_res, name="flow.png", save=True)
+
+            # print("gt:", gt.shape[1])
+            # input("gt")
+            
+        if student_teacher:
+            if gt.shape[1] == 1: # 3
+                # input("gt")
+                # print("gt.shape[1] = 1")
+                # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
+                # correct shapes
+                max_shape_2 = min(img0.shape[2], warped_img0.shape[2])
+                max_shape_3 = min(img0.shape[3], warped_img0.shape[3])
+                max_shape_4 = min(img0.shape[4], warped_img0.shape[4])
+                img0 = img0[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                img1 = img1[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                warped_img0 = warped_img0[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                warped_img1 = warped_img1[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                mask = mask[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                flow = flow[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                gt = gt[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                # print(img0.shape, img1.shape, warped_img0.shape, warped_img1.shape, mask.shape, gt.shape)
+                # print("flow:", flow.shape)
+
+                # """
+                # print("before block tea", torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1).shape)
+                # flow_d, mask_d = self.block_tea(torch.cat((img0, img1, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+                flow_d, mask_d = self.block_tea(torch.cat((img0, img1, t_mask, warped_img0, warped_img1, mask, gt), 1), flow, scale=1)
+                flow_d = flow_d[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                mask_d = mask_d[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
+                
+                flow_teacher = flow + flow_d
+                # print("img0 before warp:", img0.shape)
+                warped_img0_teacher = warp(img0, flow_teacher[:, :3])
+                # print("warped_img0_teacher:", warped_img0_teacher.shape)
+                warped_img1_teacher = warp(img1, flow_teacher[:, 3:6])
+                mask_teacher = torch.sigmoid(mask + mask_d)
+                merged_teacher = warped_img0_teacher * mask_teacher + warped_img1_teacher * (1 - mask_teacher)
+                # """
+                # flow_teacher = 0
+                # merged_teacher = 0
+            else:
+                # print("flow_teacher = None")
+                flow_teacher = None
+                merged_teacher = None
+
+        for i in range(blocks_range):
+            merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
+            merged[i] = merged[i][:,:,:gt.shape[2],:gt.shape[3],:gt.shape[4]]
+
+            # torch.cuda.list_gpu_processes()
+            # torch.cuda.memory_allocated()
+            # import gc
+            # for obj in gc.get_objects():
+            #     try:
+            #         if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
+            #             print(type(obj), obj.size())
+            #     except:
+            #         pass
+            # input("x")
+            
+            # """
+            if student_teacher:
+                if gt.shape[1] == 1: # 3
+                    flow_list[i] = flow_list[i][:,:,:flow_teacher.shape[2],:flow_teacher.shape[3],:flow_teacher.shape[4]]
+
+                    loss_mask = ( (merged[i] - gt).abs().mean(1, True) > (merged_teacher - gt).abs().mean(1, True) + 0.01 ).float().detach()
+                    # this is 0 tensor
+                    # loss_distill += ((flow_teacher.detach() - flow_list[i]).abs() * loss_mask).mean()
+                    # print(loss_distill)
+                    # print(flow_teacher.detach())
+                    # print(flow_list[i])
+                    # print(np.mean(loss_mask.detach().cpu().numpy()))
+                    # input("loss_mask")
+                    loss_distill += (((flow_teacher.detach() - flow_list[i]) ** 2).mean(1, True) ** 0.5 * loss_mask).mean()
+                    # loss_distill += (((flow_teacher.detach() - flow_list[i]) ** 2).mean(1, True) ** 0.5).mean()
+                    # print( (((flow_teacher.detach() - flow_list[i]) ** 2).mean(1, True) ** 0.5).mean() )
+                    # print(loss_mask.mean())
+                    # input("loss_distill")
+            # """
+
+        # print("in IFNet, forward")
+        if refine:
+            # c0 = self.contextnet(img0, flow[:, :2])
+            # c1 = self.contextnet(img1, flow[:, 2:4])
+            # tmp = self.unet(img0, img1, warped_img0, warped_img1, mask, flow, c0, c1)
+            # res = tmp[:, :3] * 2 - 1
+            # merged[2] = torch.clamp(merged[2] + res, 0, 1)
+            print("refined")
+        # return flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill # mask_list[2]
+        if student_teacher:
+            return flow_list, mask_list, merged, flow_teacher, merged_teacher, loss_distill
+            # return flow_list, mask_list, merged, warped_img0, flow_teacher, merged_teacher, loss_distill
+        else:
+            return flow_list, mask_list, merged

@@ -4,8 +4,6 @@ import torch.nn as nn
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 backwarp_tenGrid = {}
 
-# TODO: change for volumetric (5-D) input +
-
 # @torch.cuda.amp.autocast(True)
 def warp(tenInput, tenFlow): # img0, flow[:, :3]
     # print(tenInput.shape, tenFlow.shape)
@@ -21,8 +19,6 @@ def warp(tenInput, tenFlow): # img0, flow[:, :3]
             1, 1, 1, 1, tenFlow.shape[4]).expand(tenFlow.shape[0], -1, tenFlow.shape[2], tenFlow.shape[3], -1)
         # backwarp_tenGrid[k] = torch.cat([tenHorizontal, tenVertical, tenDepth], 1).to(device) # bug
         backwarp_tenGrid[k] = torch.cat([tenDepth, tenHorizontal, tenVertical], 1).to(device)
-        
-    # TODO: experiment with modified dims so that to check the order of d, h, w
 
     tenFlow = torch.cat([tenFlow[:, 0:1, :, :, :] / ((tenInput.shape[3] - 1.0) / 2.0),
                          tenFlow[:, 1:2, :, :, :] / ((tenInput.shape[2] - 1.0) / 2.0),

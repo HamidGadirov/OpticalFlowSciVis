@@ -2,7 +2,7 @@
 # conda activate gpu
 # python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=pool3d --mode=train
 
-# rsync -avz -e 'ssh' hamid@129.125.75.167:~/Desktop/OpticalFlow/RIFE/train_log/ /Users/hamidgadirov/Desktop/OpticalFlow/RIFE/train_log/
+# rsync -avz -e 'ssh' hamid@129.125.75.167:~/Desktop/OpticalFlow/LREST/train_log/ /Users/hamidgadirov/Desktop/OpticalFlow/LREST/train_log/
 
 from matplotlib.pyplot import axes, title
 import os
@@ -23,7 +23,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import yt
 
-from model.RIFE import Model
+from model.LREST import Model
 # from dataset import *
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
@@ -168,8 +168,8 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     # model.load_model(model_name, log_path)
     try:
         model.load_model(model_name, log_path)
-        # print("Loaded RIFE model.")
-        # print(model) # RIFE is not a neural net
+        # print("Loaded LREST model.")
+        # print(model) # LREST is not a neural net
     except:
         print("No weights found, training from scratch.")
         print("model name:", model_name)
@@ -854,26 +854,7 @@ if __name__ == "__main__":
     model_name = "flownet_l1_dist_64_rect3d.pkl"
     model_name = "flownet_l1_64_rect3d.pkl"
 
-    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_RIFE_eqRes.pkl"
-    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_gamma_RIFE_eqRes.pkl" # loss nan
-    # model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_gamma_RIFE_eqRes_test.pkl"
-    model_name = "flownet_l1_flow5e-1_v1_128_rect_big_fbb_gamma_RIFE_eqRes_lr.pkl" # loss diverges, lr too high
-    model_name = "flownet_l1_reg_flow5e-1_v1_128_rect_big_fbb_gamma_RIFE_eqRes_lr.pkl"
-    model_name = "flownet_l1_reg_flow1e-1_v1_128_rect_big_fbb_gamma_RIFE_eqRes_lr_test.pkl"
-    model_name = "flownet_l11e-1_reg1e-6_flow1e-2_v1_128_rect_big_fbb_gamma_RIFE_eqRes_lr_test.pkl" # loss constant, lr too low
-
     """ jets """
-    # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes.pkl"
-    # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test.pkl" 
-    # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test2.pkl" 
-    # model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test_BN.pkl" 
-    # model_name = "flownet_l1_reg_flow5e-1_v1_128_jets_RIFE_eqRes_test_lr.pkl" 
-    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test3.pkl" 
-    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test4.pkl" # wrong preprocessing?
-    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test5.pkl" # loss increases -
-    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test6.pkl" # lr3e-5: loss increases -
-    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test7.pkl" # lr6e-6: loss increases -
-    model_name = "flownet_l1_flow5e-1_v1_128_jets_RIFE_eqRes_test8.pkl" # lr3e-7: loss constant -
     model_name = "flownet_3Blocks_l1_flow2e-1_v1_128_jets_gamma_eqRes_deconv_lr6e-4_test.pkl"
     model_name = "flownet_3Blocks_l1_flow2e-1_v1_128_jets_gamma_eqRes_deconv_lr6e-4_test1.pkl"
     model_name = "flownet_3Blocks_l1_flow2e-1_v1_128_jets_gamma_eqRes_deconv_lr6e-4_test2.pkl"
@@ -983,9 +964,11 @@ if __name__ == "__main__":
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_lapl_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 34.89 0.7382; 10x: 35.82 0.7387 20x: 38.92 0.7392
 
+    ### +++
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W6_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 46.39 0.732; 10x: 41.76 0.7326; 15x: 41.11 0.7328; 20x: 47.32 0.7328
     # LREST 20x
+    ### +++
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_best.pkl"
     # 
