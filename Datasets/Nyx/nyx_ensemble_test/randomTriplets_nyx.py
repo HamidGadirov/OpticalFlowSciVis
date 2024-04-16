@@ -121,15 +121,18 @@ def getListOfFiles(dirName):
 # Simulation_OmM_012_OmB_00235_h_07_npy 1099
 # Simulation_OmM_0155_OmB_00235_h_055_npy 1600
 # Simulation_OmM_0155_OmB_00235_h_07_npy 780
+# Simulation_OmM_0155_OmB_00215_h_07_npy 777
+# Simulation_OmM_012_OmB_00235_h_055_npy 2400
 
 # train
-dirNames = ['./Simulation_OmM_012_OmB_00235_h_07_npy', './Simulation_OmM_0155_OmB_00235_h_055_npy']
+dirNames = ['./Simulation_OmM_012_OmB_00235_h_07_npy', './Simulation_OmM_0155_OmB_00235_h_055_npy',
+            './Simulation_OmM_012_OmB_00235_h_055_npy']
 
 # val 
-dirNames = ['./Simulation_OmM_012_OmB_00215_h_07_npy']
+# dirNames = ['./Simulation_OmM_0155_OmB_00215_h_07_npy']
 
 # test
-dirNames = ['./Simulation_OmM_0155_OmB_00235_h_07_npy']
+# dirNames = ['./Simulation_OmM_0155_OmB_00235_h_07_npy']
 # print("test")
 
 # val
@@ -174,7 +177,7 @@ for dirName in dirNames:
             if 'den' in elem:
                 if count % 5 == 0: # downloading every 5th time step # 10th
                 # print(elem)
-                    if count >= 700: # 1100 700
+                    if count >= 1100: # 1100 700
                         break
                     if count >= 300:
                         tmp_data = np.load(elem)
@@ -222,7 +225,7 @@ for dirName in dirNames:
             if 'vel' in elem:
                 if count % 5 == 0: # downloading every 5th time step # 10th
                     # print(elem)
-                    if count >= 700: # 1100 700
+                    if count >= 1100: # 1100 700
                         break
                     if count >= 300:
                         tmp_data = np.load(elem)
@@ -306,6 +309,8 @@ print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 # input(data.shape)
 # input("Data range")
 # for i in range(4):
+data[:, 0] = np.log10(data[:, 0])
+print("Density scaled logarithmically!")
 data[:, 0] = (data[:, 0] - np.min(data[:, 0])) / (np.max(data[:, 0]) - np.min(data[:, 0]))
 # data = (data - np.min(data[:, 0])) / (np.max(data[:, 0]) - np.min(data[:, 0]))
 # # data[:, 0] = cv2.normalize(data[:, 0], data[:, 0], 0., 1., cv2.NORM_MINMAX)
@@ -325,35 +330,36 @@ print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 
 # flow_u_gt = data[300:, 1, :, :, 64]
 # flow_v_gt = data[300:, 2, :, :, 64]
-flow_u_gt = data[:, 1, 40, :, :]
-flow_v_gt = data[:, 2, 40, :, :]
+# flow_u_gt = data[:, 1, 40, :, :]
+# flow_v_gt = data[:, 2, 40, :, :]
 
 # visualize_flow(flow_u_gt, flow_v_gt, dir_res="Results", title="5Jets_FlowScaled_300_yz_2D", show=False, save=True)
-visualize_flow(flow_u_gt, flow_v_gt, dir_res="Results", title="Nyx_FlowScaled_xy_2D", show=False, save=True)
-input("viz")
+# visualize_flow(flow_u_gt, flow_v_gt, dir_res="Results", title="Nyx_FlowScaled_xy_2D", show=False, save=True)
+# input("viz")
 
 # Density range 17610006.000000 to 54730323656704.000000
 # Vel x range -1902.737793 to 1960.986816
 # Vel y range -1920.188721 to 2002.423950
 # Vel z range -1890.228638 to 2030.002319
 
-print(data.shape)
-# data = data[200:350]
-print("data save shape:", data.shape)
-filename = "nyx3d_skip5_128_test.pkl"
-# hdf5_file = 'nyx3d_128_150_test_2.h5'
-# with h5py.File(hdf5_file, 'w') as hf:
-#     # hf.create_dataset('data', data=data)
-#     hf.create_dataset('data', data=data, compression='gzip', compression_opts=9, chunks=True)
-# np.save(filename, data.astype(np.float32))
-with open(filename, 'wb') as f:
-    pickle.dump(data, f, protocol=4)
-print('Test data saved!')
-input("test")
+# print(data.shape)
+# # data = data[200:350]
+# print("data save shape:", data.shape)
+# # filename = "nyx3d_skip5_128_test.pkl"
+# filename = "nyx3d_skip5_128_log10norm_test.pkl"
+# # hdf5_file = 'nyx3d_128_150_test_2.h5'
+# # with h5py.File(hdf5_file, 'w') as hf:
+# #     # hf.create_dataset('data', data=data)
+# #     hf.create_dataset('data', data=data, compression='gzip', compression_opts=9, chunks=True)
+# # np.save(filename, data.astype(np.float32))
+# with open(filename, 'wb') as f:
+#     pickle.dump(data, f, protocol=4)
+# print('Test data saved!')
+# input("test")
 
 num_members = len(dirNames)
-member_size = data.shape[0] # 160
-num_triplets = 100 # 150 300 500 1000
+member_size = 160 # data.shape[0] # 160
+num_triplets = 500 # 50 200 300 500
 window = 12 # 8 12
 
 # Create an empty array to store the triplets and corresponding t values
@@ -412,8 +418,11 @@ print('Triplet data shape:', triplet_data.shape)
 print(triplet_data.dtype)
 # input("triplet_data")
 
-filename = "nyx3d_skip5_128_triplets_W12_500_train.pkl"
-filename = "nyx3d_skip5_128_triplets_W12_100_val.pkl"
+# filename = "nyx3d_skip5_128_triplets_W12_500_train.pkl"
+# filename = "nyx3d_skip5_128_log10norm_triplets_W12_200_train.pkl"
+filename = "nyx3d_skip5_128_log10norm_triplets_W12_500_train.pkl"
+# filename = "nyx3d_skip5_128_triplets_W12_100_val.pkl"
+# filename = "nyx3d_skip5_128_log10norm_triplets_W12_50_val.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 # chunk_size = 500  # Set an appropriate chunk size

@@ -21,7 +21,7 @@ student_teacher = True # True False
     
 class Model:
     def __init__(self, local_rank=-1):
-        self.flownet = IFNet()
+        self.flownet = LRESTNet()
         
         # half precision
         # self.flownet.half()
@@ -68,11 +68,11 @@ class Model:
     # def inference(self, img0, img1, scale_list=[1, 1, 1], TTA=False, timestep=0.5): # [4, 2, 1]
     def inference(self, img0, img1, t_mask, TTA=False): # t=0.5
         # print("in RIFE, inference")
-        # # print(self.flownet) # IFNet summary
+        # # print(self.flownet) # LRESTNet summary
         # # input("x")
         # imgs = torch.cat((img0, img1), 1)
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(imgs, scale_list, timestep=timestep)
-        # print("back to RIFE from IFNet")
+        # print("back to RIFE from LRESTNet")
 
         imgs = torch.cat((img0, img1), 1)
         gt = img0.clone() * 0 # no GT during inference
@@ -227,7 +227,7 @@ class Model:
         # input("loss")
 
         # num_params =  sum(p.numel() for p in self.flownet.parameters() if p.requires_grad)
-        # print("Parameters in IFNet:", num_params) # 9641368
+        # print("Parameters in LRESTNet:", num_params) # 9641368
         # input("p")
 
         """ L1 regularization """
@@ -363,8 +363,8 @@ class Model:
             loss_photo += photometric_loss(warped_frame2, frame3)
             loss_photo /= 2.
 
-        lambda_l1 = 1. # 1
-        lambda_tea = 1. # 1
+        lambda_l1 = 1. # 1.
+        lambda_tea = 1. # 1.
         if flow_available:
             lambda_flow = 2e-1 # 0.01 0.2 1; 0.5 best on rectangle
             lambda_distill = 0

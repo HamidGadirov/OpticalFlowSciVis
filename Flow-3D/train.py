@@ -1,6 +1,6 @@
 # ssh -Y hamid@129.125.75.167
 # conda activate gpu
-# python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=pool3d --mode=train
+# python3 -m torch.distributed.launch --nproc_per_node=1 train.py --world_size=1 --dataset=nyx3d --mode=train
 
 # rsync -avz -e 'ssh' hamid@129.125.75.167:~/Desktop/OpticalFlow/LREST/train_log/ /Users/hamidgadirov/Desktop/OpticalFlow/LREST/train_log/
 
@@ -72,6 +72,7 @@ def get_learning_rate(step):
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-4 - 3e-6) * mul + 3e-6
+        # return (1e-4 - 1e-5) * mul + 1e-5
         return (1e-4 - 1e-6) * mul + 1e-6
         # return (6e-5 - 6e-7) * mul + 6e-7
         # return (1e-5 - 1e-7) * mul + 1e-7
@@ -430,7 +431,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # input("x")
 
         # reorder based on factor
-        if factor > 100:
+        if factor > 100: # 100
             interpol_data_new = []
             batch_size = batch_size_inf # what was used for inference
             try:
@@ -444,6 +445,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 print("dens reordered")
             interpol_data = np.squeeze(np.array(interpol_data_new))
             print("interpolated:", interpol_data.shape)
+            input("reordered")
 
         flow_combined = np.array(flow_combined)
         print("flow pred is in range %f to %f" % (np.min(flow_combined), np.max(flow_combined)))
@@ -800,7 +802,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', default=120, type=int) # 300 500
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
-    parser.add_argument('--local_rank', default=0, type=int, help='local rank') # local-rank
+    parser.add_argument('--local-rank', default=0, type=int, help='local rank') # local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
     parser.add_argument('--dataset', dest='dataset', type=str, default=None)
     parser.add_argument('--mode', dest='mode', type=str, default='test')
@@ -1108,8 +1110,73 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_triplets_skip5_W12_500_gamma_eqRes_deconv_lr6e-4.pkl"
     # 2x: 66.57 0.17978
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_flow2e-2_v1_64_nyx_triplets_skip5_W12_500_gamma_eqRes_deconv_lr6e-4.pkl"
+    # 
+    # 64 model, 128 in teacher block
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 54.21 0.1441; 3x: 53.30 0.1447; 8x: 45.56 0.1446
+    ###
+    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 54.88 0.1439; 3x: 53.70 0.1437; 5x: 49.80 0.1438; 8x: 45.77 0.1437; 16x: 39.15 0.1438
+    ###
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 54.71 0.1421; 8x: 45.92 0.1417
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr6e-4.pkl"
+    # explode
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr3e-4.pkl"
+    # 2x: 52.88 0.1359; 3x: 52.58 0.1357; 5x: 49.52 0.1353; 8x: 45.61 0.1352; 16x: 38.90 0.1350
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr3e-4.pkl"
+    # 2x: 54.15 0.1343; 3x: 52.98 0.1339; 8x: 45.83 0.1334
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr3e-4.pkl"
+    # explode 2x: 54.14 0.1429
+    ###
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 54.80 0.1408; 5x: 50.48 0.1405; 8x: 46.52 0.1404; 16x: 39.60 0.1402
+    ###
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # 2x: 54.42 0.1408; 5x: 50.16 0.1405; 8x: 46.20 0.1404
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 54.70 0.1389; 5x: 49.72 0.1387; 8x: 45.56 0.1386
+
+    ### +++
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # num_blocks = 3 flow
+    # 2x: 57.13 0.0979; 3x: 55.13 0.0985; 5x: 51.30 0.0986; 8x: 47.02 0.0988; 16x: 39.32 0.0990
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_2b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # num_blocks = 2 flow
+    # 2x: 56.73 0.0935; 3x: 54.93 0.0933; 5x: 51.50 0.0927; 8x: 47.13 0.0925; 16x: 39.69 0.0921
+    ### +++
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_1b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 55.71 0.0832; 8x: 45.95 0.0817
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-6.pkl"
+    # 2x: 56.76 0.0969; 8x: 46.87 0.0972
+
+
+
+    # model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 55.29 0.1365; 8x: 45.69 0.1354
+    # model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_4b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 56.76 0.1020; 8x: 46.19 0.0982
+
+
+    # # ablations
+    # no flow:
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 60.95 0.1455; 3x: 56.67 0.1458; 5x: 53.17 0.1461; 8x: 48.14 0.1465; 16x: 39.54 0.1475
+    # no rec:
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 47.15 0.1454
+    # w/o s-t:
+    # model_name = "lrest_noTea_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 59.44 0.1389; 8x: 47.37 0.1391
+
+
+    # untrained: 2x:: 52.68 0.1707; 8x: 41.26 0.1710   
+    # TODO: solve reorder issue, something is off!..
+
 
     """ tangaroa """
+
     # model_name = "flownet_lapl_tangaroa3d.pkl"
     # model_name = "flownet_l1_tangaroa3d.pkl"
 
@@ -1136,9 +1203,9 @@ if __name__ == "__main__":
 
         if "3d" in dataset: 
             # factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
-            # factors = [2, 3, 5, 8, 16, 32]
+            factors = [2, 3, 5, 8, 16, 32]
             # factors = [2, 10, 15, 20] # 30, 40, 60]
-            factors = [20]
+            # factors = [20]
         for factor in factors:
             dir_res = "Results"
             dir_res = os.path.join(dir_res, dataset)
@@ -1202,6 +1269,7 @@ if __name__ == "__main__":
             if not os.path.isdir(dir_model):
                 os.makedirs(dir_model)
 
+            """
             # save data for 3d figure:
             # data = [data_original_interpol, interpol_data, flow_original_pred, flow]
             data = [interpol_data]
@@ -1213,8 +1281,8 @@ if __name__ == "__main__":
             for d, fn in zip(data, filenames):
                 with open(os.path.join(save_path, fn), 'wb') as f:
                     pickle.dump(d, f, protocol=4)
-
             input("x")
+            """
 
             # visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
             #             dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
@@ -1259,6 +1327,8 @@ if __name__ == "__main__":
             avg_psnr = calculate_avg_psnr(data_original_interpol, lin_interpol, dir_model, factor)
             # avg_lpips = calculate_avg_lpips(data_original_interpol, lin_interpol, dir_model, factor)
             # Nyx: 2x PSNR: 79.892
+            # skip5: 2x: 53.19; 3x: 47.49; 5x: 41.92; 8x: 37.51; 16x: 31.90 32x: 27.68
+
             # jets: PSNR 2x: 77; 5x: 64; 10x: 60.8; 20x: 56.8
             # 100-200: 2x: 51.4; 5x: 40; 10x: 34.27; 15x: 30; 20x: 30.989
             # 700-800: 2x: 70; 5x: 59.28; 10x: 52.98; 15x: 49.94; 20x: 39.39
