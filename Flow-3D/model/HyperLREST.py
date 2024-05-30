@@ -76,17 +76,6 @@ class Model:
         # self.optimG = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
         self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
         self.lrest_optimizer = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
-        # self.lrest_optimizer = AdamW(list(self.flownet.convblock_0.parameters()) +
-        #                   list(self.flownet.convblock_1.parameters()) +
-        #                   list(self.flownet.convblock_2.parameters()) +
-        #                   list(self.flownet.convblock_3.parameters()) +
-        #                   list(self.flownet.convblock_4.parameters()) +
-        #                   list(self.flownet.convblock_5.parameters()) +
-        #                   list(self.flownet.convblock_6.parameters()) +
-        #                   list(self.flownet.convblock_7.parameters()) +
-        #                   list(self.flownet.convblock_8.parameters()) +
-        #                   list(self.flownet.convblock_9.parameters()), 
-        #                   lr=1e-6, weight_decay=1e-3)
         
         self.epe = EPE()
         self.lap = LapLoss()

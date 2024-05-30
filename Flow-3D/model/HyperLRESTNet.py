@@ -256,9 +256,6 @@ class IFBlock(nn.Module):
             current_params = params[i].unsqueeze(0)
             weight_dict = self.hypernet(current_params)
             weight_dict = {name: weight_dict[name].squeeze(0) for name in weight_dict}  # Remove the batch dim from weights
-            # weight_dict = weight_dict.to(device)
-            # for name, tensor in weight_dict.items():
-            #     weight_dict[name] = tensor.to(device)
 
             x_i = x[i].unsqueeze(0)
 
@@ -433,15 +430,6 @@ class HyperLRESTNet(nn.Module):
             self.contextnet = Contextnet()
             self.unet = Unet()
 
-    #     self.freeze_params()
-        
-    # def freeze_params(self):
-    #     # Freezing parameters of specific blocks
-    #     for param in self.block0.parameters():
-    #         param.requires_grad = False
-    #     for param in self.block1.parameters():
-    #         param.requires_grad = False
-
     # @torch.cuda.amp.autocast(True)
     # def forward(self, x, scale=[1, 1, 1], timestep=0.5): # scale=[4,2,1] scale=[1, 1, 1]
     # def forward(self, x): # scale=[4, 2, 1] scale=[1, 1, 1] t=0.5
@@ -584,17 +572,6 @@ class HyperLRESTNet(nn.Module):
         for i in range(self.blocks_num):
             merged[i] = merged[i][0] * mask_list[i] + merged[i][1] * (1 - mask_list[i])
             merged[i] = merged[i][:,:,:gt.shape[2],:gt.shape[3],:gt.shape[4]]
-
-            # torch.cuda.list_gpu_processes()
-            # torch.cuda.memory_allocated()
-            # import gc
-            # for obj in gc.get_objects():
-            #     try:
-            #         if torch.is_tensor(obj) or (hasattr(obj, 'data') and torch.is_tensor(obj.data)):
-            #             print(type(obj), obj.size())
-            #     except:
-            #         pass
-            # input("x")
             
             # """
             if self.student_teacher:
