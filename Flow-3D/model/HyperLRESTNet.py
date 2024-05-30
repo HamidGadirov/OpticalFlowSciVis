@@ -260,11 +260,11 @@ class IFBlock(nn.Module):
             x_i = x[i].unsqueeze(0)
 
             # Wrap in torch.no_grad() to prevent backpropagation through these operations
-            with torch.no_grad():
-                x_i = functional_conv3d(x_i, weight_dict['conv0_0_weight'], weight_dict['conv0_0_bias'], self.c//2, stride=2, padding=1)
-                x_i = functional_conv3d(x_i, weight_dict['conv0_1_weight'], weight_dict['conv0_1_bias'], self.c, stride=2, padding=1)
+            # with torch.no_grad():
+            x_i = functional_conv3d(x_i, weight_dict['conv0_0_weight'], weight_dict['conv0_0_bias'], self.c//2, stride=2, padding=1)
+            x_i = functional_conv3d(x_i, weight_dict['conv0_1_weight'], weight_dict['conv0_1_bias'], self.c, stride=2, padding=1)
 
-            x_i.requires_grad_()
+            # x_i.requires_grad_()
 
             x_i = self.prelu(self.convblock_0(x_i))
             x_i = self.prelu(self.convblock_1(x_i))
@@ -274,8 +274,8 @@ class IFBlock(nn.Module):
             x_i = self.prelu(self.convblock_5(x_i))
             x_i = self.prelu(self.convblock_6(x_i))
 
-            with torch.no_grad():
-                x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_0_weight'], weight_dict['deconvblock_0_bias'], self.c, stride=2)
+            # with torch.no_grad():
+            x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_0_weight'], weight_dict['deconvblock_0_bias'], self.c, stride=2)
 
             x_i.requires_grad_()
 
@@ -287,9 +287,9 @@ class IFBlock(nn.Module):
             convblock_out = convblock_out[:, :, :x_i.shape[2], :x_i.shape[3], :x_i.shape[4]]
             x_i = convblock_out + x_i
 
-            with torch.no_grad():
-                x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_1_weight'], weight_dict['deconvblock_1_bias'], self.c//2)
-                x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_2_weight'], weight_dict['deconvblock_2_bias'], 7)
+            # with torch.no_grad():
+            x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_1_weight'], weight_dict['deconvblock_1_bias'], self.c//2)
+            x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_2_weight'], weight_dict['deconvblock_2_bias'], 7)
 
             flow_i = x_i[:, :6]
             mask_i = x_i[:, 6:7]

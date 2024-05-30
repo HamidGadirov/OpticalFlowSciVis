@@ -75,7 +75,11 @@ class Model:
         self.device()
         # self.optimG = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
         self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
-        self.lrest_optimizer = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
+        # self.lrest_optimizer = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
+        # Only add parameters that require gradients to the optimizer
+        lrest_params = filter(lambda p: p.requires_grad, self.flownet.parameters())
+        # print(lrest_params)
+        self.lrest_optimizer = AdamW(lrest_params, lr=1e-6, weight_decay=1e-3)
         
         self.epe = EPE()
         self.lap = LapLoss()
@@ -83,11 +87,6 @@ class Model:
         if local_rank != -1:
             self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank)
             # self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
-
-        # Freezing parameters of specific blocks
-        for name, param in self.flownet.named_parameters():
-            if 'block0' in name or 'block1' in name:
-                param.requires_grad = False
 
     def train(self):
         self.flownet.train()
@@ -228,33 +227,6 @@ class Model:
         max_shape_4 = min(img0.shape[4], mask.shape[4])
         # print(max_shape_2, max_shape_3)
         gt = gt[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
-
-        # replacing laplacian loss with l1
-        # print("Laplace pyramid + L1 + AdamW (L2) + smoothness loss")
-        # print("Laplace pyramid + L1 + AdamW (L2)")
-        # print("Laplace pyramid + AdamW (L2)")
-        # print("L1 loss + AdamW (L2)")
-        # print(merged[2].shape, gt.shape)
-        # loss_l1 = (self.lap(merged[2], gt)).mean()
-        # print(np.min(merged[2].detach().cpu().numpy()), np.max(merged[2].detach().cpu().numpy()))
-        # print(np.mean(merged_teacher.detach().cpu().numpy()))
-        # print(np.min(gt.detach().cpu().numpy()), np.max(gt.detach().cpu().numpy()))
-        # input("l1_loss")
-
-        # # RIFE loss: same as l1 that I had.
-        # # i_weight = gamma**(n_predictions - i - 1)
-        # # i_loss = (flow_preds[i] - flow_gt).abs()
-        # # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
-        # loss_flow = 0.
-        # loss_flow += (flow[0][:, 3:6] - gt_flow).abs().mean() * 0.64
-        # loss_flow += (flow[1][:, 3:6] - gt_flow).abs().mean() * 0.8
-        # loss_flow += (flow[2][:, 3:6] - gt_flow).abs().mean() * 1.
-        # # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
-        # # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
-        # # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
-        # loss_flow += (flow_teacher[:, 3:6] - gt_flow).abs().mean() * 1.
-        # # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
-        # # loss_flow /= 2.
 
         # flow_pred = flow[-1].detach().cpu().numpy()
         # flow_gt = gt_flow.detach().cpu().numpy()
