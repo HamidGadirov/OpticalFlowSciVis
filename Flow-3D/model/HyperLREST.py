@@ -69,16 +69,15 @@ weight_shapes = {
 
 class Model:
     def __init__(self, local_rank=-1):
-        self.flownet = HyperLRESTNet()
-        self.hypernet = HyperNetwork(input_dim, weight_shapes)
-
-        self.device()
+        # self.flownet = HyperLRESTNet()
+        # self.hypernet = HyperNetwork(input_dim, weight_shapes)
+        self.device = torch.device(f'cuda:{local_rank}' if local_rank != -1 else 'cpu')
+        self.flownet = HyperLRESTNet().to(self.device)
+        self.hypernet = HyperNetwork(input_dim, weight_shapes).to(self.device)
+        # self.device()
         # self.optimG = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
-        self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
-        # self.lrest_optimizer = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
-        # Only add parameters that require gradients to the optimizer
         lrest_params = filter(lambda p: p.requires_grad, self.flownet.parameters())
-        # print(lrest_params)
+        self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
         self.lrest_optimizer = AdamW(lrest_params, lr=1e-6, weight_decay=1e-3)
         
         self.epe = EPE()
@@ -87,6 +86,8 @@ class Model:
         if local_rank != -1:
             self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank)
             # self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
+            self.hypernet = DDP(self.hypernet, device_ids=[local_rank], output_device=local_rank)
+
 
     def train(self):
         self.flownet.train()

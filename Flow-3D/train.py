@@ -1231,7 +1231,8 @@ if __name__ == "__main__":
     model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest.pkl"
     # 2x: 44.04
     model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_freeze1.pkl"
-
+    # 2x: 53.08 0.0317 - nothing frozen
+    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_freeze2.pkl"
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
     # 2x: 60.48 0.1239; 5x: 55.11 0.1215; 8x: 50.90 0.1211; 
@@ -1389,9 +1390,9 @@ if __name__ == "__main__":
             """
 
             # 3D rendering function
-            # visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
-            #             dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
-            # print("visualize_seq_dens_3d done!")
+            visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
+                        dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
+            print("visualize_seq_dens_3d done!")
 
             """
             original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]
