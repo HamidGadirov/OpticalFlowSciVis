@@ -177,7 +177,6 @@ class Model:
         if "3d" in dataset:
             gt_data = gt[:, 0, :1]
             gt_flow = gt[:, 0, 1:4]
-            # gt_params = gt[:, 0, 4:5]
             img0 = imgs[:, :1]
             img1 = imgs[:, 1:2]
             img0_data = img0[:, 0, :1]
@@ -191,14 +190,6 @@ class Model:
             img1 = img1_data
             imgs = torch.cat((img0, img1), 1)
             gt = gt_data
-
-            # params for hypernet
-            # param0 = gt[:, 0, 4:5, 0, 0, 0, 0]
-            # param1 = gt[:, 0, 4:5, 1, 0, 0, 0]
-            # param2 = gt[:, 0, 4:5, 2, 0, 0, 0]
-            # params = torch.cat([param0, param1, param2], dim=1)
-            # params_ = params.detach().cpu().numpy()
-            # print("params_", params_)
 
             # imgs_ = imgs.detach().cpu().numpy()
             # t_mask_ = t_mask.detach().cpu().numpy()
@@ -306,7 +297,7 @@ class Model:
         # print(merged_teacher.shape, gt.shape)
         # input("loss")
 
-        # num_params =  sum(p.numel() for p in self.flownet.parameters() if p.requires_grad)
+        # num_params = sum(p.numel() for p in self.flownet.parameters() if p.requires_grad)
         # print("Parameters in LRESTNet:", num_params) # 9641368
         # input("p")
 
