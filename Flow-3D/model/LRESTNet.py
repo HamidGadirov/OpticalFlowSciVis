@@ -33,10 +33,10 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
     )
 
 version = 1
-blocks_num = 4 # 2 3 4 5 6
+blocks_num = 3 # 2 3 4 5 6
 refine = False # True
 use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
-student_teacher = True # True False
+student_teacher = False # True False
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):
@@ -176,6 +176,9 @@ class IFBlock(nn.Module):
 class LRESTNet(nn.Module):
     def __init__(self):
         super(LRESTNet, self).__init__()
+        if blocks_num == 2:
+            self.block0 = IFBlock(3, c=128) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=64) # 13 c=90 96 64 128
         if blocks_num == 3:
             # self.block0 = IFBlock(2, c=128) # 240
             # self.block1 = IFBlock(5+6, c=96) # 150

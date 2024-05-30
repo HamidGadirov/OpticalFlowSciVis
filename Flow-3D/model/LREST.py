@@ -17,8 +17,8 @@ device = torch.device("cuda")
 
 flow_available = True # True False
 
-student_teacher = True # True False
-    
+student_teacher = False # True False
+
 class Model:
     def __init__(self, local_rank=-1):
         self.flownet = LRESTNet()
@@ -119,9 +119,9 @@ class Model:
             imgs = torch.cat((img0, img1), 1)
             gt = gt_data
 
-            imgs_ = imgs.detach().cpu().numpy()
-            gt_ = gt.detach().cpu().numpy()
-            t_mask_ = t_mask.detach().cpu().numpy()
+            # imgs_ = imgs.detach().cpu().numpy()
+            # gt_ = gt.detach().cpu().numpy()
+            # t_mask_ = t_mask.detach().cpu().numpy()
             # print("imgs_ is in range %f to %f" % (np.min(imgs_), np.max(imgs_)))
             # print("gt_ is in range %f to %f" % (np.min(gt_), np.max(gt_)))
             # print("t_mask_ is in range %f to %f" % (np.min(t_mask_), np.max(t_mask_)))
@@ -229,6 +229,15 @@ class Model:
         # num_params =  sum(p.numel() for p in self.flownet.parameters() if p.requires_grad)
         # print("Parameters in LRESTNet:", num_params) # 9641368
         # input("p")
+
+        # # TODO: find params to add for hypernet
+        # for param_tensor in self.flownet.state_dict():
+        #     print(param_tensor, "\t", self.flownet.state_dict()[param_tensor].size())
+        # input("x")
+        # for param_tensor in self.flownet.state_dict():
+        #     if param_tensor.endswith('.weight'):
+        #         # Set the weight tensor of the desired layer using the output of the hypernetwork
+        #         self.flownet.state_dict()[param_tensor] = hypernet_output  # Assign hypernetwork output to weight tensor
 
         """ L1 regularization """
         if flow_available:

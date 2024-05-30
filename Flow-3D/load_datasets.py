@@ -102,15 +102,23 @@ def load_data(dataset, factor, mode):
             # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_triplets_W12_500_train.pkl"
             # pkl_train_filename_1 = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_triplets_W12_500_train_1.npy"
             # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_200_train.pkl"
-            pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_500_train.pkl"
+            # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_500_train.pkl"
+            # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train.pkl"
+            # pkl_train_filename_1 = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train_1.pkl"
+            pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train_params.pkl"
+            pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_50_val_params.pkl"
 
             # pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_triplets_W12_100_val.pkl"
             # pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_triplets_W12_100_val.pkl"
-            pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_50_val.pkl"
+            # pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_50_val.pkl"
+            # pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_50_val_1.pkl"
+            pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_50_val_params.pkl"
 
             # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_150_test_1.npy"
             # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_test.pkl"
-            pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test.pkl"
+            # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test.pkl"
+            pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_1.pkl"
+            pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_params.pkl"
 
         if dataset == "droplet3d":
             filename_train = filename + "droplet3d_64_train.pkl"
@@ -453,62 +461,6 @@ def load_data(dataset, factor, mode):
 
                 # render_volumes(data_test[:3, 0], 'Results/')
                 # input("rendered!")
-
-                yt_viz = False
-                if yt_viz:
-                    data_test_vis = data_test[150, 0]
-                    ds = yt.load_uniform_grid({"density": data_test_vis}, data_test_vis.shape)
-                    # Create a scene
-                    sc = yt.create_scene(ds, lens_type="perspective")
-                    # Get a reference to the VolumeSource associated with this scene
-                    source = sc[0]
-                    # Set the bounds of the transfer function based on your data
-                    source.tfh.set_bounds((data_test_vis.min(), data_test_vis.max()))
-                    # Make underdense regions appear opaque
-                    source.tfh.grey_opacity = True
-                    # Plot the transfer function
-                    source.tfh.plot("Results/transfer_function_pool.png", profile_field=("gas", "density"))
-                    # Save the rendered image
-                    sc.save("Results/yt_rendering_pool.png", sigma_clip=6.0)
-                    # input("yt_rendering_grid")
-
-                    """
-                    # Create a list to store scenes
-                    scenes = []
-                    num_volumes = 25
-                    step_size = data_test.shape[0] // num_volumes
-                    for i in range(0, data_test.shape[0], step_size):
-                        # Extract the i-th volume and select the density field
-                        data_test_vis = data_test[i, 0]
-                        # Create a yt data object
-                        ds = yt.load_uniform_grid({"density": data_test_vis}, data_test_vis.shape)
-                        # Create a scene
-                        sc = yt.create_scene(ds, lens_type="perspective")
-                        # Get a reference to the VolumeSource associated with this scene
-                        source = sc[0]
-                        # Set the bounds of the transfer function based on your data
-                        source.tfh.set_bounds((data_test_vis.min(), data_test_vis.max()))
-                        # Make underdense regions appear opaque
-                        source.tfh.grey_opacity = True
-                        # Append the scene to the list
-                        scenes.append(sc)
-                    # Create a grid of renderings (5x5)
-                    num_rows = 5
-                    num_cols = 5
-                    # Create a figure and an array of subplots
-                    fig = plt.figure(figsize=(10, 10))
-                    grid = ImageGrid(fig, 111,  # similar to subplot(111)
-                                    nrows_ncols=(num_rows, num_cols),  # creates 2x2 grid of axes
-                                    axes_pad=0.1,  # pad between axes in inch.
-                                    )
-                    # Iterate through scenes and display them in subplots
-                    for i, (scene, ax) in enumerate(zip(scenes, grid)):
-                        ax.imshow(scene.render(), origin='lower')
-                        ax.set_title(f"Rendering {i + 1}")
-                    # Save the rendered image
-                    grid.save("Results/yt_rendering_grid.png", sigma_clip=6.0)
-                    input("yt_rendering_grid")
-                    """
 
                 # data_test = np.transpose(data_test, (0, 1, 4, 2, 3)) # 3rd is dim0
 

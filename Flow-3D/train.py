@@ -23,7 +23,12 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import yt
 
-from model.LREST import Model
+hyper = True # hyperLREST
+
+if hyper == False:
+    from model.LREST import Model
+else:
+    from model.HyperLREST import Model
 # from dataset import *
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
@@ -72,8 +77,8 @@ def get_learning_rate(step):
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-4 - 3e-6) * mul + 3e-6
-        # return (1e-4 - 1e-5) * mul + 1e-5
-        return (1e-4 - 1e-6) * mul + 1e-6
+        return (1e-4 - 1e-5) * mul + 1e-5
+        # return (1e-4 - 1e-6) * mul + 1e-6
         # return (6e-5 - 6e-7) * mul + 6e-7
         # return (1e-5 - 1e-7) * mul + 1e-7
         # return (6e-6 - 6e-7) * mul + 6e-7
@@ -121,7 +126,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     step = 0
     nr_eval = 0
     early_stopper = EarlyStopper(patience=50, min_delta=0.01) # 30
-    batch_size_inf = 1 # 6 3 2
+    batch_size_inf = 1 # 1 is corrent, otherwise reorder?
 
     num_workers = 1 # 8
     if mode == "train":
@@ -207,12 +212,20 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 # data_gpu = data_gpu.float() # to float32
                 # print("Data type of the tensor:", data_gpu.dtype)
 
+                # print("data_gpu:", data_gpu.shape)
+
                 # random triplets:
                 img0 = data_gpu[:, :1]
                 gt = data_gpu[:, 1:2]
                 img1 = data_gpu[:, 2:3]
                 t_mask = data_gpu[:, 3:4]
                 imgs = torch.cat((img0, img1), dim=1)
+
+                if hyper:
+                    params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
+                # print("Shape of params tensor:", params.shape)
+                # params_ = params.detach().cpu().numpy()
+                # print("params_", params_)
                 
                 # print("Training")
                 # print("imgs, gt:", imgs.shape, gt.shape)
@@ -236,7 +249,10 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 # with torch.autograd.detect_anomaly():
                 # model.half()
                     # with torch.cuda.amp.autocast(True):
-                pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
+                if hyper == False:
+                    pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
+                else:
+                    pred, info = model.update(imgs, gt, t_mask, params, dataset, learning_rate, training=True) # hyper
 
                 # with torch.cuda.amp.autocast(True):
                 #     pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
@@ -336,7 +352,12 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             # print(imgs.shape)
             # print(gt.shape)
             # input("imgs gt")
-            
+            if hyper:
+                params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
+            # print("Shape of params tensor:", params.shape)
+            # params_ = params.detach().cpu().numpy()
+            # print("params_", params_)
+
             I0 = imgs[:, :1]
             I1 = imgs[:, 1:2]
             # arbitrary interpol
@@ -349,7 +370,10 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                     # print(t_mask)
                     # input("t_mask")
                     # visualize_ind(I0.detach().cpu().numpy()[1, 0, 40], dir_res, title="I0", show=False, save=True)
-                    merged, flow, mask = model.inference(I0, I1, t_mask)
+                    if hyper == False:
+                        merged, flow, mask = model.inference(I0, I1, t_mask)
+                    else:
+                        merged, flow, mask = model.inference(I0, I1, t_mask, params) # hyper
                     # merged, flow, mask, warped_img0 = model.inference(I0, I1, t_mask)
                     merged_last = np.asarray(merged[-1].detach().cpu().numpy()) # from last block
                     # visualize_ind(merged_last[0, 0, 40], dir_res, title="I0_pred", show=False, save=True)
@@ -660,11 +684,17 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 
         # data_gpu = data_gpu.float() # to float32
 
+        # print("data_gpu:", data_gpu.shape)
+
         img0 = data_gpu[:, :1]
         gt = data_gpu[:, 1:2]
         img1 = data_gpu[:, 2:3]
         t_mask = data_gpu[:, 3:4]
         imgs = torch.cat((img0, img1), dim=1)
+
+        if hyper:
+            params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
+        # print("Shape of params tensor:", params.shape)
 
         # imgs = imgs.permute(0, 1, 2, 5, 3, 4) # 3rd is dim0
         # gt = gt.permute(0, 1, 2, 5, 3, 4)
@@ -673,7 +703,10 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 
         with torch.no_grad():
             # pred, info = model.update(imgs, gt, dataset, training=False)
-            pred, info = model.update(imgs, gt, t_mask, dataset, training=False)
+            if hyper == False:
+                pred, info = model.update(imgs, gt, t_mask, dataset, training=False)
+            else:
+                pred, info = model.update(imgs, gt, t_mask, params, dataset, training=False) # hyper
             merged_img = info['merged_tea']
 
         # pred = pred.permute(0, 1, 3, 4, 2)
@@ -822,11 +855,11 @@ if __name__ == "__main__":
     if args.dataset == "rectangle3d":
         args.batch_size = 40
     if args.dataset == "jets3d":
-        args.batch_size = 4 # 3 4 6 8
+        args.batch_size = 8 # 3 4 6 8
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
-        args.batch_size = 4 # 2 4 32
+        args.batch_size = 2 # 2 4 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -1115,7 +1148,7 @@ if __name__ == "__main__":
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 54.21 0.1441; 3x: 53.30 0.1447; 8x: 45.56 0.1446
     ###
-    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 54.88 0.1439; 3x: 53.70 0.1437; 5x: 49.80 0.1438; 8x: 45.77 0.1437; 16x: 39.15 0.1438
     ###
     # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
@@ -1129,28 +1162,92 @@ if __name__ == "__main__":
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr3e-4.pkl"
     # explode 2x: 54.14 0.1429
     ###
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 54.80 0.1408; 5x: 50.48 0.1405; 8x: 46.52 0.1404; 16x: 39.60 0.1402
     ###
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 54.42 0.1408; 5x: 50.16 0.1405; 8x: 46.20 0.1404
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # 2x: 54.70 0.1389; 5x: 49.72 0.1387; 8x: 45.56 0.1386
 
     ### +++
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # num_blocks = 3 flow
     # 2x: 57.13 0.0979; 3x: 55.13 0.0985; 5x: 51.30 0.0986; 8x: 47.02 0.0988; 16x: 39.32 0.0990
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_2b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_2b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # num_blocks = 2 flow
     # 2x: 56.73 0.0935; 3x: 54.93 0.0933; 5x: 51.50 0.0927; 8x: 47.13 0.0925; 16x: 39.69 0.0921
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 58.02 0.0912; 3x: 56.74 0.0917; 5x: 53.60 0.0923; 8x: 49.73 0.0928; 16x: 42.60 0.0935
     ### +++
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 60.47 0.1241
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 51.29 0.0290 8x: 48.98 0.0284
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow5e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 53.29 0.0306; 3x: 53.68 0.0307; 5x: 52.44 0.0305; 8x: 48.57 0.0304; 16x: 41.63 0.0302
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow3e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 52.75 0.0312; 8x: 49.15 0.0311; 16x: 42.46 0.0310
+    ### +++
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 52.62 0.0310; 5x: 52.31 0.0310; 8x: 49.39 0.0309; 16x: 42.88 0.0309
+    ### +++
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
+    # 2x: 51.82 0.0293; 5x: 51.19 0.0291; 8x: 49.07 0.0290; 16x: 42.53 0.0289
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v2.pkl"
+    # 2x: 50.66 0.0284; 5x: 50.50 0.0279; 8x: 50.05 0.0300; 16x: 42.07 0.0275
+    # noTea:
+    ### +++
+    model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 54.01 0.0313; 5x: 53.39 0.0312; 8x: 50.03 0.0312; 16x: 43.35 0.0312
+    ### +++
+    model_name = "lrest_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 52.92 0.0319; 5x: 53.55 0.0312; 8x: 49.44 0.0320; 16x: 42.97 0.0321
+    model_name = "lrest_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_1K_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 53.30 0.0305; 5x: 53.34 0.0305; 8x: 50.25 0.0305; 16x: 43.63 0.0304
+    # a bit better, use only for final experiments
+
+
+    # model_name = "lrest_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 52.11 0.0312; 5x: 52.25 0.0311; 8x: 49.43 0.0310; 16x: 42.90 0.0309
+    # model_name = "lrest_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 52.71 0.0334; 5x: 52.39 0.0334; 8x: 49.28 0.0333; 16x: 42.84 0.0331
+
+    # Tea:
+    # model_name = "lrest_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
+    # 2x: 51.83 0.0308; 5x: 51.04 0.0309; 8x: 48.70 0.0309; 16x: 42.50 0.0310
+
+    # TODO:
+    # try: replace PReLU with sine (SIREN)
+
+    # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-5_1e-7.pkl"
+    # 2x: 19
+    # change arch - only some blocks hypernet
+    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-5_1e-7_1.pkl"
+    # 2x: 44.38
+    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest.pkl"
+    # 2x: 44.04
+    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_freeze1.pkl"
+
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
+    # 2x: 60.48 0.1239; 5x: 55.11 0.1215; 8x: 50.90 0.1211; 
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma09_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 51.29 0.0307; 8x: 49.26 0.0306;
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 50.29 0.0318; 8x: 49.68 0.0319;
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 58.35 0.1182; 8x: 50.12 0.1143;
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_1b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # 2x: 55.71 0.0832; 8x: 45.95 0.0817
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-6.pkl"
     # 2x: 56.76 0.0969; 8x: 46.87 0.0972
-
 
 
     # model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
@@ -1161,6 +1258,8 @@ if __name__ == "__main__":
 
     # # ablations
     # no flow:
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_noflow_v1_128_nyx_skip5_log10norm_triplets_W12_500_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 64.95 0.1582; 8x: 51.83 0.1586
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # 2x: 60.95 0.1455; 3x: 56.67 0.1458; 5x: 53.17 0.1461; 8x: 48.14 0.1465; 16x: 39.54 0.1475
     # no rec:
@@ -1169,9 +1268,11 @@ if __name__ == "__main__":
     # w/o s-t:
     # model_name = "lrest_noTea_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # 2x: 59.44 0.1389; 8x: 47.37 0.1391
+    # model_name = "lrest_noTea_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
+    # 2x: 51.51 0.0299; 5x: 53.38 0.0300; 8x: 50.05 0.0300
 
 
-    # untrained: 2x:: 52.68 0.1707; 8x: 41.26 0.1710   
+    # untrained: 2x: 52.68 0.1707; 8x: 41.26 0.1710   
     # TODO: solve reorder issue, something is off!..
 
 
@@ -1234,7 +1335,10 @@ if __name__ == "__main__":
             # print("Vel x range %f to %f" % (np.min(data_test[:, 1]), np.max(data_test[:, 1])))
             
             if "3d" in dataset: 
-                flow_test = data_test[:, 1:] # flow
+                if hyper == False:
+                    flow_test = data_test[:, 1:] # flow
+                else:
+                    flow_test = data_test[:, 1:4] # flow
                 data_test = data_test[:, 0] # density
             else:
                 data_test = data_test[:, :interpol_data.shape[1], :interpol_data.shape[2]] # / 255.
@@ -1284,6 +1388,7 @@ if __name__ == "__main__":
             input("x")
             """
 
+            # 3D rendering function
             # visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
             #             dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
             # print("visualize_seq_dens_3d done!")

@@ -1203,7 +1203,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
     skip = 10
     data_to_vis = original_data
     index = 0
-    shift = 1
+    shift = 0
 
     if "3d" in dataset:
         vmin = 0
@@ -1229,21 +1229,34 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
     # tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
     # tf.add_gaussian(np.log10(1e2), width=2e-4, height=[0.0, 0.25, 1.0, 1e3])
 
-    bounds = (0.1, 0.9)
-    
-    # 100-200 t:
-    # density
-    tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
-    # tf.add_gaussian(np.log10(0.3), width=1e-4, height=[1.0, 0.1, 0.3, 1e2]) # red 100-200
-    # tf.add_gaussian(np.log10(0.4), width=4e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 100-200
-    # tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 700-800
-    tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.05, 0.1, 1.0, 1e2]) # blue 700-800
-    # velocity
-    tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
-    # tf_vel.add_gaussian(np.log10(0.5), width=1e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 100-200
-    # tf_vel.add_gaussian(np.log10(0.7), width=4e-4, height=[0.8, 0.6, 0.1, 1e2]) # orange 100-200
-    # tf_vel.add_gaussian(np.log10(0.7), width=2e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 700-800
-    tf_vel.add_gaussian(np.log10(0.55), width=1e-4, height=[1.0, 0.6, 0.1, 1e2]) # orange 700-800
+    if "jets3d" in dataset:
+        bounds = (0.1, 0.9)
+        # 100-200 t:
+        # density
+        tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        # tf.add_gaussian(np.log10(0.3), width=1e-4, height=[1.0, 0.1, 0.3, 1e2]) # red 100-200
+        # tf.add_gaussian(np.log10(0.4), width=4e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 100-200
+        # tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 700-800
+        tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.05, 0.1, 1.0, 1e2]) # blue 700-800
+        # velocity
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        # tf_vel.add_gaussian(np.log10(0.5), width=1e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 100-200
+        # tf_vel.add_gaussian(np.log10(0.7), width=4e-4, height=[0.8, 0.6, 0.1, 1e2]) # orange 100-200
+        # tf_vel.add_gaussian(np.log10(0.7), width=2e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 700-800
+        tf_vel.add_gaussian(np.log10(0.55), width=1e-4, height=[1.0, 0.6, 0.1, 1e2]) # orange 700-800
+    elif "nyx3d" in dataset:
+        bounds = (0.1, 0.7)
+        tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf.sample_colormap(np.log10(0.2), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.4), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.5), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # velocity
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf_vel.sample_colormap(np.log10(0.2), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf_vel.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf_vel.sample_colormap(np.log10(0.4), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf_vel.sample_colormap(np.log10(0.5), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
 
     # print("min, max: ", np.min(original_data), np.max(original_data))
     # print("mean: ", np.mean(original_data))
@@ -1297,7 +1310,10 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        if "jets3d" in dataset:
+            cam.zoom(1.75)
+        elif "nyx3d" in dataset:
+            cam.zoom(1.0)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -1317,12 +1333,14 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
             ax_title = "t=" + str(index + shift + 30)
             ax.set_title(ax_title, fontsize=12, pad=10)
         elif dataset == "nyx3d":
-            ax_title = "t=" + str(index + shift + 600)
+            ax_title = "t=" + str(5 * 10 * shift + 300)
+            shift += 1
             ax.set_title(ax_title, fontsize=12, pad=10)
         ax.axis('off')
 
         # add zoomings
-        add_zoom(ax)
+        if "jetsd" in dataset:
+            add_zoom(ax)
 
 
         # Second row: interpolated data
@@ -1338,7 +1356,10 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        if "jets3d" in dataset:
+            cam.zoom(1.75)
+        elif "nyx3d" in dataset:
+            cam.zoom(1.0)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -1353,7 +1374,8 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         ax.axis('off')
 
         # add zoomings
-        add_zoom(ax)
+        if "jetsd" in dataset:
+            add_zoom(ax)
 
 
         # Third row: flow gt
@@ -1369,7 +1391,10 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        if "jets3d" in dataset:
+            cam.zoom(1.75)
+        elif "nyx3d" in dataset:
+            cam.zoom(1.0)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -1395,7 +1420,10 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        if "jets3d" in dataset:
+            cam.zoom(1.75)
+        elif "nyx3d" in dataset:
+            cam.zoom(1.0)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
