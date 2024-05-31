@@ -257,13 +257,12 @@ class IFBlock(nn.Module):
 
             x_i = x[i].unsqueeze(0)
 
-            with torch.no_grad():
-                x_i = functional_conv3d(x_i, weight_dict['conv0_0_weight'], weight_dict['conv0_0_bias'], self.c//2, stride=2, padding=1)
-                x_i = functional_conv3d(x_i, weight_dict['conv0_1_weight'], weight_dict['conv0_1_bias'], self.c, stride=2, padding=1)
+            # with torch.no_grad():
+            x_i = functional_conv3d(x_i, weight_dict['conv0_0_weight'], weight_dict['conv0_0_bias'], self.c//2, stride=2, padding=1)
+            x_i = functional_conv3d(x_i, weight_dict['conv0_1_weight'], weight_dict['conv0_1_bias'], self.c, stride=2, padding=1)
             
             # print(f"x_i after initial convs: requires_grad={x_i.requires_grad}")
-
-            x_i.requires_grad = True
+            # x_i.requires_grad = True
 
             x_i = self.prelu(self.convblock_0(x_i))
             x_i = self.prelu(self.convblock_1(x_i))
@@ -275,12 +274,12 @@ class IFBlock(nn.Module):
             
             # print(f"x_i after convblock_6: requires_grad={x_i.requires_grad}")
 
-            with torch.no_grad():
-                x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_0_weight'], weight_dict['deconvblock_0_bias'], self.c, stride=2)
+            # with torch.no_grad():
+            x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_0_weight'], weight_dict['deconvblock_0_bias'], self.c, stride=2)
             
             # print(f"x_i after first deconv: requires_grad={x_i.requires_grad}")
 
-            x_i.requires_grad = True
+            # x_i.requires_grad = True
 
             x_i = self.prelu(self.convblock_7(x_i))
             x_i = self.prelu(self.convblock_8(x_i))
@@ -292,13 +291,13 @@ class IFBlock(nn.Module):
             convblock_out = convblock_out[:, :, :x_i.shape[2], :x_i.shape[3], :x_i.shape[4]]
             x_i = convblock_out + x_i
 
-            with torch.no_grad():
-                x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_1_weight'], weight_dict['deconvblock_1_bias'], self.c//2)
-                x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_2_weight'], weight_dict['deconvblock_2_bias'], 7)
+            # with torch.no_grad():
+            x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_1_weight'], weight_dict['deconvblock_1_bias'], self.c//2)
+            x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_2_weight'], weight_dict['deconvblock_2_bias'], 7)
 
             # print(f"x_i before final requires_grad setting: requires_grad={x_i.requires_grad}")
             
-            x_i.requires_grad = True
+            # x_i.requires_grad = True
 
             flow_i = x_i[:, :6]
             mask_i = x_i[:, 6:7]

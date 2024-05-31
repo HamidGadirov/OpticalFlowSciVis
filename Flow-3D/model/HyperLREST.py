@@ -98,6 +98,8 @@ class Model:
     def device(self):
         self.flownet.to(device)
 
+
+
     def load_model(self, model_name, path, rank=0):
         def convert(param):
             # for key, value in param.items():
@@ -453,7 +455,15 @@ class Model:
             # loss_tea: tensor(37.8157, device='cuda:0', grad_fn=<MulBackward0>)
             # loss_flow: tensor(102.9375, device='cuda:0', dtype=torch.float16, grad_fn=<MulBackward0>)
             # input("x")
+            
+            # def print_grads(module):
+            #     for name, param in module.named_parameters():
+            #         if param.requires_grad:
+            #             print(f"{name} grad: {param.grad}")
+
             loss_G.backward()
+            # print_grads(self.flownet)
+
             # self.optimG.step()
             # Optimize the hypernetwork
             self.hypernet_optimizer.step()
