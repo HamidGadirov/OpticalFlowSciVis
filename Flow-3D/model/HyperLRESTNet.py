@@ -304,6 +304,10 @@ class IFBlock(nn.Module):
 
             outputs.append((flow_i, mask_i))
 
+            # with torch.no_grad():
+            # Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+            # RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
+
             """
             # Process the current element using the generated weights
             x_i = x[i].unsqueeze(0)  # Add batch dimension back for conv operation

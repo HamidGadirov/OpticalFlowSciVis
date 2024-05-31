@@ -1235,6 +1235,8 @@ if __name__ == "__main__":
     model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_freeze2.pkl"
     # None grads
     model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd.pkl"
+    # 2x: 53.08 0.0319; 5x: 48.39 0.0318
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd.pkl"
 
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"

@@ -17,7 +17,7 @@ device = torch.device("cuda")
 
 flow_available = True # True False
 
-blocks_num = 2 # 2 3 4 5 6
+blocks_num = 3 # 2 3 4 5 6
 student_teacher = False # True False
 
 c = 256
