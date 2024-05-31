@@ -281,9 +281,10 @@ for dirName in dirNames:
     ### params
     # Extract simulation parameters
     OmM, OmB, h = extract_params(dirName)
+    num_samples = data.shape[0]
+    """
     params = np.array([OmM, OmB, h])
     # Create a new channel for parameters
-    num_samples = data.shape[0]
     params_channel = np.zeros((num_samples, 128, 128, 128, 1))
     # Insert the parameters into the new channel
     params_channel[:, 0, 0, 0, 0] = params[0]
@@ -292,21 +293,22 @@ for dirName in dirNames:
     # Append the parameters channel to data
     data = np.concatenate((data, params_channel), axis=-1)
     print("data with parameters shape:", data.shape)
+    """
+    # Create an array to store the parameters for each sample
+    params = np.zeros((num_samples, 3), dtype=np.float32)
+    params[:, 0] = OmM
+    params[:, 1] = OmB
+    params[:, 2] = h
     ### params
 
-    # # Create an array to store the parameters for each sample
-    # params = np.zeros((num_samples, 3), dtype=np.float32)
-    # params[:, 0] = OmM
-    # params[:, 1] = OmB
-    # params[:, 2] = h
+    # Combine data and parameters into a tuple
+    data_with_params = (data, params)
 
-    # # Combine data and parameters into a tuple
-    # data_with_params = (data, params)
+    print("Data shape:", data_with_params[0].shape)
+    print("Parameters shape:", data_with_params[1].shape)
 
-    # print("Data shape:", data_with_params[0].shape)
-    # print("Parameters shape:", data_with_params[1].shape)
-
-    data_ensemble = np.concatenate((data_ensemble, data), axis=0)
+    # data_ensemble = np.concatenate((data_ensemble, data), axis=0)
+    data_ensemble = np.concatenate((data_ensemble, data_with_params), axis=0)
     print(np.array(data_ensemble).shape)
 
 print(np.array(data_ensemble).shape)
@@ -330,7 +332,7 @@ print("data:", data.shape)
 # data = np.hstack((data, velocities_x))
 # data = np.hstack((data, velocities_y))
 # print(data.shape)
-# input("x")
+input("data")
 
 data = np.float32(data)
 # data = np.float16(data)
