@@ -43,7 +43,7 @@ def functional_conv3d(x, weight, bias, out_planes, stride=1, padding=1, dilation
 # autoencoder: instead of pixel we have weights
 # k channels times 3x3 spatial dims
 class HyperNetwork(nn.Module):
-    def __init__(self, input_dim, weight_shapes):
+    def __init__(self, input_dim, latent_dim, weight_shapes):
         super(HyperNetwork, self).__init__()
         self.input_dim = input_dim
         self.weight_shapes = weight_shapes
@@ -66,7 +66,9 @@ class HyperNetwork(nn.Module):
         # )
 
         self.encoder = nn.Sequential(
-            nn.Linear(input_dim, 64),
+            nn.Linear(input_dim, 32),
+            nn.PReLU(),
+            nn.Linear(32, 64),
             nn.PReLU(),
             nn.Linear(64, 128),
             nn.PReLU(),
@@ -79,10 +81,41 @@ class HyperNetwork(nn.Module):
             nn.PReLU(),
             nn.Linear(128, 64),
             nn.PReLU(),
-            nn.Linear(64, total_params)
+            nn.Linear(64, 32),
+            nn.PReLU(),
+            nn.Linear(32, total_params)
         )
 
+        # self.encoder = nn.Sequential(
+        #     nn.Conv3d(input_dim, 8, kernel_size=3, stride=2, padding=1),  # 64x64x64
+        #     nn.PReLU(),
+        #     nn.Conv3d(8, 16, kernel_size=3, stride=2, padding=1),  # 32x32x32
+        #     nn.PReLU(),
+        #     nn.Conv3d(16, 32, kernel_size=3, stride=2, padding=1),  # 16x16x16
+        #     nn.PReLU(),
+        #     nn.Conv3d(32, 64, kernel_size=3, stride=2, padding=1),  # 8x8x8
+        #     nn.PReLU(),
+        #     nn.Conv3d(64, 128, kernel_size=3, stride=2, padding=1),  # 4x4x4
+        #     nn.PReLU(),
+        #     nn.Flatten(),
+        #     nn.Linear(128 * 4 * 4 * 4, latent_dim),  # Adjust based on downsampling
+        #     nn.PReLU()
+        # )
+
+        # self.decoder = nn.Sequential(
+        #     nn.Linear(latent_dim, 256),
+        #     nn.PReLU(),
+        #     nn.Linear(256, total_params)
+        # )
+
         # pre-train, train with hypernet, fine-tuning
+
+        # Qi, 31.05
+        # try with implicit -> aFTER HYPERNET 
+        # cm4 climate ensemble
+        # larger ensembles (resolution)
+
+        # ? was amp used? is it better?
 
         # Qi, 23.05.24
         # limited capability of the LREST
@@ -202,7 +235,9 @@ class IFBlock(nn.Module):
         # }
 
         # Initialize the hypernetwork
-        self.hypernet = HyperNetwork(input_dim, self.weight_shapes)
+        # self.hypernet = HyperNetwork(input_dim, self.weight_shapes)
+        latent_dim = 256
+        self.hypernet = HyperNetwork(input_dim, latent_dim, self.weight_shapes)
 
         # Define the layers to be trained normally (LREST)
         self.convblock_0 = nn.Conv3d(c, c, 3, stride=1, padding=1)
@@ -421,9 +456,9 @@ class HyperLRESTNet(nn.Module):
             self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
             self.block1 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
         if blocks_num == 3:
-            self.block0 = IFBlock(3, c=256, input_dim=3) # 6 c=240 128 256
-            self.block1 = IFBlock(6+6, c=192, input_dim=3) # 13 c=150 96 192
-            self.block2 = IFBlock(6+6, c=128, input_dim=3) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=96, input_dim=3) # 13 c=150 96 192
+            self.block2 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
         elif blocks_num == 4:
             self.block0 = IFBlock(3, c=256, input_dim=3) # 128 256 320 400
             self.block1 = IFBlock(6+6, c=192, input_dim=3) # 96 192 256 320

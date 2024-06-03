@@ -23,6 +23,7 @@ student_teacher = False # True False
 c = 256
 in_planes = 128
 input_dim = 3
+latent_dim = 256
 weight_shapes = {
     'conv0_0_weight': torch.Size([c//2, in_planes, 4, 4, 4]),
     'conv0_0_bias': torch.Size([c//2]),
@@ -72,8 +73,9 @@ class Model:
         # self.flownet = HyperLRESTNet()
         # self.hypernet = HyperNetwork(input_dim, weight_shapes)
         self.device = torch.device(f'cuda:{local_rank}' if local_rank != -1 else 'cpu')
-        self.flownet = HyperLRESTNet().to(self.device)
-        self.hypernet = HyperNetwork(input_dim, weight_shapes).to(self.device)
+        self.flownet = HyperLRESTNet(blocks_num=3).to(self.device)
+        # self.hypernet = HyperNetwork(input_dim, weight_shapes).to(self.device)
+        self.hypernet = HyperNetwork(input_dim, latent_dim, weight_shapes).to(self.device)
         # self.device()
         # self.optimG = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
         lrest_params = filter(lambda p: p.requires_grad, self.flownet.parameters())
