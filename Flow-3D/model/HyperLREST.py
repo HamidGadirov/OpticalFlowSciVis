@@ -12,6 +12,7 @@ import torch.nn.functional as F
 from model.loss import *
 from model.laplacian import *
 # from model.refine import *
+from torch.cuda.amp import autocast, GradScaler
 
 device = torch.device("cuda")
 
@@ -23,7 +24,7 @@ student_teacher = False # True False
 c = 256
 in_planes = 128
 input_dim = 3
-latent_dim = 256
+latent_dim = 4
 weight_shapes = {
     'conv0_0_weight': torch.Size([c//2, in_planes, 4, 4, 4]),
     'conv0_0_bias': torch.Size([c//2]),
@@ -76,11 +77,15 @@ class Model:
         self.flownet = HyperLRESTNet(blocks_num=3).to(self.device)
         # self.hypernet = HyperNetwork(input_dim, weight_shapes).to(self.device)
         self.hypernet = HyperNetwork(input_dim, latent_dim, weight_shapes).to(self.device)
+
         # self.device()
         # self.optimG = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
-        lrest_params = filter(lambda p: p.requires_grad, self.flownet.parameters())
+        # lrest_params = filter(lambda p: p.requires_grad, self.flownet.parameters())
         self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
-        self.lrest_optimizer = AdamW(lrest_params, lr=1e-6, weight_decay=1e-3)
+        # self.lrest_optimizer = AdamW(lrest_params, lr=1e-6, weight_decay=1e-3)
+        self.lrest_optimizer = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
+        
+        self.scaler = GradScaler()
         
         self.epe = EPE()
         self.lap = LapLoss()
@@ -215,7 +220,8 @@ class Model:
             flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
         else:
             # flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1)) # # try without student-teacher: gt is not used
-            flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1), params) # params for hyperLREST
+            with autocast():
+                flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1), params) # params for hyperLREST
         
         # print(np.isfinite(flow.detach().cpu().numpy()).all())
         # print(np.isfinite(mask.detach().cpu().numpy()).all())
@@ -448,14 +454,6 @@ class Model:
             # print("loss_photo:", loss_photo * lambda_photo)
             # print("loss_smooth:", loss_smooth * lambda_smooth)
             # print("loss_flow:", loss_flow * lambda_flow)
-            # epoch:0/1000 2/8 time:0.00+1.34 loss_G:1.4203e+00
-            # loss_l1: tensor(0.2562, device='cuda:0', grad_fn=<MulBackward0>)
-            # loss_tea: tensor(0.2556, device='cuda:0', grad_fn=<MulBackward0>)
-            # loss_flow: tensor(0.9121, device='cuda:0', dtype=torch.float16, grad_fn=<MulBackward0>)
-            # epoch:0/1000 3/8 time:0.00+1.34 loss_G:1.4238e+00
-            # loss_l1: tensor(37.7109, device='cuda:0', grad_fn=<MulBackward0>)
-            # loss_tea: tensor(37.8157, device='cuda:0', grad_fn=<MulBackward0>)
-            # loss_flow: tensor(102.9375, device='cuda:0', dtype=torch.float16, grad_fn=<MulBackward0>)
             # input("x")
             
             # def print_grads(module):
@@ -463,14 +461,32 @@ class Model:
             #         if param.requires_grad:
             #             print(f"{name} grad: {param.grad}")
 
-            loss_G.backward()
+            # """
+            # loss_G.backward()
+            self.scaler.scale(loss_G).backward()
             # print_grads(self.flownet)
 
             # self.optimG.step()
             # Optimize the hypernetwork
             self.hypernet_optimizer.step()
+            # self.scaler.step(self.hypernet_optimizer)
             # Optimize the main network
             self.lrest_optimizer.step()
+            # self.scaler.step(self.lrest_optimizer)
+
+            # self.scaler.update()
+            # """
+
+            # self.scaler.scale(loss_G).backward()
+            # # Optimize the hypernetwork
+            # self.scaler.step(self.hypernet_optimizer)
+            # self.hypernet_optimizer.zero_grad()
+            # # Optimize the main network
+            # self.scaler.step(self.lrest_optimizer)
+            # self.lrest_optimizer.zero_grad()
+            # # Updates the scale for next iteration
+            # self.scaler.update()
+            
         else:
             flow_teacher = flow[-1] # [2]
             merged_teacher = merged[-1] # [2]

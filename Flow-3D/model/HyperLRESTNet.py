@@ -12,30 +12,15 @@ sys.path.insert(0, parentdir)
 
 from utils import plot_loss, visualize_ind, visualize_series, visualize_series_flow, visualize_large
 
-# def deconv(in_planes, out_planes, kernel_size=4, stride=2, padding=1):
-#     return nn.Sequential(
-#         torch.nn.ConvTranspose3d(in_channels=in_planes, out_channels=out_planes, 
-#                                 kernel_size=kernel_size, stride=stride, padding=padding),
-#         nn.PReLU(out_planes),
-#     )
-
-def functional_conv_transpose3d(x, weight, bias, out_planes, stride=2, padding=1):
-    x = F.conv_transpose3d(x, weight, bias, stride=stride, padding=padding)
-    # x = nn.PReLU(num_parameters=out_planes)(x)
-    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)  # Move PReLU to the correct device
+def functional_conv3d(x, weight, bias, out_planes, stride=1, padding=1, dilation=1):
+    x = F.conv3d(x, weight, bias, stride=stride, padding=padding, dilation=dilation)
+    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
     x = prelu(x)
     return x
 
-# def conv(in_planes, weights, stride=1, padding=1, dilation=1):
-#     return nn.Sequential(
-#         F.conv3d(in_planes, weights, stride=stride,
-#                   padding=padding, dilation=dilation, bias=True),
-#         nn.PReLU(out_planes),
-#     )
-
-def functional_conv3d(x, weight, bias, out_planes, stride=1, padding=1, dilation=1):
-    x = F.conv3d(x, weight, bias, stride=stride, padding=padding, dilation=dilation)
-    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)  # Move PReLU to the correct device
+def functional_conv_transpose3d(x, weight, bias, out_planes, stride=2, padding=1):
+    x = F.conv_transpose3d(x, weight, bias, stride=stride, padding=padding)
+    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
     x = prelu(x)
     return x
 
@@ -50,63 +35,72 @@ class HyperNetwork(nn.Module):
 
         total_params = sum(shape.numel() for shape in self.weight_shapes.values())
 
-        # simple net: relu
-        # optimizer
         # what they used in HyperINR
 
         # self.encoder = nn.Sequential(
         #     nn.Linear(input_dim, 64),
-        #     nn.ReLU(),
-        #     nn.Linear(64, 128)
-        # )
-        # self.decoder = nn.Sequential(
-        #     nn.Linear(128, 64),
-        #     nn.ReLU(),
-        #     nn.Linear(64, total_params)
-        # )
-
-        self.encoder = nn.Sequential(
-            nn.Linear(input_dim, 32),
-            nn.PReLU(),
-            nn.Linear(32, 64),
-            nn.PReLU(),
-            nn.Linear(64, 128),
-            nn.PReLU(),
-            nn.Linear(128, 256),
-            nn.PReLU()
-        )
-
-        self.decoder = nn.Sequential(
-            nn.Linear(256, 128),
-            nn.PReLU(),
-            nn.Linear(128, 64),
-            nn.PReLU(),
-            nn.Linear(64, 32),
-            nn.PReLU(),
-            nn.Linear(32, total_params)
-        )
-
-        # self.encoder = nn.Sequential(
-        #     nn.Conv3d(input_dim, 8, kernel_size=3, stride=2, padding=1),  # 64x64x64
         #     nn.PReLU(),
-        #     nn.Conv3d(8, 16, kernel_size=3, stride=2, padding=1),  # 32x32x32
+        #     nn.Linear(64, 128),
         #     nn.PReLU(),
-        #     nn.Conv3d(16, 32, kernel_size=3, stride=2, padding=1),  # 16x16x16
-        #     nn.PReLU(),
-        #     nn.Conv3d(32, 64, kernel_size=3, stride=2, padding=1),  # 8x8x8
-        #     nn.PReLU(),
-        #     nn.Conv3d(64, 128, kernel_size=3, stride=2, padding=1),  # 4x4x4
-        #     nn.PReLU(),
-        #     nn.Flatten(),
-        #     nn.Linear(128 * 4 * 4 * 4, latent_dim),  # Adjust based on downsampling
+        #     nn.Linear(128, 256),
         #     nn.PReLU()
         # )
 
         # self.decoder = nn.Sequential(
-        #     nn.Linear(latent_dim, 256),
+        #     nn.Linear(256, 128),
         #     nn.PReLU(),
-        #     nn.Linear(256, total_params)
+        #     nn.Linear(128, 64),
+        #     nn.PReLU(),
+        #     nn.Linear(64, total_params),
         # )
+
+        # def forward(self, params):
+        #     encoded = self.encoder(params)
+        #     weights_flat = self.decoder(encoded)
+        #     return self._reshape_weights(weights_flat)
+
+        # def _reshape_weights(self, weights_flat):
+        #     weights = {}
+        #     offset = 0
+        #     for name, shape in self.weight_shapes.items():
+        #         size = shape.numel()
+        #         weights[name] = weights_flat[:, offset:offset + size].view(-1, *shape)
+        #         offset += size
+        #     return weights
+
+        self.mlp = nn.Sequential(
+            nn.Linear(input_dim, 16),
+            nn.PReLU(),
+            nn.Linear(16, 32),
+            nn.PReLU(),
+            nn.Linear(32, latent_dim),
+            nn.PReLU()
+        )
+
+        self.cnn = nn.Sequential(
+            nn.Conv1d(in_channels=1, out_channels=8, kernel_size=3, padding=1),
+            nn.PReLU(),
+            nn.Conv1d(8, 16, kernel_size=3, padding=1),
+            nn.PReLU(),
+            nn.Conv1d(16, 32, kernel_size=3, padding=1),
+            nn.PReLU(),
+            nn.Flatten(),
+            nn.Linear(32 * latent_dim, total_params)
+        )
+
+    def forward(self, x):
+        x = self.mlp(x).unsqueeze(1)  # Transform and add a channel dimension for CNN
+        weights_flat = self.cnn(x)
+        return self._reshape_weights(weights_flat)
+
+    def _reshape_weights(self, weights_flat):
+        weights = {}
+        offset = 0
+        for name, shape in self.weight_shapes.items():
+            size = shape.numel()
+            weights[name] = weights_flat[:, offset:offset + size].view(-1, *shape)
+            offset += size
+        return weights
 
         # pre-train, train with hypernet, fine-tuning
 
@@ -133,50 +127,8 @@ class HyperNetwork(nn.Module):
         # NVIDIA Zurich - internship next year
 
         # David, 28.05
-        # try hypernet only for some layers of LREST
-
-    def forward(self, params):
-        encoded = self.encoder(params)
-        weights_flat = self.decoder(encoded)
-        return self._reshape_weights(weights_flat)
-
-    def _reshape_weights(self, weights_flat):
-        weights = {}
-        offset = 0
-        for name, shape in self.weight_shapes.items():
-            size = shape.numel()
-            weights[name] = weights_flat[:, offset:offset + size].view(-1, *shape)
-            offset += size
-        return weights
+        # try hypernet only for some layers of LREST +
 # """
-
-# class HyperNetwork(nn.Module):
-#     def __init__(self, input_dim, weight_shapes):
-#         super(HyperNetwork, self).__init__()
-#         self.input_dim = input_dim
-#         self.weight_shapes = weight_shapes
-
-#         # Define the layers for the hypernetwork
-#         self.fc = nn.Sequential(
-#             nn.Linear(input_dim, 32),
-#             nn.ReLU(),
-#             nn.Linear(32, 64),
-#             nn.ReLU()
-#         )
-
-#         self.weight_generators = nn.ModuleDict()
-#         for name, shape in weight_shapes.items():
-#             self.weight_generators[name] = nn.Linear(128, torch.prod(torch.tensor(shape)).item())
-
-#     def forward(self, params):
-#         batch_size = params.size(0)
-#         hidden = self.fc(params)
-#         weights = {}
-#         for name, generator in self.weight_generators.items():
-#             weight_shape = self.weight_shapes[name]
-#             weight = generator(hidden).view(batch_size, *weight_shape)
-#             weights[name] = weight
-#         return weights
 
 refine = False # True
 use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
@@ -236,7 +188,7 @@ class IFBlock(nn.Module):
 
         # Initialize the hypernetwork
         # self.hypernet = HyperNetwork(input_dim, self.weight_shapes)
-        latent_dim = 256
+        latent_dim = 4
         self.hypernet = HyperNetwork(input_dim, latent_dim, self.weight_shapes)
 
         # Define the layers to be trained normally (LREST)

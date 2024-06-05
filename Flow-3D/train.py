@@ -22,6 +22,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import yt
+from torch.cuda.amp import autocast, GradScaler
 
 hyper = True # hyperLREST
 
@@ -247,12 +248,11 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 # learning_rate = get_learning_rate(step)
                 learning_rate = get_learning_rate(step) * args.world_size / 4
                 # with torch.autograd.detect_anomaly():
-                # model.half()
-                    # with torch.cuda.amp.autocast(True):
                 if hyper == False:
                     pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
                 else:
-                    pred, info = model.update(imgs, gt, t_mask, params, dataset, learning_rate, training=True) # hyper
+                    with autocast():
+                        pred, info = model.update(imgs, gt, t_mask, params, dataset, learning_rate, training=True) # hyper
 
                 # with torch.cuda.amp.autocast(True):
                 #     pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
@@ -859,7 +859,7 @@ if __name__ == "__main__":
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
-        args.batch_size = 2 # 2 4 32
+        args.batch_size = 4 # 2 4 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -1243,7 +1243,16 @@ if __name__ == "__main__":
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN.pkl"
     # ???
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd1.pkl"
-
+    # 2x: 52.69  0.0342 - increased MLP
+    ### +++
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D.pkl"
+    # 2x: 52.95 0.0211; 5x: 52.33 0.0211;
+    ### +++
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_1.pkl"
+    # 2x: 52.91 0.0219; 5x: 52.35 0.0219;
+    # amp
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_amp1.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_2.pkl"
 
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
