@@ -106,7 +106,6 @@ class Model:
         self.flownet.to(device)
 
 
-
     def load_model(self, model_name, path, rank=0):
         def convert(param):
             # for key, value in param.items():
