@@ -220,8 +220,8 @@ class Model:
             flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
         else:
             # flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1)) # # try without student-teacher: gt is not used
-            with autocast():
-                flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1), params) # params for hyperLREST
+            # with autocast():
+            flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1), params) # params for hyperLREST
         
         # print(np.isfinite(flow.detach().cpu().numpy()).all())
         # print(np.isfinite(mask.detach().cpu().numpy()).all())

@@ -69,11 +69,13 @@ class HyperNetwork(nn.Module):
         #     return weights
 
         self.mlp = nn.Sequential(
-            nn.Linear(input_dim, 16),
+            nn.Linear(input_dim, 8),
+            nn.PReLU(),
+            nn.Linear(8, 16),
             nn.PReLU(),
             nn.Linear(16, 32),
             nn.PReLU(),
-            nn.Linear(32, latent_dim),
+            nn.Linear(32, latent_dim), # 64
             nn.PReLU()
         )
 
