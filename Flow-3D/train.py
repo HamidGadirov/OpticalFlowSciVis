@@ -120,6 +120,36 @@ class EarlyStopper:
                 return 1
         return 0
 
+class TripletDataset(Dataset):
+    def __init__(self, data, params):
+        """
+        Args:
+            data (numpy.ndarray): The triplet data of shape (num_triplets, 4, 4, 128, 128, 128).
+            params (numpy.ndarray): The parameters of shape (num_triplets, 3).
+        """
+        self.data = data
+        self.params = params
+
+    def __len__(self):
+        # Return the number of triplets
+        return len(self.data)
+
+    def __getitem__(self, idx):
+        """
+        Fetches the data and parameters for a given index.
+        
+        Args:
+            idx (int): The index of the sample to retrieve.
+            
+        Returns:
+            tuple: (data_sample, params_sample)
+                data_sample (torch.Tensor): The triplet data.
+                params_sample (torch.Tensor): The corresponding parameters.
+        """
+        data_sample = torch.tensor(self.data[idx], dtype=torch.float32)
+        params_sample = torch.tensor(self.params[idx], dtype=torch.float32)
+        return data_sample, params_sample
+
 def train(model, dataset, factor, model_name, mode, local_rank):
     # if local_rank == 0:
     #     writer = SummaryWriter('train')
@@ -131,22 +161,40 @@ def train(model, dataset, factor, model_name, mode, local_rank):
 
     num_workers = 1 # 8
     if mode == "train":
-        data_train, data_val = load_data(dataset, factor, mode)
+        data_train_tuple, data_val_tuple = load_data(dataset, factor, mode)
         # sampler = DistributedSampler(data_train)
         # train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
         # train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=num_workers, pin_memory=True, drop_last=True)
-        train_data = DataLoader(data_train, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
+        if hyper:
+            data_train = data_train_tuple[0]  # Triplet data
+            params_train = data_train_tuple[1]  # Parameters
+            dataset_train = TripletDataset(data_train, params_train)
+            train_data = DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
+        else:
+            train_data = DataLoader(data_train, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
         args.step_per_epoch = train_data.__len__()
         # input("train loaded")
         print(len(data_train))
         print(data_train[0].shape)
-        val_data = DataLoader(data_val, batch_size=args.batch_size, pin_memory=True, num_workers=num_workers)
+        if hyper:
+            data_val = data_val_tuple[0]  # Triplet data
+            params_val = data_val_tuple[1]  # Parameters
+            dataset_val = TripletDataset(data_val, params_val)
+            val_data = DataLoader(dataset_val, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
+        else:
+            val_data = DataLoader(data_val, batch_size=args.batch_size, pin_memory=True, num_workers=num_workers)
         print("len:", len(val_data))
         # input("x")
         # print(len(train_data.dataset))
         # for i, data in enumerate(train_data):
         #     print(i)
     else:
+        # if hyper:
+        #     data_test= data_test_tuple[0]  # Triplet data
+        #     params_test = data_test_tuple[1]  # Parameters
+        #     dataset_val = TripletDataset(data_val, params_val)
+        #     val_data = DataLoader(dataset_val, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
+    
         # data_test = load_data(dataset, mode)
         data_test, data_test_non_overlap = load_data(dataset, factor, mode)
         shuffle = False
@@ -195,11 +243,16 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         time_stamp = time.time()
         for epoch in range(args.epoch):
             # sampler.set_epoch(epoch)
-            for i, data in enumerate(train_data):
+            # for i, data in enumerate(train_data):
+            for i, (data_batch, params_batch) in enumerate(train_data):
                 data_time_interval = time.time() - time_stamp
                 time_stamp = time.time()
                 # data = torch.zeros([16, 9, 150, 450], dtype=torch.float)
-                data_gpu = data.to(device, non_blocking=True) # / 255.
+                if hyper:
+                    data_gpu = data_batch.to(device, non_blocking=True)
+                    params_gpu = params_batch.to(device, non_blocking=True)
+                else:
+                    data_gpu = data.to(device, non_blocking=True) # / 255.
                 # data_gpu = data_gpu.permute(0, 3, 1, 2)
                 # print("data to gpu:", data_gpu.shape)
                 # print(type(data_gpu[0,0,0,0,0]))
@@ -223,10 +276,12 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 imgs = torch.cat((img0, img1), dim=1)
 
                 if hyper:
-                    params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
+                    # params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
+                    params = params_gpu  # hypernet
                 # print("Shape of params tensor:", params.shape)
                 # params_ = params.detach().cpu().numpy()
                 # print("params_", params_)
+                # input("x")
                 
                 # print("Training")
                 # print("imgs, gt:", imgs.shape, gt.shape)
@@ -677,8 +732,14 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     # psnr_list_teacher = []
     loss_all_list = [0. for i in range(7)] # all loss components
     time_stamp = time.time()
-    for i, data in enumerate(val_data):
-        data_gpu = data.to(device, non_blocking=True) # / 255.
+    # for i, data in enumerate(val_data):
+    for i, (data_batch, params_batch) in enumerate(val_data):
+        if hyper:
+            data_gpu = data_batch.to(device, non_blocking=True)
+            params_gpu = params_batch.to(device, non_blocking=True)
+        else:
+            data_gpu = data.to(device, non_blocking=True) # / 255.
+
         # imgs = data_gpu[:, :2]
         # gt = data_gpu[:, 2:3]
 
@@ -693,7 +754,8 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
         imgs = torch.cat((img0, img1), dim=1)
 
         if hyper:
-            params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
+            # params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
+            params = params_gpu
         # print("Shape of params tensor:", params.shape)
 
         # imgs = imgs.permute(0, 1, 2, 5, 3, 4) # 3rd is dim0
@@ -859,7 +921,7 @@ if __name__ == "__main__":
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
-        args.batch_size = 6 # 2 4 32
+        args.batch_size = 4 # 2 4 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -1245,15 +1307,39 @@ if __name__ == "__main__":
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd1.pkl"
     # 2x: 52.69  0.0342 - increased MLP
 
+
     ### +++
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D.pkl"
     # 2x: 52.95 0.0211; 5x: 52.33 0.0211;
     ### +++
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b6.pkl"
-
-
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_1.pkl"
     # 2x: 52.91 0.0219; 5x: 52.35 0.0219;
+
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b6.pkl"
+    # 2x: 53.74 0.0469; 5x: 48.25 0.0467;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b4.pkl"
+    # 2x: 53.82 0.0349;
+    # ensemble with param tuple
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D.pkl"
+    # 2x: 53.49 0.0366; 5x: 52.19 0.0368;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-5_archtestCNN1D.pkl"
+    # 2x: 53.80 0.0331; 5x: 52.64 0.0338;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b2.pkl"
+    # 2x: 54.51 0.0337; 5x: 53.25 0.0337; 500
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4.pkl"
+
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_noamp_b4.pkl"
+    # 2x: 52.19 0.0355
+    # why EPE is not 0.02 ??? what is different???
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_noamp_b4_1.pkl"
+    # 2x: 51.96 0.0349
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_20eprestart.pkl" 
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b1.pkl"
+    # 2x: 53.02 0.0336
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_noamp_b4_2.pkl"
+    # 2x: 52.05 0.0352
+
+
     # amp
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_amp1.pkl"
     # 2x: 53.92 0.0375; 5x: 48.26 0.0374;

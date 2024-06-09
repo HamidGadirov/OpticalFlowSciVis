@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from model.loss import *
 from model.laplacian import *
 # from model.refine import *
-from torch.cuda.amp import autocast, GradScaler
+# from torch.cuda.amp import autocast, GradScaler
 
 device = torch.device("cuda")
 
@@ -81,11 +81,11 @@ class Model:
         # self.device()
         # self.optimG = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
         # lrest_params = filter(lambda p: p.requires_grad, self.flownet.parameters())
-        self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
         # self.lrest_optimizer = AdamW(lrest_params, lr=1e-6, weight_decay=1e-3)
         self.lrest_optimizer = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
+        self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
         
-        self.scaler = GradScaler()
+        # self.scaler = GradScaler()
         
         self.epe = EPE()
         self.lap = LapLoss()
@@ -461,14 +461,15 @@ class Model:
             #             print(f"{name} grad: {param.grad}")
 
             # """
-            # loss_G.backward()
-            self.scaler.scale(loss_G).backward()
+            loss_G.backward()
+            # self.scaler.scale(loss_G).backward()
             # print_grads(self.flownet)
 
             # self.optimG.step()
             # Optimize the hypernetwork
             self.hypernet_optimizer.step()
             # self.scaler.step(self.hypernet_optimizer)
+
             # Optimize the main network
             self.lrest_optimizer.step()
             # self.scaler.step(self.lrest_optimizer)

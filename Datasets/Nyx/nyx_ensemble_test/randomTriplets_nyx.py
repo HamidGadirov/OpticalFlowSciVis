@@ -117,16 +117,6 @@ def getListOfFiles(dirName):
                 
     return allFiles  
 
-def extract_params(dirName):
-    match = re.search(r'Simulation_OmM_(\d+)_OmB_(\d+)_h_(\d+)', dirName)
-    if match:
-        OmM = float(match.group(1)) / 10000  # Converting from int to float
-        OmB = float(match.group(2)) / 10000  # Converting from int to float
-        h = float(match.group(3)) / 100      # Converting from int to float
-        return OmM, OmB, h
-    else:
-        raise ValueError("Directory name does not match the expected format")
-
 # Simulation_OmM_012_OmB_00215_h_07_npy 794
 # Simulation_OmM_012_OmB_00235_h_07_npy 1099
 # Simulation_OmM_0155_OmB_00235_h_055_npy 1600
@@ -149,14 +139,11 @@ dirNames = ['./Simulation_OmM_0155_OmB_00235_h_055_npy', './Simulation_OmM_012_O
 # val 
 # dirNames = ['./Simulation_OmM_0155_OmB_00215_h_07_npy']
 dirNames = ['./Simulation_OmM_01375_OmB_00215_h_055_npy']
-# comoving_OmM = 0.1375
-# comoving_OmB = 0.0215
-# comoving_h   = 0.55
 # './Simulation_OmM_012_OmB_00235_h_07_npy',
 
 # test
 # dirNames = ['./Simulation_OmM_0155_OmB_00235_h_07_npy']
-dirNames = ['./Simulation_OmM_01375_OmB_00235_h_055_npy']
+# dirNames = ['./Simulation_OmM_01375_OmB_00235_h_055_npy']
 # print("test")
 
 # val
@@ -171,9 +158,7 @@ dirNames = ['./Simulation_OmM_01375_OmB_00235_h_055_npy']
 
 # data_ensemble = []
 # data_ensemble = np.zeros((0, 64, 64, 64, 4), dtype=np.float32) # (2000, 4, 3, 64, 64, 64)
-# data_ensemble = np.zeros((0, 128, 128, 128, 4), dtype=np.float32) # (2000, 4, 3, 128, 128, 128)
-data_ensemble = np.zeros((0, 128, 128, 128, 5), dtype=np.float32) # (2000, 4, 3, 128, 128, 128)
-# tuple: data and meta info
+data_ensemble = np.zeros((0, 128, 128, 128, 4), dtype=np.float32) # (2000, 4, 3, 128, 128, 128)
 
 for dirName in dirNames:
     # for dirName in dirNames:
@@ -278,37 +263,7 @@ for dirName in dirNames:
     print(len(data))
     print(np.array(data).shape)
 
-    ### params
-    # Extract simulation parameters
-    OmM, OmB, h = extract_params(dirName)
-    num_samples = data.shape[0]
-    """
-    params = np.array([OmM, OmB, h])
-    # Create a new channel for parameters
-    params_channel = np.zeros((num_samples, 128, 128, 128, 1))
-    # Insert the parameters into the new channel
-    params_channel[:, 0, 0, 0, 0] = params[0]
-    params_channel[:, 1, 0, 0, 0] = params[1]
-    params_channel[:, 2, 0, 0, 0] = params[2]
-    # Append the parameters channel to data
-    data = np.concatenate((data, params_channel), axis=-1)
-    print("data with parameters shape:", data.shape)
-    """
-    # Create an array to store the parameters for each sample
-    params = np.zeros((num_samples, 3), dtype=np.float32)
-    params[:, 0] = OmM
-    params[:, 1] = OmB
-    params[:, 2] = h
-    ### params
-
-    # Combine data and parameters into a tuple
-    data_with_params = (data, params)
-
-    print("Data shape:", data_with_params[0].shape)
-    print("Parameters shape:", data_with_params[1].shape)
-
-    # data_ensemble = np.concatenate((data_ensemble, data), axis=0)
-    data_ensemble = np.concatenate((data_ensemble, data_with_params), axis=0)
+    data_ensemble = np.concatenate((data_ensemble, data), axis=0)
     print(np.array(data_ensemble).shape)
 
 print(np.array(data_ensemble).shape)
@@ -332,7 +287,7 @@ print("data:", data.shape)
 # data = np.hstack((data, velocities_x))
 # data = np.hstack((data, velocities_y))
 # print(data.shape)
-input("data")
+# input("x")
 
 data = np.float32(data)
 # data = np.float16(data)
@@ -402,8 +357,7 @@ print(data.shape)
 # data = data[200:350]
 print("data save shape:", data.shape)
 # filename = "nyx3d_skip5_128_test.pkl"
-# filename = "nyx3d_skip5_128_log10norm_test_1.pkl"
-filename = "nyx3d_skip5_128_log10norm_test_params.pkl"
+filename = "nyx3d_skip5_128_log10norm_test_1.pkl"
 # hdf5_file = 'nyx3d_128_150_test_2.h5'
 # with h5py.File(hdf5_file, 'w') as hf:
 #     # hf.create_dataset('data', data=data)
@@ -416,7 +370,7 @@ input("test")
 
 num_members = len(dirNames)
 member_size = 160 # data.shape[0] # 160
-num_triplets = 50 # 500
+num_triplets = 50
 
  # 50 200 300 500
 window = 12 # 8 12
@@ -425,7 +379,6 @@ window = 12 # 8 12
 triplet_data = np.zeros((num_triplets, 4, *data.shape[1:]), dtype=np.float32) # (2000, 4, 4, 128, 128, 128)
 # triplet_data = np.zeros((num_triplets, 4, *data.shape[1:]), dtype=np.float16) # (2000, 4, 4, 128, 128, 128)
 # size, triplets + t, dens + vel, x, y, z
-# size, triplets + t + params, dens + vel, x, y, z - for Hypernetworks
 print("triplet_data:", triplet_data.shape)
 print("triplet_data type:", triplet_data.dtype)
 # input("data")
@@ -482,12 +435,10 @@ print(triplet_data.dtype)
 # filename = "nyx3d_skip5_128_triplets_W12_500_train.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_W12_200_train.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_W12_500_train.pkl"
-# filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train_1.pkl"
-# filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train_params.pkl"
+filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train.pkl"
 # filename = "nyx3d_skip5_128_triplets_W12_100_val.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_W12_50_val.pkl"
-# filename = "nyx3d_skip5_128_log10norm_triplets_W12_50_val_1.pkl"
-filename = "nyx3d_skip5_128_log10norm_triplets_W12_50_val_params.pkl"
+filename = "nyx3d_skip5_128_log10norm_triplets_W12_50_val_1.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 # chunk_size = 500  # Set an appropriate chunk size

@@ -102,14 +102,12 @@ class HyperNetwork(nn.Module):
             offset += size
         return weights
 
-        # pre-train, train with hypernet, fine-tuning
+        # pre-train, train with hypernet, fine-tuning - Steffen
 
         # Qi, 31.05
-        # try with implicit -> aFTER HYPERNET 
+        # try with implicit -> after hypernet 
         # cm4 climate ensemble
         # larger ensembles (resolution)
-
-        # ? was amp used? is it better?
 
         # Qi, 23.05.24
         # limited capability of the LREST
