@@ -22,7 +22,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import yt
-from torch.cuda.amp import autocast, GradScaler
+# from torch.cuda.amp import autocast, GradScaler
 
 hyper = True # hyperLREST
 
@@ -308,9 +308,6 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 else:
                     # with autocast():
                     pred, info = model.update(imgs, gt, t_mask, params, dataset, learning_rate, training=True) # hyper
-
-                # with torch.cuda.amp.autocast(True):
-                #     pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
                 
                 # print("pred:", pred.shape, gt.shape, info['mask'].shape)
                 # pred = pred.permute(0, 1, 3, 4, 2) # (0, 1, 3, 4, 2)
@@ -1319,6 +1316,20 @@ if __name__ == "__main__":
     # 2x: 53.74 0.0469; 5x: 48.25 0.0467;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b4.pkl"
     # 2x: 53.82 0.0349;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_c16_b4_1.pkl"
+    # 2x: 52.51 0.0353; 5x: 51.71 0.0355;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_c16_b4_val_test.pkl"
+    # still 
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-5_archtestCNN1D_c16_b4.pkl"
+    # 2x: 53.69 0.0332; 5x: 53.02 0.0334; 500 better than 200 triplets
+
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_reproduce.pkl"
+    # 2x: 51.88 0.0218; 5x: 48.12 0.0218; yes!! val same as train, 50 triplets, batch_size = 1 (look at lr plot)
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_train.pkl"
+    # 2x: 53.75 0.0351;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b4_train.pkl"
+
+
     # ensemble with param tuple
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D.pkl"
     # 2x: 53.49 0.0366; 5x: 52.19 0.0368;
@@ -1336,8 +1347,21 @@ if __name__ == "__main__":
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_20eprestart.pkl" 
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b1.pkl"
     # 2x: 53.02 0.0336
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_noamp_b4_2.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_noamp_b4_2.pkl"
     # 2x: 52.05 0.0352
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_noamp_b4_val1.pkl"
+    # 2x: 51.97 0.0372;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_c16_b4.pkl"
+    # 2x: 52.86 0.0392; 5x: 52.54 0.0397; 8x: 48.91 0.0395
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_amp_c16_b4.pkl"
+    # 2x: 54.28 0.0382; 5x: 52.21 0.0401; 8x: 48.67 0.0404
+    # similar results amp and noamp
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-5_1e-7_archtestCNN1D_c16_b4.pkl"
+    # 2x: 54.83 0.0536;
+    # loss scaler was used
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr3e-4_3e-6_archtestCNN1D_c16_b4.pkl"
+    # 2x: 51.94 0.0328; 5x: 52.02 0.0330
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr3e-4_3e-6_archtestCNN1D_c16_b4_1.pkl"
 
 
     # amp
@@ -1400,6 +1424,7 @@ if __name__ == "__main__":
 
 
     # untrained: 2x: 52.68 0.1707; 8x: 41.26 0.1710   
+    # hyper, untrained: 2x: 39.66 0.3174
     # TODO: solve reorder issue, something is off!..
 
 

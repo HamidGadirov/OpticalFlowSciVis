@@ -78,10 +78,10 @@ class HyperNetwork(nn.Module):
         )
 
         self.cnn = nn.Sequential(
-            nn.Conv1d(in_channels=1, out_channels=8, kernel_size=3, padding=1),
+            nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), # 8
             nn.PReLU(),
-            nn.Conv1d(8, 16, kernel_size=3, padding=1),
-            nn.PReLU(),
+            # nn.Conv1d(8, 16, kernel_size=3, padding=1),
+            # nn.PReLU(),
             nn.Conv1d(16, 32, kernel_size=3, padding=1),
             nn.PReLU(),
             nn.Flatten(),
