@@ -126,6 +126,10 @@ class HyperNetwork(nn.Module):
 
         # David, 28.05
         # try hypernet only for some layers of LREST +
+
+        # Qi, 10.06:
+        # pre-train LREST, then diffusion
+        # INR: per density and flow, then flatten, go to diffusion
 # """
 
 refine = False # True
@@ -143,12 +147,20 @@ class IFBlock(nn.Module):
             'conv0_0_bias': torch.Size([c//2]),
             'conv0_1_weight': torch.Size([c, c//2, 4, 4, 4]),
             'conv0_1_bias': torch.Size([c]),
-            'deconvblock_0_weight': torch.Size([c, c, 4, 4, 4]),
-            'deconvblock_0_bias': torch.Size([c]),
-            'deconvblock_1_weight': torch.Size([c, c//2, 4, 4, 4]),
-            'deconvblock_1_bias': torch.Size([c//2]),
-            'deconvblock_2_weight': torch.Size([c//2, 7, 4, 4, 4]),
-            'deconvblock_2_bias': torch.Size([7]),
+            ###
+            'convblock_0_weight': torch.Size([c, c, 3, 3, 3]),
+            'convblock_0_bias': torch.Size([c]),
+            'convblock_1_weight': torch.Size([c, c, 3, 3, 3]),
+            'convblock_1_bias': torch.Size([c]),
+            'convblock_2_weight': torch.Size([c, c, 3, 3, 3]),
+            'convblock_2_bias': torch.Size([c]),
+            ###
+            # 'deconvblock_0_weight': torch.Size([c, c, 4, 4, 4]),
+            # 'deconvblock_0_bias': torch.Size([c]),
+            # 'deconvblock_1_weight': torch.Size([c, c//2, 4, 4, 4]),
+            # 'deconvblock_1_bias': torch.Size([c//2]),
+            # 'deconvblock_2_weight': torch.Size([c//2, 7, 4, 4, 4]),
+            # 'deconvblock_2_bias': torch.Size([7]),
         }
 
         # self.weight_shapes = {
@@ -190,9 +202,9 @@ class IFBlock(nn.Module):
         self.hypernet = HyperNetwork(input_dim, latent_dim, self.weight_shapes)
 
         # Define the layers to be trained normally (LREST)
-        self.convblock_0 = nn.Conv3d(c, c, 3, stride=1, padding=1)
-        self.convblock_1 = nn.Conv3d(c, c, 3, stride=1, padding=1)
-        self.convblock_2 = nn.Conv3d(c, c, 3, stride=1, padding=1)
+        # self.convblock_0 = nn.Conv3d(c, c, 3, stride=1, padding=1)
+        # self.convblock_1 = nn.Conv3d(c, c, 3, stride=1, padding=1)
+        # self.convblock_2 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_3 = nn.Conv3d(c, c, 3, stride=2, padding=1)
         self.convblock_4 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_5 = nn.Conv3d(c, c, 3, stride=1, padding=1)
@@ -200,6 +212,11 @@ class IFBlock(nn.Module):
         self.convblock_7 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_8 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_9 = nn.Conv3d(c, c, 3, stride=1, padding=1)
+
+        # Define the deconvolutional layers to be used in LREST
+        # self.deconvblock_0 = nn.ConvTranspose3d(c, c, 4, stride=2, padding=1)
+        # self.deconvblock_1 = nn.ConvTranspose3d(c, c//2, 4, stride=2, padding=1)
+        # self.deconvblock_2 = nn.ConvTranspose3d(c//2, 7, 4, stride=2, padding=1)
 
         # Define PReLU activations
         self.prelu = nn.PReLU()
@@ -248,24 +265,31 @@ class IFBlock(nn.Module):
             
             # print(f"x_i after initial convs: requires_grad={x_i.requires_grad}")
             # x_i.requires_grad = True
+        
+            # Apply the hypernetwork-generated weights for the specified layers
+            x_i = functional_conv3d(x_i, weight_dict['convblock_0_weight'], weight_dict['convblock_0_bias'], self.c, stride=1, padding=1)
+            x_i = self.prelu(x_i)
 
-            x_i = self.prelu(self.convblock_0(x_i))
-            x_i = self.prelu(self.convblock_1(x_i))
-            x_i = self.prelu(self.convblock_2(x_i))
+            x_i = functional_conv3d(x_i, weight_dict['convblock_1_weight'], weight_dict['convblock_1_bias'], self.c, stride=1, padding=1)
+            x_i = self.prelu(x_i)
+
+            x_i = functional_conv3d(x_i, weight_dict['convblock_2_weight'], weight_dict['convblock_2_bias'], self.c, stride=1, padding=1)
+            x_i = self.prelu(x_i)
+
+            # x_i = self.prelu(self.convblock_0(x_i))
+            # x_i = self.prelu(self.convblock_1(x_i))
+            # x_i = self.prelu(self.convblock_2(x_i))
             x_i = self.prelu(self.convblock_3(x_i))
             x_i = self.prelu(self.convblock_4(x_i))
             x_i = self.prelu(self.convblock_5(x_i))
             x_i = self.prelu(self.convblock_6(x_i))
-            
             # print(f"x_i after convblock_6: requires_grad={x_i.requires_grad}")
 
             # with torch.no_grad():
-            x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_0_weight'], weight_dict['deconvblock_0_bias'], self.c, stride=2)
-            
+            # x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_0_weight'], weight_dict['deconvblock_0_bias'], self.c, stride=2)
+            x_i = self.deconvblock_0(x_i) # Use the standard deconv layers
             # print(f"x_i after first deconv: requires_grad={x_i.requires_grad}")
-
             # x_i.requires_grad = True
-
             x_i = self.prelu(self.convblock_7(x_i))
             x_i = self.prelu(self.convblock_8(x_i))
             x_i = self.prelu(self.convblock_9(x_i))
@@ -277,9 +301,10 @@ class IFBlock(nn.Module):
             x_i = convblock_out + x_i
 
             # with torch.no_grad():
-            x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_1_weight'], weight_dict['deconvblock_1_bias'], self.c//2)
-            x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_2_weight'], weight_dict['deconvblock_2_bias'], 7)
-
+            # x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_1_weight'], weight_dict['deconvblock_1_bias'], self.c//2)
+            # x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_2_weight'], weight_dict['deconvblock_2_bias'], 7)
+            x_i = self.deconvblock_1(x_i)
+            x_i = self.deconvblock_2(x_i)
             # print(f"x_i before final requires_grad setting: requires_grad={x_i.requires_grad}")
             
             # x_i.requires_grad = True

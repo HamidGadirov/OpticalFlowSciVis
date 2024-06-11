@@ -84,6 +84,7 @@ class Model:
         # self.lrest_optimizer = AdamW(lrest_params, lr=1e-6, weight_decay=1e-3)
         self.lrest_optimizer = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
         self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
+        # make one optimizer with one dictionary
         
         # self.scaler = GradScaler()
         

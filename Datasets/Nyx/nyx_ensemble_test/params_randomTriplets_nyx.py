@@ -149,6 +149,7 @@ dirNames = ['./Simulation_OmM_0155_OmB_00235_h_055_npy', './Simulation_OmM_012_O
 # val 
 # dirNames = ['./Simulation_OmM_0155_OmB_00215_h_07_npy']
 dirNames = ['./Simulation_OmM_01375_OmB_00215_h_055_npy'] # new
+dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy'] # train val
 
 # comoving_OmM = 0.1375
 # comoving_OmB = 0.0215
@@ -157,7 +158,7 @@ dirNames = ['./Simulation_OmM_01375_OmB_00215_h_055_npy'] # new
 
 # test
 # dirNames = ['./Simulation_OmM_0155_OmB_00235_h_07_npy']
-dirNames = ['./Simulation_OmM_01375_OmB_00235_h_055_npy'] # new
+# dirNames = ['./Simulation_OmM_01375_OmB_00235_h_055_npy'] # new
 # print("test")
 
 # val
@@ -488,7 +489,7 @@ print('Parameters data shape:', triplet_data[1].shape)
 # filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_params_W12_200_train.pkl"
 # filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_params_W12_500_train.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_50_val.pkl"
-filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_50_val_test.pkl"
+filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_50_train_val.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 

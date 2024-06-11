@@ -918,7 +918,7 @@ if __name__ == "__main__":
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
-        args.batch_size = 4 # 2 4 32
+        args.batch_size = 1 # 2 4 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -1325,9 +1325,22 @@ if __name__ == "__main__":
 
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_reproduce.pkl"
     # 2x: 51.88 0.0218; 5x: 48.12 0.0218; yes!! val same as train, 50 triplets, batch_size = 1 (look at lr plot)
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_train.pkl"
-    # 2x: 53.75 0.0351;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b4_train.pkl"
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_reproduce.pkl"
+    # 2x: 50.22 0.0215; 5x: 47.68 0.0214;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_trainval.pkl"
+    # 2x: 51.34 0.0281; 5x: 48.19 0.0281;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01hyper_trainval.pkl"
+    # 2x: 52.40 0.0309; 5x: 47.65 0.0306;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_prev+012convhyper_trainval.pkl"
+    # 2x: 53.41 0.0314; 5x: 51.69 0.0312;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012hyper_trainval.pkl"
+
+
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_train.pkl"
+    # 2x: 53.75 0.0351; 5x: 52.04 0.0357;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b4_train.pkl"
+    # 2x: 54.51 0.0354; 5x: 52.65 0.0356;
+    # 200 and 50 triplets, same results
 
 
     # ensemble with param tuple
@@ -1425,7 +1438,7 @@ if __name__ == "__main__":
 
     # untrained: 2x: 52.68 0.1707; 8x: 41.26 0.1710   
     # hyper, untrained: 2x: 39.66 0.3174
-    # TODO: solve reorder issue, something is off!..
+    # baseline: skip5 - 2x: 53.19; 3x: 47.49; 5x: 41.92; 8x: 37.51; 16x: 31.90 32x: 27.68
 
 
     """ tangaroa """
