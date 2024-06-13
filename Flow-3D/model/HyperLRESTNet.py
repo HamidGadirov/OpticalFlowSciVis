@@ -130,6 +130,13 @@ class HyperNetwork(nn.Module):
         # Qi, 10.06:
         # pre-train LREST, then diffusion
         # INR: per density and flow, then flatten, go to diffusion
+
+        # ???
+        # supervised vs unsupervised? (LREST and CoordNet work with same data)
+        # streamlines vis in pytorch vs ParaView?
+        # is it ok to maintain the reviewers for TVCG?
+
+
 # """
 
 refine = False # True
@@ -155,12 +162,26 @@ class IFBlock(nn.Module):
             'convblock_2_weight': torch.Size([c, c, 3, 3, 3]),
             'convblock_2_bias': torch.Size([c]),
             ###
+            # 'convblock_3_weight': torch.Size([c, c, 3, 3, 3]),
+            # 'convblock_3_bias': torch.Size([c]),
+            # 'convblock_4_weight': torch.Size([c, c, 3, 3, 3]),
+            # 'convblock_4_bias': torch.Size([c]),
+            # 'convblock_5_weight': torch.Size([c, c, 3, 3, 3]),
+            # 'convblock_5_bias': torch.Size([c]),
+            # 'convblock_6_weight': torch.Size([c, c, 3, 3, 3]),
+            # 'convblock_6_bias': torch.Size([c]),
             # 'deconvblock_0_weight': torch.Size([c, c, 4, 4, 4]),
             # 'deconvblock_0_bias': torch.Size([c]),
             # 'deconvblock_1_weight': torch.Size([c, c//2, 4, 4, 4]),
             # 'deconvblock_1_bias': torch.Size([c//2]),
             # 'deconvblock_2_weight': torch.Size([c//2, 7, 4, 4, 4]),
             # 'deconvblock_2_bias': torch.Size([7]),
+            # 'convblock_7_weight': torch.Size([self.c, self.c, 3, 3, 3]),
+            # 'convblock_7_bias': torch.Size([self.c]),
+            # 'convblock_8_weight': torch.Size([self.c, self.c, 3, 3, 3]),
+            # 'convblock_8_bias': torch.Size([self.c]),
+            # 'convblock_9_weight': torch.Size([self.c, self.c, 3, 3, 3]),
+            # 'convblock_9_bias': torch.Size([self.c]),
         }
 
         # self.weight_shapes = {
@@ -202,6 +223,9 @@ class IFBlock(nn.Module):
         self.hypernet = HyperNetwork(input_dim, latent_dim, self.weight_shapes)
 
         # Define the layers to be trained normally (LREST)
+        # self.conv0_0 = nn.Conv3d(in_planes, c//2, 4, stride=2, padding=1)
+        # self.conv0_1 = nn.Conv3d(c//2, c, 4, stride=2, padding=1)
+        #
         # self.convblock_0 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         # self.convblock_1 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         # self.convblock_2 = nn.Conv3d(c, c, 3, stride=1, padding=1)
@@ -214,9 +238,9 @@ class IFBlock(nn.Module):
         self.convblock_9 = nn.Conv3d(c, c, 3, stride=1, padding=1)
 
         # Define the deconvolutional layers to be used in LREST
-        # self.deconvblock_0 = nn.ConvTranspose3d(c, c, 4, stride=2, padding=1)
-        # self.deconvblock_1 = nn.ConvTranspose3d(c, c//2, 4, stride=2, padding=1)
-        # self.deconvblock_2 = nn.ConvTranspose3d(c//2, 7, 4, stride=2, padding=1)
+        self.deconvblock_0 = nn.ConvTranspose3d(c, c, 4, stride=2, padding=1)
+        self.deconvblock_1 = nn.ConvTranspose3d(c, c//2, 4, stride=2, padding=1)
+        self.deconvblock_2 = nn.ConvTranspose3d(c//2, 7, 4, stride=2, padding=1)
 
         # Define PReLU activations
         self.prelu = nn.PReLU()
@@ -262,19 +286,16 @@ class IFBlock(nn.Module):
             # with torch.no_grad():
             x_i = functional_conv3d(x_i, weight_dict['conv0_0_weight'], weight_dict['conv0_0_bias'], self.c//2, stride=2, padding=1)
             x_i = functional_conv3d(x_i, weight_dict['conv0_1_weight'], weight_dict['conv0_1_bias'], self.c, stride=2, padding=1)
+            # x_i = self.prelu(self.conv0_0(x_i))
+            # x_i = self.prelu(self.conv0_1(x_i))
             
             # print(f"x_i after initial convs: requires_grad={x_i.requires_grad}")
             # x_i.requires_grad = True
         
-            # Apply the hypernetwork-generated weights for the specified layers
+            # hypernetwork-generated weights for the specified layers
             x_i = functional_conv3d(x_i, weight_dict['convblock_0_weight'], weight_dict['convblock_0_bias'], self.c, stride=1, padding=1)
-            x_i = self.prelu(x_i)
-
             x_i = functional_conv3d(x_i, weight_dict['convblock_1_weight'], weight_dict['convblock_1_bias'], self.c, stride=1, padding=1)
-            x_i = self.prelu(x_i)
-
             x_i = functional_conv3d(x_i, weight_dict['convblock_2_weight'], weight_dict['convblock_2_bias'], self.c, stride=1, padding=1)
-            x_i = self.prelu(x_i)
 
             # x_i = self.prelu(self.convblock_0(x_i))
             # x_i = self.prelu(self.convblock_1(x_i))
@@ -285,6 +306,11 @@ class IFBlock(nn.Module):
             x_i = self.prelu(self.convblock_6(x_i))
             # print(f"x_i after convblock_6: requires_grad={x_i.requires_grad}")
 
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_3_weight'], weight_dict['convblock_3_bias'], self.c, stride=2, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_4_weight'], weight_dict['convblock_4_bias'], self.c, stride=1, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_5_weight'], weight_dict['convblock_5_bias'], self.c, stride=1, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_6_weight'], weight_dict['convblock_6_bias'], self.c, stride=1, padding=1)
+
             # with torch.no_grad():
             # x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_0_weight'], weight_dict['deconvblock_0_bias'], self.c, stride=2)
             x_i = self.deconvblock_0(x_i) # Use the standard deconv layers
@@ -293,6 +319,9 @@ class IFBlock(nn.Module):
             x_i = self.prelu(self.convblock_7(x_i))
             x_i = self.prelu(self.convblock_8(x_i))
             x_i = self.prelu(self.convblock_9(x_i))
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_7_weight'], weight_dict['convblock_7_bias'], self.c, stride=1, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_8_weight'], weight_dict['convblock_8_bias'], self.c, stride=1, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_9_weight'], weight_dict['convblock_9_bias'], self.c, stride=1, padding=1)
             
             # print(f"x_i after convblock_9: requires_grad={x_i.requires_grad}")
 
