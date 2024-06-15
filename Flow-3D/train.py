@@ -22,7 +22,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import yt
-# from torch.cuda.amp import autocast, GradScaler
+from torch.cuda.amp import autocast, GradScaler
 
 hyper = True # hyperLREST
 
@@ -75,11 +75,12 @@ def get_learning_rate(step):
         # return 1e-7 * mul
     else:
         mul = np.cos((step - 2000) / (args.epoch * args.step_per_epoch - 2000.) * math.pi) * 0.5 + 0.5
+        # return (1e-3 - 1e-4) * mul + 1e-4
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (1e-4 - 1e-5) * mul + 1e-5
-        # return (1e-4 - 1e-6) * mul + 1e-6
+        # return (1e-4 - 1e-5) * mul + 1e-5
+        return (1e-4 - 1e-6) * mul + 1e-6
         # return (6e-5 - 6e-7) * mul + 6e-7
         # return (1e-5 - 1e-7) * mul + 1e-7
         # return (6e-6 - 6e-7) * mul + 6e-7
@@ -306,8 +307,8 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 if hyper == False:
                     pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
                 else:
-                    # with autocast():
-                    pred, info = model.update(imgs, gt, t_mask, params, dataset, learning_rate, training=True) # hyper
+                    with autocast():
+                        pred, info = model.update(imgs, gt, t_mask, params, dataset, learning_rate, training=True) # hyper
                 
                 # print("pred:", pred.shape, gt.shape, info['mask'].shape)
                 # pred = pred.permute(0, 1, 3, 4, 2) # (0, 1, 3, 4, 2)
@@ -918,7 +919,7 @@ if __name__ == "__main__":
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
-        args.batch_size = 6 # 1 2 4 32
+        args.batch_size = 10 # 1 2 4 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -1338,6 +1339,11 @@ if __name__ == "__main__":
     # 2x: 53.94 0.0274; 5x: 51.88 0.0278;
     ###
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-5_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
+    # 2x: 54.15 0.0357; 5x: 51.05 0.0375;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-3_1e-4_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
+    # 2x: 52.67 0.0326; loss jump
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-6_archtestCNN1D_amp_b10_conv01convblock012hyper_trainval.pkl"
+
     
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012deconvhyper_trainval.pkl"
     # 2x: 53.10 0.0322; 5x: 51.81 0.0324;

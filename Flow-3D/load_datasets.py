@@ -104,6 +104,7 @@ def load_data(dataset, factor, mode):
                 pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_params_W12_500_train.pkl"
                 # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_50_val.pkl"
                 # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_50_train_val.pkl"
+                pkl_train_filename = "/media/data/hamid/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_params_W12_500_train.pkl"
 
             # pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_triplets_W12_100_val.pkl"
             # pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_triplets_W12_100_val.pkl"
@@ -112,7 +113,7 @@ def load_data(dataset, factor, mode):
             if hyper:
                 pkl_val_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_50_val.pkl"
                 # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_50_train_val.pkl"
-
+                pkl_val_filename = "/media/data/hamid/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_50_val.pkl"
 
             # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_150_test_1.npy"
             # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_test.pkl"
@@ -120,6 +121,7 @@ def load_data(dataset, factor, mode):
             pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_1.pkl"
             if hyper:
                 pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_params.pkl"
+                pkl_test_filename = "/media/data/hamid/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_params.pkl"
 
         if dataset == "droplet3d":
             filename_train = filename + "droplet3d_64_train.pkl"
