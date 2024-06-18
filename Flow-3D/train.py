@@ -55,7 +55,12 @@ from baseline_interpol import *
 # mixed precision model (3D) +
 # remove amp and try on Habrok +
 
-device = torch.device("cuda")
+# device = torch.device("cuda")
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 
 # exp = os.path.abspath('.').split('/')[-1]
 log_path = 'train_log'
@@ -79,8 +84,9 @@ def get_learning_rate(step):
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-4 - 3e-6) * mul + 3e-6
+        return (1e-4 - 5e-4) * mul + 5e-4
         # return (1e-4 - 1e-5) * mul + 1e-5
-        return (1e-4 - 1e-6) * mul + 1e-6
+        # return (1e-4 - 1e-6) * mul + 1e-6
         # return (6e-5 - 6e-7) * mul + 6e-7
         # return (1e-5 - 1e-7) * mul + 1e-7
         # return (6e-6 - 6e-7) * mul + 6e-7
@@ -1343,6 +1349,8 @@ if __name__ == "__main__":
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-3_1e-4_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
     # 2x: 52.67 0.0326; loss jump
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-6_archtestCNN1D_amp_b10_conv01convblock012hyper_trainval.pkl"
+    # 2x: 53.71 0.0369; 5x: 48.38 0.0367;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_5e-4_archtestCNN1D_amp_b10_conv01convblock012hyper_trainval.pkl"
 
     
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012deconvhyper_trainval.pkl"
