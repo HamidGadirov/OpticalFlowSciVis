@@ -1255,6 +1255,7 @@ if __name__ == "__main__":
     # 2x: 53.29 0.0306; 3x: 53.68 0.0307; 5x: 52.44 0.0305; 8x: 48.57 0.0304; 16x: 41.63 0.0302
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow3e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # 2x: 52.75 0.0312; 8x: 49.15 0.0311; 16x: 42.46 0.0310
+
     ### +++
     model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 52.62 0.0310; 5x: 52.31 0.0310; 8x: 49.39 0.0309; 16x: 42.88 0.0309
@@ -1284,8 +1285,49 @@ if __name__ == "__main__":
     # model_name = "lrest_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
     # 2x: 51.83 0.0308; 5x: 51.04 0.0309; 8x: 48.70 0.0309; 16x: 42.50 0.0310
 
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
+    # 2x: 60.48 0.1239; 5x: 55.11 0.1215; 8x: 50.90 0.1211; 
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma09_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 51.29 0.0307; 8x: 49.26 0.0306;
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 50.29 0.0318; 8x: 49.68 0.0319;
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 58.35 0.1182; 8x: 50.12 0.1143;
+
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_1b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 55.71 0.0832; 8x: 45.95 0.0817
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-6.pkl"
+    # 2x: 56.76 0.0969; 8x: 46.87 0.0972
+
+
+    # model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 55.29 0.1365; 8x: 45.69 0.1354
+    # model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_4b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 56.76 0.1020; 8x: 46.19 0.0982
+
+    # best: 2x: 52.62 0.0310; 5x: 52.31 0.0310; 8x: 49.39 0.0309; 16x: 42.88 0.0309
+
+    # # ablations
+    # no flow:
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_noflow_v1_128_nyx_skip5_log10norm_triplets_W12_500_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 64.95 0.1582; 8x: 51.83 0.1586
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 60.95 0.1455; 3x: 56.67 0.1458; 5x: 53.17 0.1461; 8x: 48.14 0.1465; 16x: 39.54 0.1475
+    # no rec:
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 47.15 0.1454
+    # w/o s-t:
+    # model_name = "lrest_noTea_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 2x: 59.44 0.1389; 8x: 47.37 0.1391
+    # model_name = "lrest_noTea_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
+    # 2x: 51.51 0.0299; 5x: 53.38 0.0300; 8x: 50.05 0.0300
+
     # TODO:
     # try: replace PReLU with sine (SIREN)
+
+    # HYPER:
 
     # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
@@ -1345,6 +1387,7 @@ if __name__ == "__main__":
     # 2x: 53.94 0.0274; 5x: 51.88 0.0278;
     ###
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-5_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
+<<<<<<< Updated upstream
     # 2x: 54.15 0.0357; 5x: 51.05 0.0375;
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-3_1e-4_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
     # 2x: 52.67 0.0326; loss jump
@@ -1353,6 +1396,9 @@ if __name__ == "__main__":
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_5e-4_archtestCNN1D_amp_b10_conv01convblock012hyper_trainval.pkl"
 
     
+=======
+
+>>>>>>> Stashed changes
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012deconvhyper_trainval.pkl"
     # 2x: 53.10 0.0322; 5x: 51.81 0.0324;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock0123456hyper_trainval.pkl"
@@ -1422,46 +1468,7 @@ if __name__ == "__main__":
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_6.pkl"
     # 2x: 54.40 0.0371; 5x: 48.30 0.0368
 
-    # TODO: train set:
 
-
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
-    # 2x: 60.48 0.1239; 5x: 55.11 0.1215; 8x: 50.90 0.1211; 
-
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma09_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
-    # 2x: 51.29 0.0307; 8x: 49.26 0.0306;
-
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 50.29 0.0318; 8x: 49.68 0.0319;
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 58.35 0.1182; 8x: 50.12 0.1143;
-
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_1b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 55.71 0.0832; 8x: 45.95 0.0817
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-6.pkl"
-    # 2x: 56.76 0.0969; 8x: 46.87 0.0972
-
-
-    # model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 55.29 0.1365; 8x: 45.69 0.1354
-    # model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_4b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 56.76 0.1020; 8x: 46.19 0.0982
-
-
-    # # ablations
-    # no flow:
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_noflow_v1_128_nyx_skip5_log10norm_triplets_W12_500_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 64.95 0.1582; 8x: 51.83 0.1586
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 60.95 0.1455; 3x: 56.67 0.1458; 5x: 53.17 0.1461; 8x: 48.14 0.1465; 16x: 39.54 0.1475
-    # no rec:
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 47.15 0.1454
-    # w/o s-t:
-    # model_name = "lrest_noTea_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 59.44 0.1389; 8x: 47.37 0.1391
-    # model_name = "lrest_noTea_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
-    # 2x: 51.51 0.0299; 5x: 53.38 0.0300; 8x: 50.05 0.0300
 
 
     # untrained: 2x: 52.68 0.1707; 8x: 41.26 0.1710   

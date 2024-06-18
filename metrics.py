@@ -240,6 +240,15 @@ def calculate_avg_epe_3d(flow_gt, flow_pred, dir_model, factor):
     print('avg EPE: {:.4f}'.format(mean_error))
     return mean_error
 
+def calculate_mean_of_closest_points_streamline(reference_point, streamlines):
+    closest_points = []
+    for streamline in streamlines:
+        distances = np.linalg.norm(streamline - reference_point, axis=1)
+        closest_index = np.argmin(distances)
+        closest_points.append(streamline[closest_index])
+    mean_point = np.mean(closest_points, axis=0)
+    return mean_point
+
 def calculate_sum_psnr(orig, interp):
     # Normalize to [0, 1]
     orig = (orig - orig.min()) / (orig.max() - orig.min())

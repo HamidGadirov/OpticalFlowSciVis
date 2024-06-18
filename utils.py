@@ -22,6 +22,7 @@ from PIL import Image
 from matplotlib.colors import LogNorm
 import glob
 from natsort import natsorted
+from metrics import calculate_mean_of_closest_points_streamline
 
 def flow2rgb(flow_map_np):
     h, w, _ = flow_map_np.shape
@@ -1194,6 +1195,15 @@ def render_volume_yt(volume, save_path, file_name):
     print("rendered!")
     # omega - overall brightness, to see more details
 
+# Define function to add streamlines
+def add_streamlines_to_scene(scene, ds, field, seed_points):
+    streamlines = ds.streamlines(field, seeds=seed_points, length=1.0, method='rk4')
+    streamline_obj = yt.LinePlotCallback(streamlines, 'streamline', color='blue')
+    scene.add_source(streamline_obj)
+    return streamlines
+
+# Example seed points
+seed_points = np.random.rand(100, 3)  # 100 random points in the unit cube
 
 def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
                           dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
@@ -1296,6 +1306,16 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         ax_zoom1.add_patch(frame1)
         ax_zoom2.add_patch(frame2)
 
+    # Initialize lists to store streamline data
+    streamlines_data_gt = []
+    streamlines_data = []
+
+    # Initialize lists to store mean of closest points for averaging later
+    mean_closest_points_gt_list = []
+    mean_closest_points_list = []
+
+    # Define reference point (example)
+    reference_point = np.array([0.5, 0.5, 0.5])
 
     for i in range(columns):
         volume = original_data[round(index)]
@@ -1389,6 +1409,15 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         source.tfh.bounds = bounds
         source.tfh.plot(os.path.join(dir_res, "flow_gt_tf.png"), profile_field=("gas", "density"))
 
+        # Add streamlines
+        streamlines = add_streamlines_to_scene(sc, ds, ("gas", "velocity"), seed_points)
+        # streamlines_data_gt.append(streamlines)
+
+        # Calculate and accumulate mean of closest points for ground truth
+        mean_closest_point_gt = calculate_mean_of_closest_points_streamline(reference_point, [sl for sl in streamlines])
+        mean_closest_points_gt_list.append(mean_closest_point_gt)
+        print(f"Mean of closest points to {reference_point} in GT: {mean_closest_point_gt}")
+
         cam = sc.camera
         cam.resolution = cam_resolution
         if "jets3d" in dataset:
@@ -1418,6 +1447,14 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         source.tfh.bounds = bounds
         source.tfh.plot(os.path.join(dir_res, "flow_tf.png"), profile_field=("gas", "density"))
 
+        # Add streamlines
+        streamlines = add_streamlines_to_scene(sc, ds, ("gas", "velocity"), seed_points)
+        streamlines_data.append(streamlines)
+        # Calculate and accumulate mean of closest points for flow
+        mean_closest_point = calculate_mean_of_closest_points_streamline(reference_point, [sl for sl in streamlines])
+        mean_closest_points_list.append(mean_closest_point)
+        print(f"Mean of closest points to {reference_point} in flow: {mean_closest_point}")
+
         cam = sc.camera
         cam.resolution = cam_resolution
         if "jets3d" in dataset:
@@ -1437,6 +1474,13 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         ax.axis('off')
 
         index += skip
+
+    # Calculate the average of the mean closest points for both ground truth and flow
+    avg_mean_closest_point_gt = np.mean(mean_closest_points_gt_list, axis=0)
+    avg_mean_closest_point = np.mean(mean_closest_points_list, axis=0)
+
+    print(f"Average mean of closest points to {reference_point} in GT: {avg_mean_closest_point_gt}")
+    print(f"Average mean of closest points to {reference_point} in flow: {avg_mean_closest_point}")
 
     if show:
         plt.show() 
