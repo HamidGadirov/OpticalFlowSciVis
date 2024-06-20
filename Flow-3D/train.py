@@ -22,7 +22,7 @@ currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentfram
 parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import yt
-from torch.cuda.amp import autocast, GradScaler
+# from torch.cuda.amp import autocast
 
 hyper = True # hyperLREST
 
@@ -55,11 +55,11 @@ from baseline_interpol import *
 # mixed precision model (3D) +
 # remove amp and try on Habrok +
 
-# device = torch.device("cuda")
+device = torch.device("cuda")
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 # exp = os.path.abspath('.').split('/')[-1]
@@ -86,6 +86,7 @@ def get_learning_rate(step):
         # return (3e-4 - 3e-6) * mul + 3e-6
         return (1e-4 - 5e-4) * mul + 5e-4
         # return (1e-4 - 1e-5) * mul + 1e-5
+        # return (1e-4 - 5e-5) * mul + 5e-5
         # return (1e-4 - 1e-6) * mul + 1e-6
         # return (6e-5 - 6e-7) * mul + 6e-7
         # return (1e-5 - 1e-7) * mul + 1e-7
@@ -313,8 +314,8 @@ def train(model, dataset, factor, model_name, mode, local_rank):
                 if hyper == False:
                     pred, info = model.update(imgs, gt, t_mask, dataset, learning_rate, training=True)
                 else:
-                    with autocast():
-                        pred, info = model.update(imgs, gt, t_mask, params, dataset, learning_rate, training=True) # hyper
+                    # with autocast():
+                    pred, info = model.update(imgs, gt, t_mask, params, dataset, learning_rate, training=True) # hyper
                 
                 # print("pred:", pred.shape, gt.shape, info['mask'].shape)
                 # pred = pred.permute(0, 1, 3, 4, 2) # (0, 1, 3, 4, 2)
@@ -899,7 +900,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=120, type=int) # 300 500
+    parser.add_argument('--epoch', default=120, type=int) # 120 200 300 500
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
     parser.add_argument('--local-rank', default=0, type=int, help='local rank') # local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -925,7 +926,7 @@ if __name__ == "__main__":
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
-        args.batch_size = 10 # 1 2 4 32
+        args.batch_size = 4 # 1 2 4 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -1387,18 +1388,40 @@ if __name__ == "__main__":
     # 2x: 53.94 0.0274; 5x: 51.88 0.0278;
     ###
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-5_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
-<<<<<<< Updated upstream
     # 2x: 54.15 0.0357; 5x: 51.05 0.0375;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-3_1e-4_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-3_1e-4_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
     # 2x: 52.67 0.0326; loss jump
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-6_archtestCNN1D_amp_b10_conv01convblock012hyper_trainval.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-6_archtestCNN1D_amp_b10_conv01convblock012hyper_trainval.pkl"
     # 2x: 53.71 0.0369; 5x: 48.38 0.0367;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_5e-4_archtestCNN1D_amp_b10_conv01convblock012hyper_trainval.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_5e-4_archtestCNN1D_amp_b10_conv01convblock012hyper_trainval.pkl"
+
+    # experiemnt - train on one member with furtherst params from test
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012hyper.pkl"
+    # 2x: 52.73 0.0278; 5x: 51.41 0.0284;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # 2x: 51.55 0.0277; 5x: 52.02 0.0278;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # 2x: 53.81 0.0317; 5x: 52.68 0.0318;
+    ###
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # 2x: 52.18 0.0259; 5x: 51.90 0.0259; lr1e-4_5e-4 actually
+    ###
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-5_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # 2x: 53.90 0.0293; 5x: 52.86 0.0294; lr1e-4_5e-4 actually
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-5_archtestCNN1D_b4_conv01convblock012hyper_1.pkl"
+    # 2x: 53.61 0.0315; 5x: 52.74 0.0316; 
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 53.85 0.0602; 5x: 54.15 0.0602; overfit?
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # 2x: 52.64 0.0252; 5x: 52.64 0.0251;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-3_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # explode -
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_3e-4_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # 2x: 52.18 0.0261; 5x: 52.50 0.0262;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_AdamW_1e-3_1e-2_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # 2x: 51.92 0.0255; 5x: 52.57 0.0255;
 
     
-=======
-
->>>>>>> Stashed changes
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012deconvhyper_trainval.pkl"
     # 2x: 53.10 0.0322; 5x: 51.81 0.0324;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock0123456hyper_trainval.pkl"
@@ -1450,7 +1473,6 @@ if __name__ == "__main__":
     # 2x: 51.94 0.0328; 5x: 52.02 0.0330
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr3e-4_3e-6_archtestCNN1D_c16_b4_1.pkl"
 
-
     # amp
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_amp1.pkl"
     # 2x: 53.92 0.0375; 5x: 48.26 0.0374;
@@ -1469,11 +1491,10 @@ if __name__ == "__main__":
     # 2x: 54.40 0.0371; 5x: 48.30 0.0368
 
 
-
-
     # untrained: 2x: 52.68 0.1707; 8x: 41.26 0.1710   
     # hyper, untrained: 2x: 39.66 0.3174
     # baseline: skip5 - 2x: 53.19; 3x: 47.49; 5x: 41.92; 8x: 37.51; 16x: 31.90 32x: 27.68
+    # 200 and 50 triplets, same results
 
 
     """ tangaroa """

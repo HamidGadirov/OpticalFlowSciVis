@@ -146,10 +146,15 @@ dirNames = ['./Simulation_OmM_0155_OmB_00235_h_055_npy', './Simulation_OmM_012_O
             './Simulation_OmM_012_OmB_00215_h_055_npy', # new
             './Simulation_OmM_0155_OmB_00215_h_055_npy', './Simulation_OmM_0155_OmB_00225_h_055_npy'] # new
 
+dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy', './Simulation_OmM_0155_OmB_00215_h_055_npy'] # train
+dirNames = ['./Simulation_OmM_0155_OmB_00225_h_055_npy'] # for ends
+dirNames = ['./Simulation_OmM_01375_OmB_00225_h_055_npy'] # for ends
+
 # val 
 # dirNames = ['./Simulation_OmM_0155_OmB_00215_h_07_npy']
-dirNames = ['./Simulation_OmM_01375_OmB_00215_h_055_npy'] # new
-dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy'] # train val
+# dirNames = ['./Simulation_OmM_01375_OmB_00215_h_055_npy'] # new
+# dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy'] # train val
+# dirNames = ['./Simulation_OmM_0155_OmB_00215_h_055_npy'] # train val 1
 
 # comoving_OmM = 0.1375
 # comoving_OmB = 0.0215
@@ -159,6 +164,7 @@ dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy'] # train val
 # test
 # dirNames = ['./Simulation_OmM_0155_OmB_00235_h_07_npy']
 # dirNames = ['./Simulation_OmM_01375_OmB_00235_h_055_npy'] # new
+# dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy', './Simulation_OmM_0155_OmB_00235_h_055_npy'] # ends
 # print("test")
 
 # val
@@ -420,7 +426,7 @@ data_with_params = (data, params_ensemble)
 
 num_members = len(dirNames)
 member_size = 160 # data.shape[0] # 160
-num_triplets = 50 # 50 200 500
+num_triplets = 200 # 50 200 500
 window = 12 # 8 12
 
 # Initialize a tuple to hold the triplet data and parameters
@@ -489,7 +495,8 @@ print('Parameters data shape:', triplet_data[1].shape)
 # filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_params_W12_200_train.pkl"
 # filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_params_W12_500_train.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_50_val.pkl"
-filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_50_train_val.pkl"
+# filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_200_train_OmM_0155_OmB_00215_h_055.pkl"
+filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_200_train_end2m.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 

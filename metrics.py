@@ -28,7 +28,7 @@ import torch
 import lpips
 from skimage.metrics import structural_similarity as ssim
 
-from utils import visualize_ind, visualize_series
+# from utils import visualize_ind, visualize_series
 
 # TODO: add frames or images that were GT for interpolation
 # show full video
@@ -553,8 +553,8 @@ def create_gt_interpol(dataset, factor):
     gt = np.array(gt)
     print("GT:", gt.shape)
     title = "Ground_truth"
-    if "2d" in dataset:
-        visualize_series(gt, factor,  dataset, dir_res, title=title, show=False, save=True)
+    # if "2d" in dataset:
+    #     visualize_series(gt, factor,  dataset, dir_res, title=title, show=False, save=True)
     # input("GT created...")
 
     # calc_diff = True # True
@@ -652,8 +652,8 @@ if calc_metrics:
         dir_res = os.path.join(dir_res, str(factor) + "x")
         print("Saving at:", dir_res)
         title = "Baseline"
-        if "2d" in dataset:
-            visualize_series(linear_interpol_data, factor,  dataset, dir_res, title=title, show=False, save=True)
+        # if "2d" in dataset:
+        #     visualize_series(linear_interpol_data, factor,  dataset, dir_res, title=title, show=False, save=True)
         # input("x")
         mean_psnr_score, mean_ssim_score = calculate_metrics(original_data.squeeze(), linear_interpol_data.squeeze(), factor)
         mean_psnr_scores_baseline.append(round(mean_psnr_score, 2))
