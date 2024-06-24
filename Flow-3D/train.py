@@ -66,7 +66,7 @@ print(f"Using device: {device}")
 log_path = 'train_log'
 
 def get_learning_rate(step):
-    if step < 2000:
+    if step < 2000: # 2000
         mul = step / 2000.
         # return 1e-3 * mul
         # return 6e-4 * mul # 2D
@@ -84,7 +84,7 @@ def get_learning_rate(step):
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (1e-4 - 5e-4) * mul + 5e-4
+        return (1e-4 - 3e-4) * mul + 3e-4
         # return (1e-4 - 1e-5) * mul + 1e-5
         # return (1e-4 - 5e-5) * mul + 5e-5
         # return (1e-4 - 1e-6) * mul + 1e-6
@@ -176,6 +176,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         if hyper:
             data_train = data_train_tuple[0]  # Triplet data
             params_train = data_train_tuple[1]  # Parameters
+            # print("len data_train:", len(data_train))
             dataset_train = TripletDataset(data_train, params_train)
             train_data = DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
         else:
@@ -204,9 +205,17 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         #     val_data = DataLoader(dataset_val, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
     
         # data_test = load_data(dataset, mode)
-        data_test, data_test_non_overlap = load_data(dataset, factor, mode)
+        data_test_tuple, data_test_non_overlap = load_data(dataset, factor, mode)
         shuffle = False
-        data_test = DataLoader(data_test, batch_size=batch_size_inf, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
+        if hyper:
+            data_test = data_test_tuple[0]  # Triplet data
+            params_test = data_test_tuple[1]  # Parameters
+            print("len:", len(data_test))
+            dataset_test = TripletDataset(data_test, params_test)
+            data_test = DataLoader(dataset_test, batch_size=batch_size_inf, shuffle=shuffle, num_workers=num_workers, pin_memory=True, drop_last=True)
+        else:
+            data_test = DataLoader(data_test, batch_size=batch_size_inf, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
+        print("len:", len(data_test))
 
     # input("x")
 
@@ -398,22 +407,28 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # flow_gt_combined = []
         # data_test_combined = []
         print(f"inference for {factor}x interpolation")
-        for i, data in enumerate(data_test):
-            print("data:", data.shape)
-            # input("x")
-            data_gpu = data
+        # for i, data in enumerate(data_test):
+        for i, (data_batch, params_batch) in enumerate(data_test):
+            if hyper:
+                data_gpu = data_batch.to(device, non_blocking=True)
+                params_gpu = params_batch.to(device, non_blocking=True)
+            else:
+                data_gpu = data
+                # print("data:", data.shape)
 
             # data_gpu = data_gpu.permute(0, 1, 2, 5, 3, 4) # 3rd is dim0
-            
             # data_gpu = data_gpu.float() # to float32
+            # print("data_gpu:", data_gpu.shape)
 
             imgs = data_gpu[:, :2, 0]
             # gt = data_gpu[:, 2:3, 0]
-            # print(imgs.shape)
+            # print("imgs", imgs.shape)
+            # print("params_gpu", params_gpu.shape)
             # print(gt.shape)
             # input("imgs gt")
             if hyper:
-                params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
+                # params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
+                params = params_gpu  # hypernet
             # print("Shape of params tensor:", params.shape)
             # params_ = params.detach().cpu().numpy()
             # print("params_", params_)
@@ -900,7 +915,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=120, type=int) # 120 200 300 500
+    parser.add_argument('--epoch', default=200, type=int) # 120 200
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
     parser.add_argument('--local-rank', default=0, type=int, help='local rank') # local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -1420,6 +1435,26 @@ if __name__ == "__main__":
     # 2x: 52.18 0.0261; 5x: 52.50 0.0262;
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_AdamW_1e-3_1e-2_archtestCNN1D_b4_conv01convblock012hyper.pkl"
     # 2x: 51.92 0.0255; 5x: 52.57 0.0255;
+    ###
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 52.47 0.0238; 5x: 52.70 0.0237;
+    ###
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-5_step4000_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.63 0.0254; 5x: 52.31 0.0253;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 53.50 0.0263; 5x: 51.53 0.0269;
+    ###
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b1_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.87 0.0132; 5x: 51.81 0.0134;
+    ###
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 52.96 0.0157; 5x: 53.27 0.0156; explode -
+    ###
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_3e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 54.22 0.0143; 5x: 53.26 0.0142;
+    # 2x: 50.43 0.0265; 5x: 51.10 0.0264; OmM_0155_OmB_00235_h_055
+    # 2x: 52.89 0.0189; 5x: 52.11 0.0188; OmM_012_OmB_00215_h_055
+    ###
 
     
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012deconvhyper_trainval.pkl"

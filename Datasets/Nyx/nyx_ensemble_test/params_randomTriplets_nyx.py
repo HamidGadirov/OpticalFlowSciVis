@@ -164,7 +164,8 @@ dirNames = ['./Simulation_OmM_01375_OmB_00225_h_055_npy'] # for ends
 # test
 # dirNames = ['./Simulation_OmM_0155_OmB_00235_h_07_npy']
 # dirNames = ['./Simulation_OmM_01375_OmB_00235_h_055_npy'] # new
-# dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy', './Simulation_OmM_0155_OmB_00235_h_055_npy'] # ends
+# dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy'] # ends
+# dirNames = ['./Simulation_OmM_0155_OmB_00235_h_055_npy'] # ends
 # print("test")
 
 # val
@@ -395,27 +396,30 @@ print("Vel z range %f to %f" % (np.min(data[:, 3]), np.max(data[:, 3])))
 # Vel y range -1920.188721 to 2002.423950
 # Vel z range -1890.228638 to 2030.002319
 
-# print(data.shape)
-# test_data_with_params = (data, params_ensemble)
-# # data = data[200:350]
-# data = np.array(test_data_with_params[0])
-# params = np.array(test_data_with_params[1])
-# print("data shape:", data.shape)
-# print("params shape:", params.shape)
+print(data.shape)
+test_data_with_params = (data, params_ensemble)
+# data = data[200:350]
+data = np.array(test_data_with_params[0])
+params = np.array(test_data_with_params[1])
+print("data shape:", data.shape)
+print("params shape:", params.shape)
 # input("x")
-# # filename = "nyx3d_skip5_128_test.pkl"
-# # filename = "nyx3d_skip5_128_log10norm_test_1.pkl"
+# filename = "nyx3d_skip5_128_test.pkl"
+# filename = "nyx3d_skip5_128_log10norm_test_1.pkl"
 # filename = "nyx3d_skip5_128_log10norm_test_params.pkl"
-# # hdf5_file = 'nyx3d_128_150_test_2.h5'
-# # with h5py.File(hdf5_file, 'w') as hf:
-# #     # hf.create_dataset('data', data=data)
-# #     hf.create_dataset('data', data=data, compression='gzip', compression_opts=9, chunks=True)
-# # np.save(filename, data.astype(np.float32))
-# with open(filename, 'wb') as f:
-#     pickle.dump(data, f, protocol=4)
-# print('Test data saved!')
-# input("test")
-
+filename = "nyx3d_skip5_128_log10norm_OmM_012_OmB_00215_h_055_test_params.pkl"
+# filename = "nyx3d_skip5_128_log10norm_OmM_0155_OmB_00235_h_055_test_params.pkl"
+# hdf5_file = 'nyx3d_128_150_test_2.h5'
+# with h5py.File(hdf5_file, 'w') as hf:
+#     # hf.create_dataset('data', data=data)
+#     hf.create_dataset('data', data=data, compression='gzip', compression_opts=9, chunks=True)
+# np.save(filename, data.astype(np.float32))
+with open(filename, 'wb') as f:
+    # pickle.dump(data, f, protocol=4)
+    pickle.dump(test_data_with_params, f, protocol=4)
+print('Test data saved!')
+input("test")
+exit()
 
 data_with_params = (data, params_ensemble)
 # data = np.array(data_with_params[0])
@@ -496,9 +500,11 @@ print('Parameters data shape:', triplet_data[1].shape)
 # filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_params_W12_500_train.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_50_val.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_200_train_OmM_0155_OmB_00215_h_055.pkl"
-filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_200_train_end2m.pkl"
+filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_200_train_OmM_01375_OmB_00225_h_055.pkl"
+# filename = "nyx3d_skip5_128_log10norm_triplets_params_W12_200_train_end2m.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
+
 
 print(f"Triplet data and parameters saved to {filename}")
 

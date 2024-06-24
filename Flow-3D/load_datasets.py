@@ -105,6 +105,7 @@ def load_data(dataset, factor, mode):
                 # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_50_val.pkl"
                 # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_50_train_val.pkl"
                 pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_200_train_OmM_0155_OmB_00215_h_055.pkl"
+                pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_200_train_OmM_01375_OmB_00225_h_055.pkl"
                 # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_200_train_end2m.pkl"
                 # pkl_train_filename = "/media/data/hamid/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_params_W12_500_train.pkl"
 
@@ -123,6 +124,8 @@ def load_data(dataset, factor, mode):
             pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_1.pkl"
             if hyper:
                 pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_params.pkl"
+                pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_012_OmB_00215_h_055_test_params.pkl"
+                # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_0155_OmB_00235_h_055_test_params.pkl"
                 # pkl_test_filename = "/media/data/hamid/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_params.pkl"
 
         if dataset == "droplet3d":
@@ -450,9 +453,10 @@ def load_data(dataset, factor, mode):
                     data_part3 = data_test[600:700]
                     data_test = np.concatenate([data_part1, data_part3], axis=0)
 
-                data_test = np.array(data_test) # [30:]
-                print(data_test.shape)
-                # input("x")
+                if hyper == False:
+                    data_test = np.array(data_test) # [30:]
+                    print(data_test.shape)
+                    # input("x")
 
                 # print("Density range %f to %f" % (np.min(data_test[:, 0]), np.max(data_test[:, 0])))
                 # print("Vel x range %f to %f" % (np.min(data_test[:, 1]), np.max(data_test[:, 1])))
@@ -503,43 +507,94 @@ def load_data(dataset, factor, mode):
                 # visualize_series(data_test[:, 0, slice_num, :, :], factor, dataset, dir_res, title="Density", show=False, save=True)
                 # visualize_series(data_test[:, 1, slice_num, :, :], factor, dataset, dir_res, title="Velocity x", show=False, save=True)
                 # input("viz")
-        
-            print(data_test.shape)
-        
-            data_test_non_overlap = np.squeeze(data_test)
-            print("data_test_non_overlap:", data_test_non_overlap.shape)
-            # input("data_test_non_overlap")
 
-            random_triplets = False
-            if random_triplets == False:
-                # data_test = np.squeeze(data_test)
-                data_test_combined = []
-                n = factor  # or any desired value for interpolation factor
-                print(f"preparing data for {n}x interpolation")
+            if hyper == False:
+                print(data_test.shape)
+            
+                data_test_non_overlap = np.squeeze(data_test)
+                print("data_test_non_overlap:", data_test_non_overlap.shape)
+                # input("data_test_non_overlap")
 
-                for i in range(0, data_test.shape[0], n):
-                    try:
-                        # we don't need GT for inference!
-                        # concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
-                        # concat_in_between = np.concatenate(concat_in_between, axis=0)
-                        # ensure same number of dimensions
-                        data_test_i = np.expand_dims(data_test[i], axis=0)
-                        data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
-                        # print(np.array(concat_in_between).shape)
-                        # print(np.array(data_test_i).shape)
-                        # print(np.array(data_test_i_n).shape)
-                        # data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
-                        data_test_combined.append(np.concatenate((data_test_i, data_test_i_n), axis=0))
-                    except:
-                        print("done")
+                random_triplets = False
+                if random_triplets == False:
+                    # data_test = np.squeeze(data_test)
+                    data_test_combined = []
+                    n = factor  # or any desired value for interpolation factor
+                    print(f"preparing data for {n}x interpolation")
 
-                data_test = np.array(data_test_combined)
-                data_test = np.squeeze(data_test)
-                print("data_test combined:", data_test.shape)
+                    for i in range(0, data_test.shape[0], n):
+                        try:
+                            # we don't need GT for inference!
+                            # concat_in_between = [np.expand_dims(d, axis=0) for j, d in enumerate(data_test[i+1:i+n])]
+                            # concat_in_between = np.concatenate(concat_in_between, axis=0)
+                            # ensure same number of dimensions
+                            data_test_i = np.expand_dims(data_test[i], axis=0)
+                            data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
+                            # print(np.array(concat_in_between).shape)
+                            # print(np.array(data_test_i).shape)
+                            # print(np.array(data_test_i_n).shape)
+                            # data_test_combined.append(np.concatenate((data_test_i, data_test_i_n, concat_in_between), axis=0))
+                            data_test_combined.append(np.concatenate((data_test_i, data_test_i_n), axis=0))
+                        except:
+                            print("done")
+
+                    data_test = np.array(data_test_combined)
+                    data_test = np.squeeze(data_test)
+                    print("data_test combined:", data_test.shape)
 
                 # save_path = "Results/jets3d"
                 # render_density(data_test[:, 0, 0], data_test[:, 1, 0], save_path)
                 # input("data test")
+            else:
+                # Assuming data_test is now a tuple
+                data_test, params_test = data_test
+
+                # Flatten the data_test
+                data_test_non_overlap = np.squeeze(data_test)
+                print("data_test_non_overlap:", data_test_non_overlap.shape)
+
+                # # Flatten params_test if necessary
+                # params_test_non_overlap = np.squeeze(params_test)
+                # print("params_test_non_overlap:", params_test_non_overlap.shape)
+
+                random_triplets = False
+                if random_triplets == False:
+                    data_test_combined = []
+                    # params_test_combined = []
+                    n = factor  # or any desired value for interpolation factor
+                    print(f"Preparing data for {n}x interpolation")
+
+                    for i in range(0, data_test.shape[0], n):
+                        try:
+                            # Prepare the data for interpolation
+                            data_test_i = np.expand_dims(data_test[i], axis=0)
+                            data_test_i_n = np.expand_dims(data_test[i+n], axis=0)
+                            
+                            # # Prepare the parameters for interpolation
+                            # params_test_i = np.expand_dims(params_test[i], axis=0)
+                            # params_test_i_n = np.expand_dims(params_test[i+n], axis=0)
+
+                            # Combine data and parameters, without ground truth for inference
+                            data_combined = np.concatenate((data_test_i, data_test_i_n), axis=0)
+                            # params_combined = np.concatenate((params_test_i, params_test_i_n), axis=0)
+
+                            data_test_combined.append(data_combined)
+                            # params_test_combined.append(params_combined)
+
+                        except IndexError:
+                            print("Reached the end of data.")
+
+                    # Convert the lists back to arrays
+                    data_test = np.array(data_test_combined)
+                    data_test = np.squeeze(data_test)
+                    print("data_test combined:", data_test.shape)
+
+                    # params_test = np.array(params_test_combined)
+                    params_test = np.squeeze(params_test)
+                    print("params_test combined:", params_test.shape)
+
+                # Re-pack the data and parameters back into a tuple
+                data_test = (data_test, params_test)
 
             if "tangaroa3d" in filename:
                 data_test = data[150:201]

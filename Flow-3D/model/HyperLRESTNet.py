@@ -87,6 +87,7 @@ class HyperNetwork(nn.Module):
             nn.Flatten(),
             nn.Linear(32 * latent_dim, total_params)
         )
+        # TODO: how can change? Conv1d in 3D?
 
     def forward(self, x):
         x = self.mlp(x).unsqueeze(1)  # Transform and add a channel dimension for CNN
@@ -133,7 +134,7 @@ class HyperNetwork(nn.Module):
 
         # ???
         # supervised vs unsupervised? (LREST and CoordNet work with same data)
-        # streamlines vis in pytorch vs ParaView?
+        # streamlines vis in pytorch vs ParaView? streamtracer - or cross section (paper)
         # is it ok to maintain the reviewers for TVCG?
 
 

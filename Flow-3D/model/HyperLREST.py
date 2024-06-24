@@ -146,6 +146,7 @@ class Model:
 
         imgs = torch.cat((img0, img1), 1)
         gt = img0.clone() * 0 # no GT during inference
+        # print("imgs, gt, params:", imgs.shape, gt.shape, params.shape)
         if student_teacher:
             flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
             # flow, mask, merged, warped_img0, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
@@ -219,7 +220,7 @@ class Model:
         else:
             self.eval()
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
-        # print("imgs, gt:", imgs.shape, gt.shape)
+        # print("imgs, gt, params:", imgs.shape, gt.shape, params.shape)
         # with torch.cuda.amp.autocast(True):
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
         if student_teacher:
