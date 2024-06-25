@@ -12,15 +12,23 @@ sys.path.insert(0, parentdir)
 
 from utils import plot_loss, visualize_ind, visualize_series, visualize_series_flow, visualize_large
 
+class SineActivation(nn.Module):
+    def forward(self, x):
+        return torch.sin(x)
+
 def functional_conv3d(x, weight, bias, out_planes, stride=1, padding=1, dilation=1):
     x = F.conv3d(x, weight, bias, stride=stride, padding=padding, dilation=dilation)
-    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
+    # prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
+    # prelu = nn.SELU().to(x.device)
+    prelu = SineActivation().to(x.device)
     x = prelu(x)
     return x
 
 def functional_conv_transpose3d(x, weight, bias, out_planes, stride=2, padding=1):
     x = F.conv_transpose3d(x, weight, bias, stride=stride, padding=padding)
-    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
+    # prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
+    # prelu = nn.SELU().to(x.device)
+    prelu = SineActivation().to(x.device)
     x = prelu(x)
     return x
 
@@ -70,27 +78,42 @@ class HyperNetwork(nn.Module):
 
         self.mlp = nn.Sequential(
             nn.Linear(input_dim, 16),
-            nn.PReLU(),
+            # nn.SELU(), # PReLU(),
+            SineActivation(),
             nn.Linear(16, 32),
-            nn.PReLU(),
+            # nn.SELU(), # PReLU(),
+            SineActivation(),
             nn.Linear(32, latent_dim), # 64
-            nn.PReLU()
+            # nn.SELU(), #PReLU()
+            SineActivation(),
         )
 
         self.cnn = nn.Sequential(
             nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), # 8
-            nn.PReLU(),
-            # nn.Conv1d(8, 16, kernel_size=3, padding=1),
-            # nn.PReLU(),
+            # nn.SELU(), # nn.PReLU(),
+            SineActivation(),
             nn.Conv1d(16, 32, kernel_size=3, padding=1),
-            nn.PReLU(),
+            # nn.SELU(), # PReLU(),
+            SineActivation(),
             nn.Flatten(),
             nn.Linear(32 * latent_dim, total_params)
         )
         # TODO: how can change? Conv1d in 3D?
+        # self.cnn3d = nn.Sequential(
+        #     nn.Conv3d(in_channels=1, out_channels=16, kernel_size=(3, 3, 3), padding=1),
+        #     nn.PReLU(),
+        #     # nn.Conv3d(8, 16, kernel_size=(3, 3, 3), padding=1),
+        #     # nn.PReLU(),
+        #     nn.Conv3d(16, 32, kernel_size=(3, 3, 3), padding=1),
+        #     nn.PReLU(),
+        #     nn.Flatten(),
+        #     nn.Linear(32 * latent_dim, total_params)
+        # )
 
     def forward(self, x):
         x = self.mlp(x).unsqueeze(1)  # Transform and add a channel dimension for CNN
+        # x = x.unsqueeze(2).unsqueeze(3)  # Add spatial dimensions for Conv3d
+        # weights_flat = self.cnn3d(x)
         weights_flat = self.cnn(x)
         return self._reshape_weights(weights_flat)
 
@@ -244,7 +267,9 @@ class IFBlock(nn.Module):
         self.deconvblock_2 = nn.ConvTranspose3d(c//2, 7, 4, stride=2, padding=1)
 
         # Define PReLU activations
-        self.prelu = nn.PReLU()
+        # self.prelu = nn.PReLU()
+        # self.prelu = nn.SELU()
+        self.prelu = SineActivation()
 
         # Freeze LREST layers
         # self.freeze_lrest_layers()

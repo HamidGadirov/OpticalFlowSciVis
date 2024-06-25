@@ -84,7 +84,8 @@ def get_learning_rate(step):
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (1e-4 - 3e-4) * mul + 3e-4
+        return (1e-4 - 4e-4) * mul + 4e-4
+        # return (1e-4 - 1e-5) * mul + 1e-5
         # return (1e-4 - 1e-5) * mul + 1e-5
         # return (1e-4 - 5e-5) * mul + 5e-5
         # return (1e-4 - 1e-6) * mul + 1e-6
@@ -1456,6 +1457,19 @@ if __name__ == "__main__":
     # 2x: 50.43 0.0265; 5x: 51.10 0.0264; OmM_0155_OmB_00235_h_055
     # 2x: 52.89 0.0189; 5x: 52.11 0.0188; OmM_012_OmB_00215_h_055
     ###
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 52.06 0.0210; 5x: 52.00 0.0208; OmM_012_OmB_00215_h_055
+    ### +++
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.27 0.0177; 5x: 52.21 0.0179; OmM_012_OmB_00215_h_055
+    ### +++
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN3D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 52.20 0.0190; 5x: 52.64 0.0190;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN3D_4layers_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 50.71 0.0177; 5x: 51.56 0.0177;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_SELU_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.24 0.0216; 5x: 51.71 0.0215;
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_Sine_b4_conv01convblock012hyper_200ep.pkl"
 
     
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012deconvhyper_trainval.pkl"
@@ -1646,9 +1660,9 @@ if __name__ == "__main__":
             """
 
             # 3D rendering function
-            visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
-                        dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
-            print("visualize_seq_dens_3d done!")
+            # visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
+            #             dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
+            # print("visualize_seq_dens_3d done!")
 
             """
             original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]
