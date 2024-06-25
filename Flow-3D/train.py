@@ -1446,11 +1446,12 @@ if __name__ == "__main__":
     ###
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b1_conv01convblock012hyper_200ep.pkl"
     # 2x: 51.87 0.0132; 5x: 51.81 0.0134;
+    # 2x: 51.34 0.0197; 5x: 51.19 0.0196; OmM_012_OmB_00215_h_055
     ###
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 52.96 0.0157; 5x: 53.27 0.0156; explode -
     ###
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_3e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_3e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 54.22 0.0143; 5x: 53.26 0.0142;
     # 2x: 50.43 0.0265; 5x: 51.10 0.0264; OmM_0155_OmB_00235_h_055
     # 2x: 52.89 0.0189; 5x: 52.11 0.0188; OmM_012_OmB_00215_h_055
@@ -1645,9 +1646,9 @@ if __name__ == "__main__":
             """
 
             # 3D rendering function
-            # visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
-            #             dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
-            # print("visualize_seq_dens_3d done!")
+            visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
+                        dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
+            print("visualize_seq_dens_3d done!")
 
             """
             original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]
