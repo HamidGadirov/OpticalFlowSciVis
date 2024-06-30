@@ -12,23 +12,68 @@ sys.path.insert(0, parentdir)
 
 from utils import plot_loss, visualize_ind, visualize_series, visualize_series_flow, visualize_large
 
-class SineActivation(nn.Module):
-    def forward(self, x):
-        return torch.sin(x)
+# class SineActivation(nn.Module):
+#     def forward(self, x):
+#         return torch.sin(x)
+
+# import torch.nn.init as init
+
+# def sine_init(m):
+#     if isinstance(m, nn.Linear):
+#         num_input = m.weight.size(-1)
+#         with torch.no_grad():
+#             m.weight.uniform_(-np.sqrt(6 / num_input), np.sqrt(6 / num_input))
+#     elif isinstance(m, nn.Conv1d):
+#         num_input = m.weight.size(1)
+#         with torch.no_grad():
+#             m.weight.uniform_(-np.sqrt(6 / num_input), np.sqrt(6 / num_input))
+#     elif isinstance(m, nn.Conv3d):
+#         num_input = m.weight.size(1) * m.weight.size(2) * m.weight.size(3) * m.weight.size(4)
+#         with torch.no_grad():
+#             m.weight.uniform_(-np.sqrt(6 / num_input), np.sqrt(6 / num_input))
+
+# def first_layer_sine_init(m):
+#     if isinstance(m, nn.Linear):
+#         num_input = m.weight.size(-1)
+#         with torch.no_grad():
+#             m.weight.uniform_(-1 / num_input, 1 / num_input)
+#     elif isinstance(m, nn.Conv1d):
+#         num_input = m.weight.size(1)
+#         with torch.no_grad():
+#             m.weight.uniform_(-1 / num_input, 1 / num_input)
+#     elif isinstance(m, nn.Conv3d):
+#         num_input = m.weight.size(1) * m.weight.size(2) * m.weight.size(3) * m.weight.size(4)
+#         with torch.no_grad():
+#             m.weight.uniform_(-1 / num_input, 1 / num_input)
+
+# def kaiming_init(m):
+#     if isinstance(m, nn.Linear):
+#         nn.init.kaiming_normal_(m.weight, nonlinearity='linear')
+#     elif isinstance(m, nn.Conv1d):
+#         nn.init.kaiming_normal_(m.weight, nonlinearity='linear')
+#     elif isinstance(m, nn.Conv3d):
+#         nn.init.kaiming_normal_(m.weight, nonlinearity='linear')
+#     elif isinstance(m, nn.ConvTranspose3d):
+#         nn.init.kaiming_normal_(m.weight, nonlinearity='linear')
+
+# def prelu_init(m):
+#     if isinstance(m, nn.PReLU):
+#         m.weight.data.fill_(0.25)
+
 
 def functional_conv3d(x, weight, bias, out_planes, stride=1, padding=1, dilation=1):
     x = F.conv3d(x, weight, bias, stride=stride, padding=padding, dilation=dilation)
-    # prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
+    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
     # prelu = nn.SELU().to(x.device)
-    prelu = SineActivation().to(x.device)
+    # prelu = SineActivation().to(x.device)
     x = prelu(x)
     return x
 
 def functional_conv_transpose3d(x, weight, bias, out_planes, stride=2, padding=1):
     x = F.conv_transpose3d(x, weight, bias, stride=stride, padding=padding)
-    # prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
+    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
     # prelu = nn.SELU().to(x.device)
-    prelu = SineActivation().to(x.device)
+    # prelu = SineActivation().to(x.device)
     x = prelu(x)
     return x
 
@@ -78,23 +123,23 @@ class HyperNetwork(nn.Module):
 
         self.mlp = nn.Sequential(
             nn.Linear(input_dim, 16),
-            # nn.SELU(), # PReLU(),
-            SineActivation(),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
             nn.Linear(16, 32),
-            # nn.SELU(), # PReLU(),
-            SineActivation(),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
             nn.Linear(32, latent_dim), # 64
-            # nn.SELU(), #PReLU()
-            SineActivation(),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
         )
 
         self.cnn = nn.Sequential(
             nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), # 8
-            # nn.SELU(), # nn.PReLU(),
-            SineActivation(),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
             nn.Conv1d(16, 32, kernel_size=3, padding=1),
-            # nn.SELU(), # PReLU(),
-            SineActivation(),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
             nn.Flatten(),
             nn.Linear(32 * latent_dim, total_params)
         )
@@ -109,6 +154,18 @@ class HyperNetwork(nn.Module):
         #     nn.Flatten(),
         #     nn.Linear(32 * latent_dim, total_params)
         # )
+
+        # model weight same capacity - experiment 
+        # ablations
+        # more metrics for flow: SSIM, nRSME, gradients of the flow; angle difference nomalized (cosine similarity)
+        # render the metrics as fields or as a histogram
+        # avoid integration (or short integration)
+        # stremaline generation
+
+        # self.apply(sine_init)
+
+        # self.apply(kaiming_init)
+        # self.apply(prelu_init)
 
     def forward(self, x):
         x = self.mlp(x).unsqueeze(1)  # Transform and add a channel dimension for CNN
@@ -158,8 +215,6 @@ class HyperNetwork(nn.Module):
         # ???
         # supervised vs unsupervised? (LREST and CoordNet work with same data)
         # streamlines vis in pytorch vs ParaView? streamtracer - or cross section (paper)
-        # is it ok to maintain the reviewers for TVCG?
-
 
 # """
 
@@ -243,8 +298,14 @@ class IFBlock(nn.Module):
 
         # Initialize the hypernetwork
         # self.hypernet = HyperNetwork(input_dim, self.weight_shapes)
-        latent_dim = 4
+        latent_dim = 3
         self.hypernet = HyperNetwork(input_dim, latent_dim, self.weight_shapes)
+
+        # self.hypernet.apply(sine_init)
+        # self.hypernet.apply(first_layer_sine_init)
+
+        # self.hypernet.apply(kaiming_init)
+        # self.hypernet.apply(prelu_init)
 
         # Define the layers to be trained normally (LREST)
         # self.conv0_0 = nn.Conv3d(in_planes, c//2, 4, stride=2, padding=1)
@@ -267,9 +328,9 @@ class IFBlock(nn.Module):
         self.deconvblock_2 = nn.ConvTranspose3d(c//2, 7, 4, stride=2, padding=1)
 
         # Define PReLU activations
-        # self.prelu = nn.PReLU()
+        self.prelu = nn.PReLU()
         # self.prelu = nn.SELU()
-        self.prelu = SineActivation()
+        # self.prelu = SineActivation()
 
         # Freeze LREST layers
         # self.freeze_lrest_layers()
@@ -482,18 +543,20 @@ class HyperLRESTNet(nn.Module):
         self.refine = refine
         self.use_deconv = use_deconv
 
+        if blocks_num == 1:
+            self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
         if blocks_num == 2:
             self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
             self.block1 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
         if blocks_num == 3:
-            self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
-            self.block1 = IFBlock(6+6, c=96, input_dim=3) # 13 c=150 96 192
-            self.block2 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=160, input_dim=3) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=120, input_dim=3) # 13 c=150 96 192
+            self.block2 = IFBlock(6+6, c=80, input_dim=3) # 13 c=90 96 64 128
         elif blocks_num == 4:
-            self.block0 = IFBlock(3, c=256, input_dim=3) # 128 256 320 400
-            self.block1 = IFBlock(6+6, c=192, input_dim=3) # 96 192 256 320
-            self.block2 = IFBlock(6+6, c=192, input_dim=3) # 96 192 256 320
-            self.block3 = IFBlock(6+6, c=128, input_dim=3) # 64 128 192 256
+            self.block0 = IFBlock(3, c=128, input_dim=3) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=96, input_dim=3) # 96 192 256 320
+            self.block2 = IFBlock(6+6, c=96, input_dim=3) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=64, input_dim=3) # 64 128 192 256
         elif blocks_num == 5:
             self.block0 = IFBlock(3, c=256, input_dim=3) # 128 256 320 400
             self.block1 = IFBlock(6+6, c=192, input_dim=3) # 96 192 256 320

@@ -21,10 +21,10 @@ flow_available = True # True False
 blocks_num = 3 # 2 3 4 5 6
 student_teacher = False # True False
 
-c = 256
+c = 64
 in_planes = 128
 input_dim = 3
-latent_dim = 4
+latent_dim = 3
 weight_shapes = {
     'conv0_0_weight': torch.Size([c//2, in_planes, 4, 4, 4]),
     'conv0_0_bias': torch.Size([c//2]),
@@ -80,7 +80,7 @@ class Model:
         # self.flownet = HyperLRESTNet()
         # self.hypernet = HyperNetwork(input_dim, weight_shapes)
         self.device = torch.device(f'cuda:{local_rank}' if local_rank != -1 else 'cpu')
-        self.flownet = HyperLRESTNet(blocks_num=3).to(self.device)
+        self.flownet = HyperLRESTNet(blocks_num=blocks_num).to(self.device)
         # self.hypernet = HyperNetwork(input_dim, weight_shapes).to(self.device)
         self.hypernet = HyperNetwork(input_dim, latent_dim, weight_shapes).to(self.device)
 

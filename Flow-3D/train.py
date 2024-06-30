@@ -942,7 +942,7 @@ if __name__ == "__main__":
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
-        args.batch_size = 4 # 1 2 4 32
+        args.batch_size = 3 # 1 2 4 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
     # if args.dataset == "tangaroa3d":
@@ -1459,17 +1459,55 @@ if __name__ == "__main__":
     ###
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 52.06 0.0210; 5x: 52.00 0.0208; OmM_012_OmB_00215_h_055
-    ### +++
+    ### 
     model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 50.29 0.0274; 5x: 50.76 0.0271; OmM_0155_OmB_00235_h_055
     # 2x: 51.27 0.0177; 5x: 52.21 0.0179; OmM_012_OmB_00215_h_055
+    ###
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock012hyper_300ep.pkl"
+    # 2x: 51.52 0.0255; 5x: 49.98 0.0254; OmM_0155_OmB_00235_h_055
+    # 2x: 52.53 0.0181; 5x: 52.02 0.0180; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock01hyper_200ep.pkl"
+    # 2x: 50.98 0.0196; 5x: 52.36 0.0194; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 50.60 0.0179; 5x: 51.42 0.0178; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 50.96 0.0173; 5x: 51.52 0.0171; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_32_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.51 0.0206; 5x: 51.81 0.0204; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_80_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.53 0.0185; 5x: 52.66 0.0184; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l2_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 52.47 0.0174; 5x: 52.59 0.0172; OmM_012_OmB_00215_h_055
     ### +++
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l3_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.43 0.0266; 5x: 50.87 0.0265; OmM_0155_OmB_00235_h_055
+    # 2x: 51.91 0.0166; 5x: 52.22 0.0165; OmM_012_OmB_00215_h_055 
+    # b_s = 3, mlp32
+    ### +++
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_mlp16_CNN1D_l3_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.35 0.0173; 5x: 52.76 0.0172; OmM_012_OmB_00215_h_055
+
+    # TODO: 
+    # model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+
+
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN3D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 52.20 0.0190; 5x: 52.64 0.0190;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN3D_4layers_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 50.71 0.0177; 5x: 51.56 0.0177;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_SELU_b4_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_SELU_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 51.24 0.0216; 5x: 51.71 0.0215;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_Sine_b4_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_Sine_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 50.86 0.0729; -
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_SineInit_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 52.79 0.0201; 5x: 52.04 0.0200;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_PReLUinit_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.42 0.0212 ; 5x: 51.54 0.0211; exploded
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l6_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 53.31 0.0180; 5x: 52.31 0.0178;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l8_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 52.61 0.0185; 5x: 52.53 0.0184;
 
     
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012deconvhyper_trainval.pkl"

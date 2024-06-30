@@ -1231,7 +1231,7 @@ def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path)
             source_center=seed,
             source_radius=0.05,  # Define a small radius around the seed point
             # integrator_type='4',  # Runge-Kutta 4/5 integrator
-            max_time=100.0  # You can adjust this value as needed
+            max_time=10.0  # You can adjust this value as needed
         )
         streamline_collection.append(streamline)
 
@@ -1263,15 +1263,15 @@ def generate_streamlines(ds, velocity_field, seed_points):
     streamlines.integrate_through_volume()
     return streamlines
 
-# Example seed points
-seed_points = np.random.rand(10, 3)  # 100 random points in the unit cube
+np.random.seed(42)
+seed_points = np.random.rand(10, 3)
 # seed_points = np.array(seed_points)
 
 def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
                           dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
     
-    columns = 2 # 6
-    rows = 6 # 4
+    columns = 2 # 2 6
+    rows = 6 # 4 5
     skip = 10
     data_to_vis = original_data
     index = 0
@@ -1570,7 +1570,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         #     if len(streamline) > 1:
         #         ax.plot(streamline[:, 0], streamline[:, 1], streamline[:, 2], color='red', alpha=0.7)
 
-
+        # """
         # Fifth row: flow gt streamlines on density
         output_path = os.path.join(dir_res, "Flow_streamlines.png")
         volume = original_data[round(index)]
@@ -1599,6 +1599,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
 
         ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
         ax.axis('off')
+        # """
 
         index += skip
 
