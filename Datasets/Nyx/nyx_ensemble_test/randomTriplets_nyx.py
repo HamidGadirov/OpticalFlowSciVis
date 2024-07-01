@@ -136,14 +136,18 @@ dirNames = ['./Simulation_OmM_0155_OmB_00235_h_055_npy', './Simulation_OmM_012_O
             './Simulation_OmM_012_OmB_00215_h_055_npy', # new
             './Simulation_OmM_0155_OmB_00215_h_055_npy', './Simulation_OmM_0155_OmB_00225_h_055_npy'] # new
 
+dirNames = ['./Simulation_OmM_01375_OmB_00225_h_055_npy'] # for ends
+
 # val 
 # dirNames = ['./Simulation_OmM_0155_OmB_00215_h_07_npy']
-dirNames = ['./Simulation_OmM_01375_OmB_00215_h_055_npy']
+# dirNames = ['./Simulation_OmM_01375_OmB_00215_h_055_npy']
 # './Simulation_OmM_012_OmB_00235_h_07_npy',
 
 # test
 # dirNames = ['./Simulation_OmM_0155_OmB_00235_h_07_npy']
 # dirNames = ['./Simulation_OmM_01375_OmB_00235_h_055_npy']
+dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy'] # ends
+dirNames = ['./Simulation_OmM_0155_OmB_00235_h_055_npy'] # ends
 # print("test")
 
 # val
@@ -357,7 +361,9 @@ print(data.shape)
 # data = data[200:350]
 print("data save shape:", data.shape)
 # filename = "nyx3d_skip5_128_test.pkl"
-filename = "nyx3d_skip5_128_log10norm_test_1.pkl"
+# filename = "nyx3d_skip5_128_log10norm_test_1.pkl"
+# filename = "nyx3d_skip5_128_log10norm_OmM_012_OmB_00215_h_055_test.pkl"
+filename = "nyx3d_skip5_128_log10norm_OmM_0155_OmB_00235_h_055_test.pkl"
 # hdf5_file = 'nyx3d_128_150_test_2.h5'
 # with h5py.File(hdf5_file, 'w') as hf:
 #     # hf.create_dataset('data', data=data)
@@ -370,7 +376,7 @@ input("test")
 
 num_members = len(dirNames)
 member_size = 160 # data.shape[0] # 160
-num_triplets = 50
+num_triplets = 200
 
  # 50 200 300 500
 window = 12 # 8 12
@@ -435,10 +441,11 @@ print(triplet_data.dtype)
 # filename = "nyx3d_skip5_128_triplets_W12_500_train.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_W12_200_train.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_W12_500_train.pkl"
-filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train.pkl"
+# filename = "nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train.pkl"
+filename = "nyx3d_skip5_128_log10norm_triplets_W12_200_train_OmM_01375_OmB_00225_h_055.pkl"
 # filename = "nyx3d_skip5_128_triplets_W12_100_val.pkl"
 # filename = "nyx3d_skip5_128_log10norm_triplets_W12_50_val.pkl"
-filename = "nyx3d_skip5_128_log10norm_triplets_W12_50_val_1.pkl"
+# filename = "nyx3d_skip5_128_log10norm_triplets_W12_50_val_1.pkl"
 with open(filename, 'wb') as f:
     pickle.dump(triplet_data, f, protocol=4)
 # chunk_size = 500  # Set an appropriate chunk size

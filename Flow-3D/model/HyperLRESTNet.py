@@ -549,9 +549,9 @@ class HyperLRESTNet(nn.Module):
             self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
             self.block1 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
         if blocks_num == 3:
-            self.block0 = IFBlock(3, c=160, input_dim=3) # 6 c=240 128 256
-            self.block1 = IFBlock(6+6, c=120, input_dim=3) # 13 c=150 96 192
-            self.block2 = IFBlock(6+6, c=80, input_dim=3) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=96, input_dim=3) # 13 c=150 96 192
+            self.block2 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
         elif blocks_num == 4:
             self.block0 = IFBlock(3, c=128, input_dim=3) # 128 256 320 400
             self.block1 = IFBlock(6+6, c=96, input_dim=3) # 96 192 256 320

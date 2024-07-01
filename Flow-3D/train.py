@@ -24,7 +24,7 @@ sys.path.insert(0, parentdir)
 import yt
 # from torch.cuda.amp import autocast
 
-hyper = True # hyperLREST
+hyper = False # hyperLREST
 
 if hyper == False:
     from model.LREST import Model
@@ -170,17 +170,18 @@ def train(model, dataset, factor, model_name, mode, local_rank):
 
     num_workers = 1 # 8
     if mode == "train":
-        data_train_tuple, data_val_tuple = load_data(dataset, factor, mode)
         # sampler = DistributedSampler(data_train)
         # train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=8, pin_memory=True, drop_last=True, sampler=sampler)
         # train_data = DataLoader(data_train, batch_size=args.batch_size, num_workers=num_workers, pin_memory=True, drop_last=True)
         if hyper:
+            data_train_tuple, data_val_tuple = load_data(dataset, factor, mode)
             data_train = data_train_tuple[0]  # Triplet data
             params_train = data_train_tuple[1]  # Parameters
             # print("len data_train:", len(data_train))
             dataset_train = TripletDataset(data_train, params_train)
             train_data = DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
         else:
+            data_train, data_val = load_data(dataset, factor, mode)
             train_data = DataLoader(data_train, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
         args.step_per_epoch = train_data.__len__()
         # input("train loaded")
@@ -199,24 +200,19 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # for i, data in enumerate(train_data):
         #     print(i)
     else:
-        # if hyper:
-        #     data_test= data_test_tuple[0]  # Triplet data
-        #     params_test = data_test_tuple[1]  # Parameters
-        #     dataset_val = TripletDataset(data_val, params_val)
-        #     val_data = DataLoader(dataset_val, batch_size=args.batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
-    
-        # data_test = load_data(dataset, mode)
-        data_test_tuple, data_test_non_overlap = load_data(dataset, factor, mode)
         shuffle = False
         if hyper:
+            data_test_tuple, data_test_non_overlap = load_data(dataset, factor, mode)
             data_test = data_test_tuple[0]  # Triplet data
             params_test = data_test_tuple[1]  # Parameters
             print("len:", len(data_test))
             dataset_test = TripletDataset(data_test, params_test)
             data_test = DataLoader(dataset_test, batch_size=batch_size_inf, shuffle=shuffle, num_workers=num_workers, pin_memory=True, drop_last=True)
         else:
+            data_test, data_test_non_overlap = load_data(dataset, factor, mode)
             data_test = DataLoader(data_test, batch_size=batch_size_inf, shuffle=shuffle, pin_memory=True, num_workers=num_workers)
         print("len:", len(data_test))
+
 
     # input("x")
 
@@ -261,8 +257,15 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         time_stamp = time.time()
         for epoch in range(args.epoch):
             # sampler.set_epoch(epoch)
+            data_iterator = enumerate(train_data)
             # for i, data in enumerate(train_data):
-            for i, (data_batch, params_batch) in enumerate(train_data):
+            # for i, (data_batch, params_batch) in enumerate(train_data):
+            for i, data in data_iterator:
+                if hyper == False:
+                    data_batch = data
+                else:
+                    data_batch, params_batch = data
+
                 data_time_interval = time.time() - time_stamp
                 time_stamp = time.time()
                 # data = torch.zeros([16, 9, 150, 450], dtype=torch.float)
@@ -409,14 +412,17 @@ def train(model, dataset, factor, model_name, mode, local_rank):
         # data_test_combined = []
         print(f"inference for {factor}x interpolation")
         # for i, data in enumerate(data_test):
-        for i, (data_batch, params_batch) in enumerate(data_test):
-            if hyper:
-                data_gpu = data_batch.to(device, non_blocking=True)
-                params_gpu = params_batch.to(device, non_blocking=True)
-            else:
+        # for i, (data_batch, params_batch) in enumerate(data_test):
+        data_iterator = enumerate(data_test)
+        for i, data in data_iterator:
+            if hyper == False:
                 data_gpu = data
                 # print("data:", data.shape)
-
+            else:
+                data_batch, params_batch = data
+                data_gpu = data_batch.to(device, non_blocking=True)
+                params_gpu = params_batch.to(device, non_blocking=True)
+                
             # data_gpu = data_gpu.permute(0, 1, 2, 5, 3, 4) # 3rd is dim0
             # data_gpu = data_gpu.float() # to float32
             # print("data_gpu:", data_gpu.shape)
@@ -753,14 +759,18 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
     # psnr_list_teacher = []
     loss_all_list = [0. for i in range(7)] # all loss components
     time_stamp = time.time()
+    data_iterator = enumerate(val_data)
     # for i, data in enumerate(val_data):
-    for i, (data_batch, params_batch) in enumerate(val_data):
-        if hyper:
+    # for i, (data_batch, params_batch) in enumerate(val_data):
+    for i, data in data_iterator:
+        if hyper == False:
+            data_batch = data
+            data_gpu = data.to(device, non_blocking=True) # / 255.
+        else:
+            data_batch, params_batch = data
             data_gpu = data_batch.to(device, non_blocking=True)
             params_gpu = params_batch.to(device, non_blocking=True)
-        else:
-            data_gpu = data.to(device, non_blocking=True) # / 255.
-
+            
         # imgs = data_gpu[:, :2]
         # gt = data_gpu[:, 2:3]
 
@@ -1292,6 +1302,15 @@ if __name__ == "__main__":
     # 2x: 53.30 0.0305; 5x: 53.34 0.0305; 8x: 50.25 0.0305; 16x: 43.63 0.0304
     # a bit better, use only for final experiments
 
+    # TODO: 
+    model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 49.86 0.0294; 5x: 51.07 0.0294; OmM_0155_OmB_00235_h_055
+    # 2x: 50.52 0.0212; 5x: 52.93 0.0210; OmM_012_OmB_00215_h_055
+
+    # hyper best:
+    # 2x: 51.79 0.0264; 5x: 50.64 0.0262; OmM_0155_OmB_00235_h_055
+    # 2x: 51.91 0.0166; 5x: 52.22 0.0165; OmM_012_OmB_00215_h_055 
+
 
     # model_name = "lrest_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 52.11 0.0312; 5x: 52.25 0.0311; 8x: 49.43 0.0310; 16x: 42.90 0.0309
@@ -1347,32 +1366,32 @@ if __name__ == "__main__":
     # HYPER:
 
     # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
-    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-5_1e-7.pkl"
+    # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-5_1e-7.pkl"
     # 2x: 19
     # change arch - only some blocks hypernet
-    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-5_1e-7_1.pkl"
+    # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-5_1e-7_1.pkl"
     # 2x: 44.38
-    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest.pkl"
+    # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest.pkl"
     # 2x: 44.04
-    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_freeze1.pkl"
+    # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_freeze1.pkl"
     # 2x: 53.08 0.0317 - nothing frozen
-    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_freeze2.pkl"
+    # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_freeze2.pkl"
     # None grads
-    model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd.pkl"
+    # model_name = "hyperLREST_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd.pkl"
     # 2x: 53.08 0.0319; 5x: 48.39 0.0318
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd.pkl"
     # OOM
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd.pkl"
     # 2x: 53.83 0.0285; 5x: 48.29 0.0283
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN.pkl"
     # ???
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd1.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtest_removedNograd1.pkl"
     # 2x: 52.69  0.0342 - increased MLP
 
 
     ### +++
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D.pkl"
     # 2x: 52.95 0.0211; 5x: 52.33 0.0211;
     ### +++
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_1.pkl"
@@ -1382,28 +1401,28 @@ if __name__ == "__main__":
     # 2x: 53.74 0.0469; 5x: 48.25 0.0467;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b4.pkl"
     # 2x: 53.82 0.0349;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_c16_b4_1.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_c16_b4_1.pkl"
     # 2x: 52.51 0.0353; 5x: 51.71 0.0355;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_c16_b4_val_test.pkl"
     # still 
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-5_archtestCNN1D_c16_b4.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-5_archtestCNN1D_c16_b4.pkl"
     # 2x: 53.69 0.0332; 5x: 53.02 0.0334; 500 better than 200 triplets
 
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_reproduce.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_reproduce.pkl"
     # 2x: 51.88 0.0218; 5x: 48.12 0.0218; yes!! val same as train, 50 triplets, batch_size = 1 (look at lr plot)
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_reproduce.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_reproduce.pkl"
     # 2x: 50.22 0.0215; 5x: 47.68 0.0214;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_trainval.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b1_trainval.pkl"
     # 2x: 51.34 0.0281; 5x: 48.19 0.0281;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01hyper_trainval.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01hyper_trainval.pkl"
     # 2x: 52.40 0.0309; 5x: 47.65 0.0306;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_prev+012convhyper_trainval.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_prev+012convhyper_trainval.pkl"
     # 2x: 53.41 0.0314; 5x: 51.69 0.0312;
     ###
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012hyper_trainval.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012hyper_trainval.pkl"
     # 2x: 53.94 0.0274; 5x: 51.88 0.0278;
     ###
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-5_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-4_1e-5_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
     # 2x: 54.15 0.0357; 5x: 51.05 0.0375;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_lr1e-3_1e-4_archtestCNN1D_b6_conv01convblock012hyper_trainval.pkl"
     # 2x: 52.67 0.0326; loss jump
@@ -1414,38 +1433,38 @@ if __name__ == "__main__":
     # experiemnt - train on one member with furtherst params from test
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-5_archtestCNN1D_b1_conv01convblock012hyper.pkl"
     # 2x: 52.73 0.0278; 5x: 51.41 0.0284;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_conv01convblock012hyper.pkl"
     # 2x: 51.55 0.0277; 5x: 52.02 0.0278;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_conv01convblock012hyper.pkl"
     # 2x: 53.81 0.0317; 5x: 52.68 0.0318;
     ###
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper.pkl"
     # 2x: 52.18 0.0259; 5x: 51.90 0.0259; lr1e-4_5e-4 actually
     ###
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-5_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-5_archtestCNN1D_b4_conv01convblock012hyper.pkl"
     # 2x: 53.90 0.0293; 5x: 52.86 0.0294; lr1e-4_5e-4 actually
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-5_archtestCNN1D_b4_conv01convblock012hyper_1.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-5_archtestCNN1D_b4_conv01convblock012hyper_1.pkl"
     # 2x: 53.61 0.0315; 5x: 52.74 0.0316; 
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_end2m_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 53.85 0.0602; 5x: 54.15 0.0602; overfit?
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper.pkl"
     # 2x: 52.64 0.0252; 5x: 52.64 0.0251;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_1e-3_archtestCNN1D_b4_conv01convblock012hyper.pkl"
     # explode -
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_3e-4_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_3e-4_archtestCNN1D_b4_conv01convblock012hyper.pkl"
     # 2x: 52.18 0.0261; 5x: 52.50 0.0262;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_AdamW_1e-3_1e-2_archtestCNN1D_b4_conv01convblock012hyper.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_AdamW_1e-3_1e-2_archtestCNN1D_b4_conv01convblock012hyper.pkl"
     # 2x: 51.92 0.0255; 5x: 52.57 0.0255;
     ###
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 52.47 0.0238; 5x: 52.70 0.0237;
     ###
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_oneMember_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-5_step4000_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 51.63 0.0254; 5x: 52.31 0.0253;
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 53.50 0.0263; 5x: 51.53 0.0269;
     ###
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b1_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_50_gamma_lr1e-4_5e-4_archtestCNN1D_b1_conv01convblock012hyper_200ep.pkl"
     # 2x: 51.87 0.0132; 5x: 51.81 0.0134;
     # 2x: 51.34 0.0197; 5x: 51.19 0.0196; OmM_012_OmB_00215_h_055
     ###
@@ -1460,7 +1479,7 @@ if __name__ == "__main__":
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 52.06 0.0210; 5x: 52.00 0.0208; OmM_012_OmB_00215_h_055
     ### 
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 50.29 0.0274; 5x: 50.76 0.0271; OmM_0155_OmB_00235_h_055
     # 2x: 51.27 0.0177; 5x: 52.21 0.0179; OmM_012_OmB_00215_h_055
     ###
@@ -1480,16 +1499,20 @@ if __name__ == "__main__":
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l2_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 52.47 0.0174; 5x: 52.59 0.0172; OmM_012_OmB_00215_h_055
     ### +++
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l3_b4_conv01convblock012hyper_200ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l3_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 51.43 0.0266; 5x: 50.87 0.0265; OmM_0155_OmB_00235_h_055
     # 2x: 51.91 0.0166; 5x: 52.22 0.0165; OmM_012_OmB_00215_h_055 
-    # b_s = 3, mlp32
+    # b_s = 3, mlp32, 80
     ### +++
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_mlp16_CNN1D_l3_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 51.35 0.0173; 5x: 52.76 0.0172; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_mlp32_cnn1D_l3_b4_conv01convblock012hyper_200ep.pkl"
+    # 2x: 50.06 0.0260; 5x: 50.58 0.0259; OmM_0155_OmB_00235_h_055
+    # 2x: 50.34 0.0188; 5x: 51.78 0.0186; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_mlp32_cnn1D_l3_b3_conv01convblock012hyper_200ep.pkl"
+    # 2x: 51.79 0.0264; 5x: 50.64 0.0262; OmM_0155_OmB_00235_h_055
+    # 2x: 52.53 0.0178; 5x: 52.09 0.0177; OmM_012_OmB_00215_h_055
 
-    # TODO: 
-    # model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
 
 
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN3D_b4_conv01convblock012hyper_200ep.pkl"

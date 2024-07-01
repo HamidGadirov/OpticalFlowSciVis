@@ -25,7 +25,7 @@ sys.path.insert(0, parentdir)
 from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large, visualize_large_3d, \
     render_volume_yt, visualize_seq_dens_3d, render_density
 
-hyper = True # hyperLREST
+hyper = False # hyperLREST
 
 # @profile
 def load_data(dataset, factor, mode):
@@ -98,8 +98,9 @@ def load_data(dataset, factor, mode):
             # pkl_train_filename_1 = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_128_triplets_W12_500_train_1.npy"
             # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_200_train.pkl"
             # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_500_train.pkl"
-            # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train.pkl"
-            pkl_train_filename_1 = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train_1.pkl"
+            pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train.pkl"
+            # pkl_train_filename_1 = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_W12_500_train_1.pkl"
+            pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_W12_200_train_OmM_01375_OmB_00225_h_055.pkl"
             if hyper:
                 pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_ens5m_skip5_128_log10norm_triplets_params_W12_500_train.pkl"
                 # pkl_train_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_triplets_params_W12_50_val.pkl"
@@ -122,6 +123,8 @@ def load_data(dataset, factor, mode):
             # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_test.pkl"
             # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test.pkl"
             pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_1.pkl"
+            pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_012_OmB_00215_h_055_test.pkl"
+            # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_0155_OmB_00235_h_055_test.pkl"
             if hyper:
                 pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_params.pkl"
                 pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_012_OmB_00215_h_055_test_params.pkl"
