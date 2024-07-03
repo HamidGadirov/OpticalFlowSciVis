@@ -33,7 +33,7 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
     )
 
 version = 1
-blocks_num = 3 # 2 3 4 5 6
+blocks_num = 6 # 2 3 4 5 6
 refine = False # True
 use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
 student_teacher = False # True False
@@ -180,9 +180,6 @@ class LRESTNet(nn.Module):
             self.block0 = IFBlock(3, c=128) # 6 c=240 128 256
             self.block1 = IFBlock(6+6, c=64) # 13 c=90 96 64 128
         if blocks_num == 3:
-            # self.block0 = IFBlock(2, c=128) # 240
-            # self.block1 = IFBlock(5+6, c=96) # 150
-            # self.block2 = IFBlock(5+6, c=64) # 90
             self.block0 = IFBlock(3, c=256) # 6 c=240 128 256
             self.block1 = IFBlock(6+6, c=192) # 13 c=150 96 192
             self.block2 = IFBlock(6+6, c=128) # 13 c=90 96 64 128
@@ -197,6 +194,13 @@ class LRESTNet(nn.Module):
             self.block2 = IFBlock(6+6, c=192) # 96 192 256 320
             self.block3 = IFBlock(6+6, c=128) # 64 128 192 256
             self.block4 = IFBlock(6+6, c=128) # 64 128 192 256
+        elif blocks_num == 6:
+            self.block0 = IFBlock(3, c=256) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=256) # 128 256 320 400
+            self.block2 = IFBlock(6+6, c=192) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=192) # 96 192 256 320
+            self.block4 = IFBlock(6+6, c=128) # 64 128 192 256
+            self.block5 = IFBlock(6+6, c=128) # 64 128 192 256
 
         # self.block_tea = IFBlock(6+6, c=64) # 6 from cat, 6 from flow  c=90
         if student_teacher:
@@ -237,6 +241,9 @@ class LRESTNet(nn.Module):
         elif blocks_num == 5:
             stu = [self.block0, self.block1, self.block2, self.block3, self.block4]
             scale = [1, 1, 1, 1, 1] if use_deconv else [4, 2, 2, 1, 1]
+        elif blocks_num == 6:
+            stu = [self.block0, self.block1, self.block2, self.block3, self.block4, self.block5]
+            scale = [1, 1, 1, 1, 1, 1] if use_deconv else [4, 4, 2, 2, 1, 1]
         # stu = [self.block0, self.block1, self.block2]
         # stu = [self.block0, self.block2]
         for i in range(blocks_num):

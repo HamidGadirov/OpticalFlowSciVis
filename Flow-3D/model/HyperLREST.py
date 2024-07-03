@@ -12,28 +12,36 @@ import torch.nn.functional as F
 from model.loss import *
 from model.laplacian import *
 # from model.refine import *
+# from torch.cuda.amp import autocast, GradScaler
 
 device = torch.device("cuda")
 
 flow_available = True # True False
 
-blocks_num = 2 # 2 3 4 5 6
+blocks_num = 3 # 2 3 4 5 6
 student_teacher = False # True False
 
-c = 256
+c = 64
 in_planes = 128
 input_dim = 3
+latent_dim = 3
 weight_shapes = {
     'conv0_0_weight': torch.Size([c//2, in_planes, 4, 4, 4]),
     'conv0_0_bias': torch.Size([c//2]),
     'conv0_1_weight': torch.Size([c, c//2, 4, 4, 4]),
     'conv0_1_bias': torch.Size([c]),
-    'deconvblock_0_weight': torch.Size([c, c, 4, 4, 4]),
-    'deconvblock_0_bias': torch.Size([c]),
-    'deconvblock_1_weight': torch.Size([c, c//2, 4, 4, 4]),
-    'deconvblock_1_bias': torch.Size([c//2]),
-    'deconvblock_2_weight': torch.Size([c//2, 7, 4, 4, 4]),
-    'deconvblock_2_bias': torch.Size([7]),
+    # 'deconvblock_0_weight': torch.Size([c, c, 4, 4, 4]),
+    # 'deconvblock_0_bias': torch.Size([c]),
+    # 'deconvblock_1_weight': torch.Size([c, c//2, 4, 4, 4]),
+    # 'deconvblock_1_bias': torch.Size([c//2]),
+    # 'deconvblock_2_weight': torch.Size([c//2, 7, 4, 4, 4]),
+    # 'deconvblock_2_bias': torch.Size([7]),
+    'convblock_0_weight': torch.Size([c, c, 3, 3, 3]),
+    'convblock_0_bias': torch.Size([c]),
+    'convblock_1_weight': torch.Size([c, c, 3, 3, 3]),
+    'convblock_1_bias': torch.Size([c]),
+    'convblock_2_weight': torch.Size([c, c, 3, 3, 3]),
+    'convblock_2_bias': torch.Size([c]),
     
     # 'conv0_0_weight': torch.Size([c//2, in_planes, 4, 4, 4]), # out_channels, in_channels
     # 'conv0_0_bias': torch.Size([c//2]),
@@ -69,13 +77,22 @@ weight_shapes = {
 
 class Model:
     def __init__(self, local_rank=-1):
-        self.flownet = HyperLRESTNet()
-        self.hypernet = HyperNetwork(input_dim, weight_shapes)
+        # self.flownet = HyperLRESTNet()
+        # self.hypernet = HyperNetwork(input_dim, weight_shapes)
+        self.device = torch.device(f'cuda:{local_rank}' if local_rank != -1 else 'cpu')
+        self.flownet = HyperLRESTNet(blocks_num=blocks_num).to(self.device)
+        # self.hypernet = HyperNetwork(input_dim, weight_shapes).to(self.device)
+        self.hypernet = HyperNetwork(input_dim, latent_dim, weight_shapes).to(self.device)
 
-        self.device()
+        # self.device()
         # self.optimG = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
-        self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
+        # lrest_params = filter(lambda p: p.requires_grad, self.flownet.parameters())
+        # self.lrest_optimizer = AdamW(lrest_params, lr=1e-6, weight_decay=1e-3)
         self.lrest_optimizer = AdamW(self.flownet.parameters(), lr=1e-6, weight_decay=1e-3)
+        self.hypernet_optimizer = AdamW(self.hypernet.parameters(), lr=1e-6, weight_decay=1e-3)
+        # make one optimizer with one dictionary
+        
+        # self.scaler = GradScaler()
         
         self.epe = EPE()
         self.lap = LapLoss()
@@ -83,11 +100,8 @@ class Model:
         if local_rank != -1:
             self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank)
             # self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
+            self.hypernet = DDP(self.hypernet, device_ids=[local_rank], output_device=local_rank)
 
-        # Freezing parameters of specific blocks
-        for name, param in self.flownet.named_parameters():
-            if 'block0' in name or 'block1' in name:
-                param.requires_grad = False
 
     def train(self):
         self.flownet.train()
@@ -97,6 +111,7 @@ class Model:
 
     def device(self):
         self.flownet.to(device)
+
 
     def load_model(self, model_name, path, rank=0):
         def convert(param):
@@ -131,6 +146,7 @@ class Model:
 
         imgs = torch.cat((img0, img1), 1)
         gt = img0.clone() * 0 # no GT during inference
+        # print("imgs, gt, params:", imgs.shape, gt.shape, params.shape)
         if student_teacher:
             flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
             # flow, mask, merged, warped_img0, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
@@ -204,13 +220,14 @@ class Model:
         else:
             self.eval()
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[4, 2, 1])
-        # print("imgs, gt:", imgs.shape, gt.shape)
+        # print("imgs, gt, params:", imgs.shape, gt.shape, params.shape)
         # with torch.cuda.amp.autocast(True):
         # flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt), 1), scale=[1, 1, 1])
         if student_teacher:
             flow, mask, merged, flow_teacher, merged_teacher, loss_distill = self.flownet(torch.cat((imgs, gt, t_mask), 1))
         else:
             # flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1)) # # try without student-teacher: gt is not used
+            # with autocast():
             flow, mask, merged = self.flownet(torch.cat((imgs, gt, t_mask), 1), params) # params for hyperLREST
         
         # print(np.isfinite(flow.detach().cpu().numpy()).all())
@@ -228,33 +245,6 @@ class Model:
         max_shape_4 = min(img0.shape[4], mask.shape[4])
         # print(max_shape_2, max_shape_3)
         gt = gt[:,:,:max_shape_2,:max_shape_3,:max_shape_4]
-
-        # replacing laplacian loss with l1
-        # print("Laplace pyramid + L1 + AdamW (L2) + smoothness loss")
-        # print("Laplace pyramid + L1 + AdamW (L2)")
-        # print("Laplace pyramid + AdamW (L2)")
-        # print("L1 loss + AdamW (L2)")
-        # print(merged[2].shape, gt.shape)
-        # loss_l1 = (self.lap(merged[2], gt)).mean()
-        # print(np.min(merged[2].detach().cpu().numpy()), np.max(merged[2].detach().cpu().numpy()))
-        # print(np.mean(merged_teacher.detach().cpu().numpy()))
-        # print(np.min(gt.detach().cpu().numpy()), np.max(gt.detach().cpu().numpy()))
-        # input("l1_loss")
-
-        # # RIFE loss: same as l1 that I had.
-        # # i_weight = gamma**(n_predictions - i - 1)
-        # # i_loss = (flow_preds[i] - flow_gt).abs()
-        # # flow_loss += i_weight * (valid[:, None] * i_loss).mean()
-        # loss_flow = 0.
-        # loss_flow += (flow[0][:, 3:6] - gt_flow).abs().mean() * 0.64
-        # loss_flow += (flow[1][:, 3:6] - gt_flow).abs().mean() * 0.8
-        # loss_flow += (flow[2][:, 3:6] - gt_flow).abs().mean() * 1.
-        # # loss_flow += (flow[0][:, :2] - (-gt_flow)).abs().mean() * 0.64
-        # # loss_flow += (flow[1][:, :2] - (-gt_flow)).abs().mean() * 0.8
-        # # loss_flow += (flow[2][:, :2] - (-gt_flow)).abs().mean() * 1.
-        # loss_flow += (flow_teacher[:, 3:6] - gt_flow).abs().mean() * 1.
-        # # loss_flow += (flow_teacher[:, :2] - (-gt_flow)).abs().mean() * 1.
-        # # loss_flow /= 2.
 
         # flow_pred = flow[-1].detach().cpu().numpy()
         # flow_gt = gt_flow.detach().cpu().numpy()
@@ -471,21 +461,40 @@ class Model:
             # print("loss_photo:", loss_photo * lambda_photo)
             # print("loss_smooth:", loss_smooth * lambda_smooth)
             # print("loss_flow:", loss_flow * lambda_flow)
-            # epoch:0/1000 2/8 time:0.00+1.34 loss_G:1.4203e+00
-            # loss_l1: tensor(0.2562, device='cuda:0', grad_fn=<MulBackward0>)
-            # loss_tea: tensor(0.2556, device='cuda:0', grad_fn=<MulBackward0>)
-            # loss_flow: tensor(0.9121, device='cuda:0', dtype=torch.float16, grad_fn=<MulBackward0>)
-            # epoch:0/1000 3/8 time:0.00+1.34 loss_G:1.4238e+00
-            # loss_l1: tensor(37.7109, device='cuda:0', grad_fn=<MulBackward0>)
-            # loss_tea: tensor(37.8157, device='cuda:0', grad_fn=<MulBackward0>)
-            # loss_flow: tensor(102.9375, device='cuda:0', dtype=torch.float16, grad_fn=<MulBackward0>)
             # input("x")
+            
+            # def print_grads(module):
+            #     for name, param in module.named_parameters():
+            #         if param.requires_grad:
+            #             print(f"{name} grad: {param.grad}")
+
+            # """
             loss_G.backward()
+            # self.scaler.scale(loss_G).backward()
+            # print_grads(self.flownet)
+
             # self.optimG.step()
             # Optimize the hypernetwork
             self.hypernet_optimizer.step()
+            # self.scaler.step(self.hypernet_optimizer)
+
             # Optimize the main network
             self.lrest_optimizer.step()
+            # self.scaler.step(self.lrest_optimizer)
+
+            # self.scaler.update()
+            # """
+
+            # self.scaler.scale(loss_G).backward()
+            # # Optimize the hypernetwork
+            # self.scaler.step(self.hypernet_optimizer)
+            # self.hypernet_optimizer.zero_grad()
+            # # Optimize the main network
+            # self.scaler.step(self.lrest_optimizer)
+            # self.lrest_optimizer.zero_grad()
+            # # Updates the scale for next iteration
+            # self.scaler.update()
+            
         else:
             flow_teacher = flow[-1] # [2]
             merged_teacher = merged[-1] # [2]

@@ -25,10 +25,11 @@ from tqdm import tqdm
 import re
 
 import torch
+import torch.nn.functional as F
 import lpips
 from skimage.metrics import structural_similarity as ssim
 
-from utils import visualize_ind, visualize_series
+# from utils import visualize_ind, visualize_series
 
 # TODO: add frames or images that were GT for interpolation
 # show full video
@@ -239,6 +240,38 @@ def calculate_avg_epe_3d(flow_gt, flow_pred, dir_model, factor):
     mean_error = np.mean(error)
     print('avg EPE: {:.4f}'.format(mean_error))
     return mean_error
+
+def calculate_angle_difference(flow_gt, flow):
+
+    # Normalize the flow vectors
+    flow_gt_norm = F.normalize(flow_gt, dim=1, p=2)
+    flow_norm = F.normalize(flow, dim=1, p=2)
+
+    # Compute the dot product between normalized vectors
+    dot_product = torch.sum(flow_gt_norm * flow_norm, dim=1)
+
+    # Clamp dot_product to avoid numerical issues with arccos
+    dot_product = torch.clamp(dot_product, -1.0, 1.0)
+
+    # Compute the angle in radians
+    angle_radians = torch.acos(dot_product)
+
+    # Convert the angle to degrees
+    angle_degrees = torch.rad2deg(angle_radians)
+
+    # Compute the mean angle difference across the batch
+    angle_diff_mean = angle_degrees.mean()
+
+    return angle_diff_mean
+
+def calculate_mean_of_closest_points_streamline(reference_point, streamlines):
+    closest_points = []
+    for streamline in streamlines:
+        distances = np.linalg.norm(streamline - reference_point, axis=1)
+        closest_index = np.argmin(distances)
+        closest_points.append(streamline[closest_index])
+    mean_point = np.mean(closest_points, axis=0)
+    return mean_point
 
 def calculate_sum_psnr(orig, interp):
     # Normalize to [0, 1]
@@ -544,8 +577,8 @@ def create_gt_interpol(dataset, factor):
     gt = np.array(gt)
     print("GT:", gt.shape)
     title = "Ground_truth"
-    if "2d" in dataset:
-        visualize_series(gt, factor,  dataset, dir_res, title=title, show=False, save=True)
+    # if "2d" in dataset:
+    #     visualize_series(gt, factor,  dataset, dir_res, title=title, show=False, save=True)
     # input("GT created...")
 
     # calc_diff = True # True
@@ -643,8 +676,8 @@ if calc_metrics:
         dir_res = os.path.join(dir_res, str(factor) + "x")
         print("Saving at:", dir_res)
         title = "Baseline"
-        if "2d" in dataset:
-            visualize_series(linear_interpol_data, factor,  dataset, dir_res, title=title, show=False, save=True)
+        # if "2d" in dataset:
+        #     visualize_series(linear_interpol_data, factor,  dataset, dir_res, title=title, show=False, save=True)
         # input("x")
         mean_psnr_score, mean_ssim_score = calculate_metrics(original_data.squeeze(), linear_interpol_data.squeeze(), factor)
         mean_psnr_scores_baseline.append(round(mean_psnr_score, 2))

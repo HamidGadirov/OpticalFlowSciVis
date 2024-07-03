@@ -12,30 +12,68 @@ sys.path.insert(0, parentdir)
 
 from utils import plot_loss, visualize_ind, visualize_series, visualize_series_flow, visualize_large
 
-# def deconv(in_planes, out_planes, kernel_size=4, stride=2, padding=1):
-#     return nn.Sequential(
-#         torch.nn.ConvTranspose3d(in_channels=in_planes, out_channels=out_planes, 
-#                                 kernel_size=kernel_size, stride=stride, padding=padding),
-#         nn.PReLU(out_planes),
-#     )
+# class SineActivation(nn.Module):
+#     def forward(self, x):
+#         return torch.sin(x)
 
-def functional_conv_transpose3d(x, weight, bias, out_planes, stride=2, padding=1):
-    x = F.conv_transpose3d(x, weight, bias, stride=stride, padding=padding)
-    # x = nn.PReLU(num_parameters=out_planes)(x)
-    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)  # Move PReLU to the correct device
-    x = prelu(x)
-    return x
+# import torch.nn.init as init
 
-# def conv(in_planes, weights, stride=1, padding=1, dilation=1):
-#     return nn.Sequential(
-#         F.conv3d(in_planes, weights, stride=stride,
-#                   padding=padding, dilation=dilation, bias=True),
-#         nn.PReLU(out_planes),
-#     )
+# def sine_init(m):
+#     if isinstance(m, nn.Linear):
+#         num_input = m.weight.size(-1)
+#         with torch.no_grad():
+#             m.weight.uniform_(-np.sqrt(6 / num_input), np.sqrt(6 / num_input))
+#     elif isinstance(m, nn.Conv1d):
+#         num_input = m.weight.size(1)
+#         with torch.no_grad():
+#             m.weight.uniform_(-np.sqrt(6 / num_input), np.sqrt(6 / num_input))
+#     elif isinstance(m, nn.Conv3d):
+#         num_input = m.weight.size(1) * m.weight.size(2) * m.weight.size(3) * m.weight.size(4)
+#         with torch.no_grad():
+#             m.weight.uniform_(-np.sqrt(6 / num_input), np.sqrt(6 / num_input))
+
+# def first_layer_sine_init(m):
+#     if isinstance(m, nn.Linear):
+#         num_input = m.weight.size(-1)
+#         with torch.no_grad():
+#             m.weight.uniform_(-1 / num_input, 1 / num_input)
+#     elif isinstance(m, nn.Conv1d):
+#         num_input = m.weight.size(1)
+#         with torch.no_grad():
+#             m.weight.uniform_(-1 / num_input, 1 / num_input)
+#     elif isinstance(m, nn.Conv3d):
+#         num_input = m.weight.size(1) * m.weight.size(2) * m.weight.size(3) * m.weight.size(4)
+#         with torch.no_grad():
+#             m.weight.uniform_(-1 / num_input, 1 / num_input)
+
+# def kaiming_init(m):
+#     if isinstance(m, nn.Linear):
+#         nn.init.kaiming_normal_(m.weight, nonlinearity='linear')
+#     elif isinstance(m, nn.Conv1d):
+#         nn.init.kaiming_normal_(m.weight, nonlinearity='linear')
+#     elif isinstance(m, nn.Conv3d):
+#         nn.init.kaiming_normal_(m.weight, nonlinearity='linear')
+#     elif isinstance(m, nn.ConvTranspose3d):
+#         nn.init.kaiming_normal_(m.weight, nonlinearity='linear')
+
+# def prelu_init(m):
+#     if isinstance(m, nn.PReLU):
+#         m.weight.data.fill_(0.25)
+
 
 def functional_conv3d(x, weight, bias, out_planes, stride=1, padding=1, dilation=1):
     x = F.conv3d(x, weight, bias, stride=stride, padding=padding, dilation=dilation)
-    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)  # Move PReLU to the correct device
+    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
+    # prelu = nn.SELU().to(x.device)
+    # prelu = SineActivation().to(x.device)
+    x = prelu(x)
+    return x
+
+def functional_conv_transpose3d(x, weight, bias, out_planes, stride=2, padding=1):
+    x = F.conv_transpose3d(x, weight, bias, stride=stride, padding=padding)
+    prelu = nn.PReLU(num_parameters=out_planes).to(x.device)
+    # prelu = nn.SELU().to(x.device)
+    # prelu = SineActivation().to(x.device)
     x = prelu(x)
     return x
 
@@ -43,46 +81,114 @@ def functional_conv3d(x, weight, bias, out_planes, stride=1, padding=1, dilation
 # autoencoder: instead of pixel we have weights
 # k channels times 3x3 spatial dims
 class HyperNetwork(nn.Module):
-    def __init__(self, input_dim, weight_shapes):
+    def __init__(self, input_dim, latent_dim, weight_shapes):
         super(HyperNetwork, self).__init__()
         self.input_dim = input_dim
         self.weight_shapes = weight_shapes
 
         total_params = sum(shape.numel() for shape in self.weight_shapes.values())
 
-        # simple net: relu
-        # optimizer
         # what they used in HyperINR
 
         # self.encoder = nn.Sequential(
         #     nn.Linear(input_dim, 64),
-        #     nn.ReLU(),
-        #     nn.Linear(64, 128)
+        #     nn.PReLU(),
+        #     nn.Linear(64, 128),
+        #     nn.PReLU(),
+        #     nn.Linear(128, 256),
+        #     nn.PReLU()
         # )
+
         # self.decoder = nn.Sequential(
+        #     nn.Linear(256, 128),
+        #     nn.PReLU(),
         #     nn.Linear(128, 64),
-        #     nn.ReLU(),
-        #     nn.Linear(64, total_params)
+        #     nn.PReLU(),
+        #     nn.Linear(64, total_params),
         # )
 
-        self.encoder = nn.Sequential(
-            nn.Linear(input_dim, 64),
-            nn.PReLU(),
-            nn.Linear(64, 128),
-            nn.PReLU(),
-            nn.Linear(128, 256),
-            nn.PReLU()
+        # def forward(self, params):
+        #     encoded = self.encoder(params)
+        #     weights_flat = self.decoder(encoded)
+        #     return self._reshape_weights(weights_flat)
+
+        # def _reshape_weights(self, weights_flat):
+        #     weights = {}
+        #     offset = 0
+        #     for name, shape in self.weight_shapes.items():
+        #         size = shape.numel()
+        #         weights[name] = weights_flat[:, offset:offset + size].view(-1, *shape)
+        #         offset += size
+        #     return weights
+
+        self.mlp = nn.Sequential(
+            nn.Linear(input_dim, 16),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
+            nn.Linear(16, 32),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
+            nn.Linear(32, latent_dim), # 64
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
         )
 
-        self.decoder = nn.Sequential(
-            nn.Linear(256, 128),
-            nn.PReLU(),
-            nn.Linear(128, 64),
-            nn.PReLU(),
-            nn.Linear(64, total_params)
+        self.cnn = nn.Sequential(
+            nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), # 8
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
+            nn.Conv1d(16, 32, kernel_size=3, padding=1),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
+            nn.Flatten(),
+            nn.Linear(32 * latent_dim, total_params)
         )
+        # TODO: how can change? Conv1d in 3D?
+        # self.cnn3d = nn.Sequential(
+        #     nn.Conv3d(in_channels=1, out_channels=16, kernel_size=(3, 3, 3), padding=1),
+        #     nn.PReLU(),
+        #     # nn.Conv3d(8, 16, kernel_size=(3, 3, 3), padding=1),
+        #     # nn.PReLU(),
+        #     nn.Conv3d(16, 32, kernel_size=(3, 3, 3), padding=1),
+        #     nn.PReLU(),
+        #     nn.Flatten(),
+        #     nn.Linear(32 * latent_dim, total_params)
+        # )
 
-        # pre-train, train with hypernet, fine-tuning
+        # model weight same capacity - experiment 
+        # ablations
+        # more metrics for flow: SSIM, nRSME, gradients of the flow; angle difference nomalized (cosine similarity)
+        # render the metrics as fields or as a histogram
+        # avoid integration (or short integration)
+        # stremaline generation
+
+        # self.apply(sine_init)
+
+        # self.apply(kaiming_init)
+        # self.apply(prelu_init)
+
+    def forward(self, x):
+        x = self.mlp(x).unsqueeze(1)  # Transform and add a channel dimension for CNN
+        # x = x.unsqueeze(2).unsqueeze(3)  # Add spatial dimensions for Conv3d
+        # weights_flat = self.cnn3d(x)
+        weights_flat = self.cnn(x)
+        return self._reshape_weights(weights_flat)
+
+    def _reshape_weights(self, weights_flat):
+        weights = {}
+        offset = 0
+        for name, shape in self.weight_shapes.items():
+            size = shape.numel()
+            weights[name] = weights_flat[:, offset:offset + size].view(-1, *shape)
+            offset += size
+        return weights
+
+        # pre-train, train with hypernet, fine-tuning - Steffen
+
+        # Qi, 31.05
+        # try with implicit -> after hypernet 
+        # cm4 climate ensemble
+        # larger ensembles (resolution)
 
         # Qi, 23.05.24
         # limited capability of the LREST
@@ -100,50 +206,17 @@ class HyperNetwork(nn.Module):
         # NVIDIA Zurich - internship next year
 
         # David, 28.05
-        # try hypernet only for some layers of LREST
+        # try hypernet only for some layers of LREST +
 
-    def forward(self, params):
-        encoded = self.encoder(params)
-        weights_flat = self.decoder(encoded)
-        return self._reshape_weights(weights_flat)
+        # Qi, 10.06:
+        # pre-train LREST, then diffusion
+        # INR: per density and flow, then flatten, go to diffusion
 
-    def _reshape_weights(self, weights_flat):
-        weights = {}
-        offset = 0
-        for name, shape in self.weight_shapes.items():
-            size = shape.numel()
-            weights[name] = weights_flat[:, offset:offset + size].view(-1, *shape)
-            offset += size
-        return weights
+        # ???
+        # supervised vs unsupervised? (LREST and CoordNet work with same data)
+        # streamlines vis in pytorch vs ParaView? streamtracer - or cross section (paper)
+
 # """
-
-# class HyperNetwork(nn.Module):
-#     def __init__(self, input_dim, weight_shapes):
-#         super(HyperNetwork, self).__init__()
-#         self.input_dim = input_dim
-#         self.weight_shapes = weight_shapes
-
-#         # Define the layers for the hypernetwork
-#         self.fc = nn.Sequential(
-#             nn.Linear(input_dim, 32),
-#             nn.ReLU(),
-#             nn.Linear(32, 64),
-#             nn.ReLU()
-#         )
-
-#         self.weight_generators = nn.ModuleDict()
-#         for name, shape in weight_shapes.items():
-#             self.weight_generators[name] = nn.Linear(128, torch.prod(torch.tensor(shape)).item())
-
-#     def forward(self, params):
-#         batch_size = params.size(0)
-#         hidden = self.fc(params)
-#         weights = {}
-#         for name, generator in self.weight_generators.items():
-#             weight_shape = self.weight_shapes[name]
-#             weight = generator(hidden).view(batch_size, *weight_shape)
-#             weights[name] = weight
-#         return weights
 
 refine = False # True
 use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
@@ -160,12 +233,34 @@ class IFBlock(nn.Module):
             'conv0_0_bias': torch.Size([c//2]),
             'conv0_1_weight': torch.Size([c, c//2, 4, 4, 4]),
             'conv0_1_bias': torch.Size([c]),
-            'deconvblock_0_weight': torch.Size([c, c, 4, 4, 4]),
-            'deconvblock_0_bias': torch.Size([c]),
-            'deconvblock_1_weight': torch.Size([c, c//2, 4, 4, 4]),
-            'deconvblock_1_bias': torch.Size([c//2]),
-            'deconvblock_2_weight': torch.Size([c//2, 7, 4, 4, 4]),
-            'deconvblock_2_bias': torch.Size([7]),
+            ###
+            'convblock_0_weight': torch.Size([c, c, 3, 3, 3]),
+            'convblock_0_bias': torch.Size([c]),
+            'convblock_1_weight': torch.Size([c, c, 3, 3, 3]),
+            'convblock_1_bias': torch.Size([c]),
+            'convblock_2_weight': torch.Size([c, c, 3, 3, 3]),
+            'convblock_2_bias': torch.Size([c]),
+            ###
+            # 'convblock_3_weight': torch.Size([c, c, 3, 3, 3]),
+            # 'convblock_3_bias': torch.Size([c]),
+            # 'convblock_4_weight': torch.Size([c, c, 3, 3, 3]),
+            # 'convblock_4_bias': torch.Size([c]),
+            # 'convblock_5_weight': torch.Size([c, c, 3, 3, 3]),
+            # 'convblock_5_bias': torch.Size([c]),
+            # 'convblock_6_weight': torch.Size([c, c, 3, 3, 3]),
+            # 'convblock_6_bias': torch.Size([c]),
+            # 'deconvblock_0_weight': torch.Size([c, c, 4, 4, 4]),
+            # 'deconvblock_0_bias': torch.Size([c]),
+            # 'deconvblock_1_weight': torch.Size([c, c//2, 4, 4, 4]),
+            # 'deconvblock_1_bias': torch.Size([c//2]),
+            # 'deconvblock_2_weight': torch.Size([c//2, 7, 4, 4, 4]),
+            # 'deconvblock_2_bias': torch.Size([7]),
+            # 'convblock_7_weight': torch.Size([self.c, self.c, 3, 3, 3]),
+            # 'convblock_7_bias': torch.Size([self.c]),
+            # 'convblock_8_weight': torch.Size([self.c, self.c, 3, 3, 3]),
+            # 'convblock_8_bias': torch.Size([self.c]),
+            # 'convblock_9_weight': torch.Size([self.c, self.c, 3, 3, 3]),
+            # 'convblock_9_bias': torch.Size([self.c]),
         }
 
         # self.weight_shapes = {
@@ -202,12 +297,23 @@ class IFBlock(nn.Module):
         # }
 
         # Initialize the hypernetwork
-        self.hypernet = HyperNetwork(input_dim, self.weight_shapes)
+        # self.hypernet = HyperNetwork(input_dim, self.weight_shapes)
+        latent_dim = 3
+        self.hypernet = HyperNetwork(input_dim, latent_dim, self.weight_shapes)
+
+        # self.hypernet.apply(sine_init)
+        # self.hypernet.apply(first_layer_sine_init)
+
+        # self.hypernet.apply(kaiming_init)
+        # self.hypernet.apply(prelu_init)
 
         # Define the layers to be trained normally (LREST)
-        self.convblock_0 = nn.Conv3d(c, c, 3, stride=1, padding=1)
-        self.convblock_1 = nn.Conv3d(c, c, 3, stride=1, padding=1)
-        self.convblock_2 = nn.Conv3d(c, c, 3, stride=1, padding=1)
+        # self.conv0_0 = nn.Conv3d(in_planes, c//2, 4, stride=2, padding=1)
+        # self.conv0_1 = nn.Conv3d(c//2, c, 4, stride=2, padding=1)
+        #
+        # self.convblock_0 = nn.Conv3d(c, c, 3, stride=1, padding=1)
+        # self.convblock_1 = nn.Conv3d(c, c, 3, stride=1, padding=1)
+        # self.convblock_2 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_3 = nn.Conv3d(c, c, 3, stride=2, padding=1)
         self.convblock_4 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_5 = nn.Conv3d(c, c, 3, stride=1, padding=1)
@@ -216,8 +322,15 @@ class IFBlock(nn.Module):
         self.convblock_8 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_9 = nn.Conv3d(c, c, 3, stride=1, padding=1)
 
+        # Define the deconvolutional layers to be used in LREST
+        self.deconvblock_0 = nn.ConvTranspose3d(c, c, 4, stride=2, padding=1)
+        self.deconvblock_1 = nn.ConvTranspose3d(c, c//2, 4, stride=2, padding=1)
+        self.deconvblock_2 = nn.ConvTranspose3d(c//2, 7, 4, stride=2, padding=1)
+
         # Define PReLU activations
         self.prelu = nn.PReLU()
+        # self.prelu = nn.SELU()
+        # self.prelu = SineActivation()
 
         # Freeze LREST layers
         # self.freeze_lrest_layers()
@@ -251,50 +364,75 @@ class IFBlock(nn.Module):
         outputs = []
         # Iterate over each element in the batch
         for i in range(batch_size):
-            # print("i", i)
-            # Generate weights for the current batch element
             current_params = params[i].unsqueeze(0)
             weight_dict = self.hypernet(current_params)
             weight_dict = {name: weight_dict[name].squeeze(0) for name in weight_dict}  # Remove the batch dim from weights
 
             x_i = x[i].unsqueeze(0)
 
-            # Wrap in torch.no_grad() to prevent backpropagation through these operations
-            with torch.no_grad():
-                x_i = functional_conv3d(x_i, weight_dict['conv0_0_weight'], weight_dict['conv0_0_bias'], self.c//2, stride=2, padding=1)
-                x_i = functional_conv3d(x_i, weight_dict['conv0_1_weight'], weight_dict['conv0_1_bias'], self.c, stride=2, padding=1)
+            # with torch.no_grad():
+            x_i = functional_conv3d(x_i, weight_dict['conv0_0_weight'], weight_dict['conv0_0_bias'], self.c//2, stride=2, padding=1)
+            x_i = functional_conv3d(x_i, weight_dict['conv0_1_weight'], weight_dict['conv0_1_bias'], self.c, stride=2, padding=1)
+            # x_i = self.prelu(self.conv0_0(x_i))
+            # x_i = self.prelu(self.conv0_1(x_i))
+            
+            # print(f"x_i after initial convs: requires_grad={x_i.requires_grad}")
+            # x_i.requires_grad = True
+        
+            # hypernetwork-generated weights for the specified layers
+            x_i = functional_conv3d(x_i, weight_dict['convblock_0_weight'], weight_dict['convblock_0_bias'], self.c, stride=1, padding=1)
+            x_i = functional_conv3d(x_i, weight_dict['convblock_1_weight'], weight_dict['convblock_1_bias'], self.c, stride=1, padding=1)
+            x_i = functional_conv3d(x_i, weight_dict['convblock_2_weight'], weight_dict['convblock_2_bias'], self.c, stride=1, padding=1)
 
-            x_i.requires_grad_()
-
-            x_i = self.prelu(self.convblock_0(x_i))
-            x_i = self.prelu(self.convblock_1(x_i))
-            x_i = self.prelu(self.convblock_2(x_i))
+            # x_i = self.prelu(self.convblock_0(x_i))
+            # x_i = self.prelu(self.convblock_1(x_i))
+            # x_i = self.prelu(self.convblock_2(x_i))
             x_i = self.prelu(self.convblock_3(x_i))
             x_i = self.prelu(self.convblock_4(x_i))
             x_i = self.prelu(self.convblock_5(x_i))
             x_i = self.prelu(self.convblock_6(x_i))
+            # print(f"x_i after convblock_6: requires_grad={x_i.requires_grad}")
 
-            with torch.no_grad():
-                x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_0_weight'], weight_dict['deconvblock_0_bias'], self.c, stride=2)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_3_weight'], weight_dict['convblock_3_bias'], self.c, stride=2, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_4_weight'], weight_dict['convblock_4_bias'], self.c, stride=1, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_5_weight'], weight_dict['convblock_5_bias'], self.c, stride=1, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_6_weight'], weight_dict['convblock_6_bias'], self.c, stride=1, padding=1)
 
-            x_i.requires_grad_()
-
+            # with torch.no_grad():
+            # x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_0_weight'], weight_dict['deconvblock_0_bias'], self.c, stride=2)
+            x_i = self.deconvblock_0(x_i) # Use the standard deconv layers
+            # print(f"x_i after first deconv: requires_grad={x_i.requires_grad}")
+            # x_i.requires_grad = True
             x_i = self.prelu(self.convblock_7(x_i))
             x_i = self.prelu(self.convblock_8(x_i))
             x_i = self.prelu(self.convblock_9(x_i))
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_7_weight'], weight_dict['convblock_7_bias'], self.c, stride=1, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_8_weight'], weight_dict['convblock_8_bias'], self.c, stride=1, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_9_weight'], weight_dict['convblock_9_bias'], self.c, stride=1, padding=1)
+            
+            # print(f"x_i after convblock_9: requires_grad={x_i.requires_grad}")
 
             convblock_out = x_i
             convblock_out = convblock_out[:, :, :x_i.shape[2], :x_i.shape[3], :x_i.shape[4]]
             x_i = convblock_out + x_i
 
-            with torch.no_grad():
-                x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_1_weight'], weight_dict['deconvblock_1_bias'], self.c//2)
-                x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_2_weight'], weight_dict['deconvblock_2_bias'], 7)
+            # with torch.no_grad():
+            # x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_1_weight'], weight_dict['deconvblock_1_bias'], self.c//2)
+            # x_i = functional_conv_transpose3d(x_i, weight_dict['deconvblock_2_weight'], weight_dict['deconvblock_2_bias'], 7)
+            x_i = self.deconvblock_1(x_i)
+            x_i = self.deconvblock_2(x_i)
+            # print(f"x_i before final requires_grad setting: requires_grad={x_i.requires_grad}")
+            
+            # x_i.requires_grad = True
 
             flow_i = x_i[:, :6]
             mask_i = x_i[:, 6:7]
 
             outputs.append((flow_i, mask_i))
+
+            # with torch.no_grad():
+            # Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+            # RuntimeError: element 0 of tensors does not require grad and does not have a grad_fn
 
             """
             # Process the current element using the generated weights
@@ -405,18 +543,20 @@ class HyperLRESTNet(nn.Module):
         self.refine = refine
         self.use_deconv = use_deconv
 
+        if blocks_num == 1:
+            self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
         if blocks_num == 2:
             self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
             self.block1 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
         if blocks_num == 3:
-            self.block0 = IFBlock(3, c=256, input_dim=3) # 6 c=240 128 256
-            self.block1 = IFBlock(6+6, c=192, input_dim=3) # 13 c=150 96 192
-            self.block2 = IFBlock(6+6, c=128, input_dim=3) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=96, input_dim=3) # 13 c=150 96 192
+            self.block2 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
         elif blocks_num == 4:
-            self.block0 = IFBlock(3, c=256, input_dim=3) # 128 256 320 400
-            self.block1 = IFBlock(6+6, c=192, input_dim=3) # 96 192 256 320
-            self.block2 = IFBlock(6+6, c=192, input_dim=3) # 96 192 256 320
-            self.block3 = IFBlock(6+6, c=128, input_dim=3) # 64 128 192 256
+            self.block0 = IFBlock(3, c=128, input_dim=3) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=96, input_dim=3) # 96 192 256 320
+            self.block2 = IFBlock(6+6, c=96, input_dim=3) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=64, input_dim=3) # 64 128 192 256
         elif blocks_num == 5:
             self.block0 = IFBlock(3, c=256, input_dim=3) # 128 256 320 400
             self.block1 = IFBlock(6+6, c=192, input_dim=3) # 96 192 256 320
