@@ -1302,15 +1302,24 @@ if __name__ == "__main__":
     # 2x: 53.30 0.0305; 5x: 53.34 0.0305; 8x: 50.25 0.0305; 16x: 43.63 0.0304
     # a bit better, use only for final experiments
 
-    # TODO: 
+    # lrest train as hyperLREST: 
     model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 49.86 0.0294; 5x: 51.07 0.0294; OmM_0155_OmB_00235_h_055
     # 2x: 50.52 0.0212; 5x: 52.93 0.0210; OmM_012_OmB_00215_h_055
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # 2x: 48.55 0.0260; 5x: 50.02 0.0259; OmM_0155_OmB_00235_h_055
+    # 2x: 49.33 0.0191; 5x: 52.81 0.0189; OmM_012_OmB_00215_h_055
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_4e-4_200ep.pkl"
+    # 2x: 50.06 0.0253; 5x: 50.16 0.0251; OmM_0155_OmB_00235_h_055
+    # 2x: 52.48 0.0177; 5x: 52.13 0.0176; OmM_012_OmB_00215_h_055
+    model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_4e-4_200ep.pkl"
+
+    model_name = "lrest_6Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_4e-4_200ep.pkl"
+
 
     # hyper best:
     # 2x: 51.79 0.0264; 5x: 50.64 0.0262; OmM_0155_OmB_00235_h_055
     # 2x: 51.91 0.0166; 5x: 52.22 0.0165; OmM_012_OmB_00215_h_055 
-
 
     # model_name = "lrest_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 52.11 0.0312; 5x: 52.25 0.0311; 8x: 49.43 0.0310; 16x: 42.90 0.0309

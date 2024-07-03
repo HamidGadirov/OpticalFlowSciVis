@@ -25,6 +25,7 @@ from tqdm import tqdm
 import re
 
 import torch
+import torch.nn.functional as F
 import lpips
 from skimage.metrics import structural_similarity as ssim
 
@@ -239,6 +240,29 @@ def calculate_avg_epe_3d(flow_gt, flow_pred, dir_model, factor):
     mean_error = np.mean(error)
     print('avg EPE: {:.4f}'.format(mean_error))
     return mean_error
+
+def calculate_angle_difference(flow_gt, flow):
+
+    # Normalize the flow vectors
+    flow_gt_norm = F.normalize(flow_gt, dim=1, p=2)
+    flow_norm = F.normalize(flow, dim=1, p=2)
+
+    # Compute the dot product between normalized vectors
+    dot_product = torch.sum(flow_gt_norm * flow_norm, dim=1)
+
+    # Clamp dot_product to avoid numerical issues with arccos
+    dot_product = torch.clamp(dot_product, -1.0, 1.0)
+
+    # Compute the angle in radians
+    angle_radians = torch.acos(dot_product)
+
+    # Convert the angle to degrees
+    angle_degrees = torch.rad2deg(angle_radians)
+
+    # Compute the mean angle difference across the batch
+    angle_diff_mean = angle_degrees.mean()
+
+    return angle_diff_mean
 
 def calculate_mean_of_closest_points_streamline(reference_point, streamlines):
     closest_points = []
