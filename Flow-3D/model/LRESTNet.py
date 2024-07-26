@@ -33,10 +33,10 @@ def conv(in_planes, out_planes, kernel_size=3, stride=1, padding=1, dilation=1):
     )
 
 version = 1
-blocks_num = 6 # 2 3 4 5 6
+blocks_num = 4 # 2 3 4 5 6
 refine = False # True
 use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
-student_teacher = False # True False
+student_teacher = True # True False
 
 class IFBlock(nn.Module):
     def __init__(self, in_planes, c=64):

@@ -10,6 +10,9 @@ from logger import *
 import torch.nn.functional as F
 import sys
 import json
+import pickle
+import yt
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 def flattenDict(d):
@@ -122,20 +125,25 @@ def getPSNRFile(GT_dat_file,eval_dat_file):
     PSNR = 20*np.log10(GT_range) - 10*np.log10(MSE)
     return PSNR
 
-def getAllFilePaths(dir_path):
-    """Get all file paths in dir_path
+
+
+def getAllDatFilePaths(dir_path, extension='.raw'):
+    """Get all file paths with a specific extension in dir_path.
 
     Args:
-        dir_path (str): get all file paths in this dir_path
+        dir_path (str): The directory path to search.
+        extension (str): The file extension to look for (e.g., '.raw', '.pkl').
 
     Returns:
-        filePaths(list): a list contain all file paths in the dir_path
+        filePaths (list): A list containing all file paths with the specified extension in the dir_path.
     """
     filePaths = []
-    for root,dirs,files in os.walk(dir_path):
+    for root, dirs, files in os.walk(dir_path):
         for file_name in files:
-            filepath = os.path.join(root,file_name)
-            filePaths.append(filepath)
+            if file_name.endswith(extension):
+                filepath = os.path.join(root, file_name)
+                filePaths.append(filepath)
+    filePaths.sort()
     return filePaths
 
 def copy_modelSetting(log_base_dir,copy_file_names=None):
@@ -176,22 +184,31 @@ def getLatestModelPath(model_dir,verbose=False):
     latest_file_path = None
     latest_time = 0
     last_file_name = None
-    
-    for root,dirs,files in os.walk(model_dir):
-        for file_name in files:
-            _,ext = os.path.splitext(file_name)
-            if ext != '.pth':
-                continue
-            file_path = os.path.join(root,file_name)
-            modifyTime = os.path.getmtime(file_path)
-            if(modifyTime > latest_time):
-                last_file_name = file_name
-                latest_time = modifyTime
-                latest_file_path = file_path
-    if last_file_name == None:
-        raise ValueError(f"getLatestModelPath: Result is {last_file_name}. Can not get the latest model, check your model_dir argument")
-    if verbose:
-        print(f'getLatestModelPath: load latest file path {last_file_name}')
+
+    model_dir = "./Exp/nyx/vnyx/Log"
+    print("model_dir", model_dir)
+    # last_file_name = os.path.join(model_dir, "STSR-nyx_Scalar-600.pth")
+    last_file_name = os.path.join(model_dir, "STSR-nyx_Scalar-100.pth")
+    print(last_file_name)
+
+    latest_file_path = last_file_name
+
+    # for root,dirs,files in os.walk(model_dir):
+    #     for file_name in files:
+    #         _,ext = os.path.splitext(file_name)
+    #         if ext != '.pth':
+    #             continue
+    #         file_path = os.path.join(root,file_name)
+    #         modifyTime = os.path.getmtime(file_path)
+    #         if(modifyTime > latest_time):
+    #             last_file_name = file_name
+    #             latest_time = modifyTime
+    #             latest_file_path = file_path
+    # if last_file_name == None:
+    #     raise ValueError(f"getLatestModelPath: Result is {last_file_name}. Can not get the latest model, check your model_dir argument")
+    # if verbose:
+    #     print(f'getLatestModelPath: load latest file path {last_file_name}')
+
     return latest_file_path
 
 
@@ -230,9 +247,13 @@ class EvalMetric():
         Returns:
             _type_: _description_
         """
-        print(self.GT_dirPath,self.eval_dirPath)
+        self.GT_dirPath = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/STSRINR_GT"
+        print(self.GT_dirPath, self.eval_dirPath)
+        # nyx_ensemble_test/Nyx/Exec/LyA/STSRINR_GT
         filePaths_GT = getAllDatFilePaths(self.GT_dirPath)
         filePaths_eval = getAllDatFilePaths(self.eval_dirPath)
+        print("filePaths_GT", filePaths_GT)
+        print("filePaths_eval", filePaths_eval)
         GT_length = len(filePaths_eval)
         for index in tqdm(range(GT_length),desc="Calculating Metrics",disable=(not self.verbose)):
             self.PSNR.append(self.getPSNRFile(filePaths_GT[index],filePaths_eval[index]))
@@ -242,20 +263,126 @@ class EvalMetric():
 
         return MeanPSNR, self.PSNR
 
-def getAllDatFilePaths(dir_path):
-    """Get all .dat file paths in dir_path
+class MetricsCalculator:
+    def __init__(self, GT_filePath, eval_dirPath, verbose=False):
+        self.GT_filePath = GT_filePath
+        self.eval_dirPath = eval_dirPath
+        self.verbose = verbose
+        self.PSNR = []
+
+    def load_GT_data(self):
+        """Load ground truth data from the GT file."""
+        with open(self.GT_filePath, 'rb') as f:
+            GT_data = pickle.load(f)
+        GT_data = GT_data[:, 0]  # Use only the density field
+        GT_data = np.asfortranarray(GT_data)
+        return GT_data
+
+    def load_eval_data(self, eval_file):
+        """Load evaluation data from a .raw file."""
+        with open(eval_file, 'rb') as f:
+            eval_data = np.fromfile(f, dtype=np.float32)
+        eval_data = eval_data.reshape(-1, 128, 128, 128, order='F')
+        return eval_data
+
+    def normalize_data(self, data):
+        """Normalize data to the range [0, 1]."""
+        min_val = np.min(data)
+        max_val = np.max(data)
+        norm_data = (data - min_val) / (max_val - min_val)
+        return norm_data
+
+    def calculate_psnr(self, gt, pred):
+        """Calculate PSNR between two numpy arrays."""
+        mse = np.mean((gt - pred) ** 2)
+        print(mse)
+        if mse == 0:
+            return float('inf')
+        max_pixel = 1.0  # Assuming the pixel values are normalized to [0, 1]
+        psnr = 20 * np.log10(max_pixel / np.sqrt(mse))
+        return psnr
+    
+    def render_volume_yt(self, volume, save_path, file_name):
+        """Render the 3D volume using yt and save the image."""
+        ds_numpy = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        sc = yt.create_scene(ds_numpy, field=("gas", "density"))
+        source = sc[0]
+
+        source.set_log(True)
+        bounds = (0.1, 0.7)
+        tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf.sample_colormap(np.log10(0.2), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.4), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.5), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+
+        source.tfh.tf = tf
+        source.tfh.bounds = bounds
+
+        cam = sc.camera
+        cam.resolution = 256
+        cam.zoom(1.0)
+        im = sc.render()
+        im.write_png(os.path.join(save_path, file_name), background=[0.0, 0.0, 0.0, 1.0], sigma_clip=4.0) # 2.0
+        print("Rendered:", file_name)
+
+    def getPSNR(self):
+        """Get PSNR from the GT and eval data."""
+        # Load GT data
+        GT_data = self.load_GT_data()
+        print(f"GT Data Loaded: shape={GT_data.shape}, min={GT_data.min()}, max={GT_data.max()}, mean={GT_data.mean()}")
+
+        # Fetch eval file paths
+        filePaths_eval = getAllDatFilePaths(self.eval_dirPath, extension='.raw')
+        print("filePaths_eval", len(filePaths_eval))
+
+        # Check that GT_data can be divided into segments corresponding to eval files
+        if len(GT_data) % len(filePaths_eval) != 0:
+            raise ValueError("GT data length is not divisible by the number of eval files")
+
+        segment_length = len(GT_data) // len(filePaths_eval)
+
+        # Calculate PSNR for each file pair
+        for index in tqdm(range(len(filePaths_eval)), desc="Calculating Metrics", disable=(not self.verbose)):
+            eval_data = self.load_eval_data(filePaths_eval[index])
+            print(f"Eval Data Loaded (Index {index}): shape={eval_data.shape}, min={eval_data.min()}, max={eval_data.max()}, mean={eval_data.mean()}")
+
+            gt_segment = GT_data[index * segment_length : (index + 1) * segment_length]
+            print(f"GT Segment (Index {index}): shape={gt_segment.shape}, min={gt_segment.min()}, max={gt_segment.max()}, mean={gt_segment.mean()}")
+            
+            # Normalize the data before calculating PSNR
+            gt_segment_norm = self.normalize_data(gt_segment[0])
+            eval_data_norm = self.normalize_data(eval_data[0])
+            
+            print(f"Normalized GT Segment (Index {index}): min={gt_segment_norm.min()}, max={gt_segment_norm.max()}, mean={gt_segment_norm.mean()}")
+            print(f"Normalized Eval Data (Index {index}): min={eval_data_norm.min()}, max={eval_data_norm.max()}, mean={eval_data_norm.mean()}")
+
+            # Render the volumes
+            self.render_volume_yt(gt_segment[0], 'renders', f'gt_segment_{index}.png')
+            self.render_volume_yt(eval_data[0], 'renders', f'eval_data_{index}.png')
+            
+            psnr_value = self.calculate_psnr(gt_segment_norm, eval_data_norm)  # Use only the density data
+            self.PSNR.append(psnr_value)
+
+        MeanPSNR = np.array(self.PSNR).mean()
+        return MeanPSNR, self.PSNR
+    
+    
+def getAllDatFilePaths(dir_path, extension='.raw'):
+    """Get all file paths with a specific extension in dir_path.
 
     Args:
-        dir_path (str): get all file paths in this dir_path
+        dir_path (str): The directory path to search.
+        extension (str): The file extension to look for (e.g., '.raw', '.pkl').
 
     Returns:
-        filePaths(list): a list contain all .dat file paths in the dir_path
+        filePaths (list): A list containing all file paths with the specified extension in the dir_path.
     """
     filePaths = []
-    for root,dirs,files in os.walk(dir_path):
+    for root, dirs, files in os.walk(dir_path):
         for file_name in files:
-            if(os.path.splitext(file_name)[-1] == '.raw'):
-                filepath = os.path.join(root,file_name)
+            if file_name.endswith(extension):
+                filepath = os.path.join(root, file_name)
                 filePaths.append(filepath)
     filePaths.sort()
     return filePaths
