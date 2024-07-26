@@ -6,6 +6,7 @@ from train import *
 import os
 import time
 from torchsummary import summary
+import pickle
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -14,11 +15,15 @@ def setup_Exp(opt,settings_path=None,version=None):
     """
     #parse the settings
     settings_path = opt.config_path if settings_path == None else settings_path
+    # print("settings_path", settings_path)
     args = yaml_loader(settings_path)
     mode = args['mode']
     model_setting = args['model_setting']
     train_setting = args['train_setting']
     data_setting = args['data_setting']
+    # train_setting['version'] = "nyx" ####
+    print("train_setting['version']", train_setting['version'])
+    # print("version", version)
     train_setting['version'] = train_setting['version'] if version == None else version
     version =f"v{train_setting['version']}"
 
@@ -64,9 +69,23 @@ def main(opt):
 	t.trainNet()
 
 if __name__ == "__main__":
+    """
     p = argparse.ArgumentParser()
     # p.add_argument('--config_path', type=str, default='./tasks/configs/CylinderVelM.yml', help='The path of the config file') 
     p.add_argument('--config_path', type=str, default='./configs/nyx_train.yml', help='The path of the config file')
     opt = p.parse_args()
     main(opt)
+    """
+
+    GT_filePath = '../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_01375_OmB_00225_h_055_STSRINR_train.pkl'
+    eval_dirPath = './Exp/nyx/vnyx/Results/nyx_Scalar/'
+
+    metrics_calculator = MetricsCalculator(GT_filePath, eval_dirPath, verbose=True)
+    mean_psnr, psnr_list = metrics_calculator.getPSNR()
+    print("Mean PSNR:", mean_psnr)
+
+# python3 main.py --config_path './configs/nyx_train.yml'
+# python3 main.py --config_path './configs/nyx_inf.yml'
+
+# inference is slow, much slower than LREST
 

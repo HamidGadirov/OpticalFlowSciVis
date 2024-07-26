@@ -92,7 +92,12 @@ class Train():
 
     
     def train_one_iteration(self,data):#inps -> [time,x,y,z]
-        input_values,GT = data[0],data[1]
+        input_values, GT = data[0],data[1]
+        ###
+        # print(input_values.shape, GT.shape)
+        # mse = np.mean((input_values - GT) ** 2)
+        # print(mse)
+        ###
         input_values = input_values.to(device)
         GT = GT.to(device)
         self.optimizer.zero_grad()
@@ -179,6 +184,7 @@ class Train():
                 results_path = os.path.join(self.Results_path,self.vars[k])
                 gt_norm_path = os.path.dirname(self.datasetInfo[self.vars[k]]['data_path'])
                 evalWidget = EvalMetric(gt_norm_path,results_path,verbose=True)
+                print("EvalMetric")
                 mean_PSNR,PSNR_array = evalWidget.getPSNR()
                 total_PSNR += mean_PSNR
                 for i in range(1, len(PSNR_array)+1):
@@ -201,6 +207,8 @@ class Train():
         torch.save(save_content,save_file_path)
         
         latent_fileName ="Latent-"+"".join([f"-{var}" for var in self.vars])+f"-{itera}.pth"
+        print("latent_fileName", latent_fileName)
+        
         latent_save_content = {
             'latent_state_dict':self.latentTable.state_dict(),
             'latent_optimizer':self.LatentOptimizer.state_dict(),
@@ -216,7 +224,9 @@ class Train():
         self.model.load_state_dict(saved_content['model_state_dict'])
         self.optimizer.load_state_dict(saved_content['optimizer'])
         
-        lateset_latent_path = getLatestModelPath(self.Latent_path)
+        # lateset_latent_path = getLatestModelPath(self.Latent_path)
+        # lateset_latent_path = "./Exp/nyx/vnyx/Latent/Latent--nyx_Scalar-600.pth"
+        lateset_latent_path = "./Exp/nyx/vnyx/Latent/Latent--nyx_Scalar-100.pth"
         latent_saved_content = torch.load(lateset_latent_path,map_location='cpu')
         self.latentTable.load_state_dict(latent_saved_content['latent_state_dict'])
         self.LatentOptimizer.load_state_dict(latent_saved_content['latent_optimizer'])

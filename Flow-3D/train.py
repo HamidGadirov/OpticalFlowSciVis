@@ -1047,12 +1047,12 @@ if __name__ == "__main__":
     # continue training on 200 diff triplets with W5: (lr1e-4)
     # 2x: 15 0.4; 10x: 30.56 0.4442
 
-    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow5e-2_v1_128_jets_skip10_triplets_W6_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow5e-2_v1_128_jets_skip10_triplets_W6_200_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 29.89 0.0818
 
-    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_jets_skip10_triplets_W6_200_gamma_eqRes_deconv_lr1e-4.pkl"
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_jets_skip10_triplets_W6_200_gamma_eqRes_deconv_lr1e-4.pkl"
 
-    model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr6e-4.pkl"
+    # model_name = "flownet_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_200_gamma_eqRes_deconv_lr6e-4.pkl"
     # diverge
     # 128 96 64, check 256 - 128 !
     ### +++
@@ -1073,7 +1073,7 @@ if __name__ == "__main__":
     # 2x: 32.76 0.0877; 10x: 33.96 0.0869
 
     ### +++
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 40.45 0.7363; 10x: 46.05 0.7364; 15x: 45.41 0.7365; 20x: 39.36 0.7366
     ### +++ flow to 3 blocks...
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W12_1K_gamma_eqRes_deconv_lr1e-4.pkl"
@@ -1270,7 +1270,7 @@ if __name__ == "__main__":
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_2b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # num_blocks = 2 flow
     # 2x: 56.73 0.0935; 3x: 54.93 0.0933; 5x: 51.50 0.0927; 8x: 47.13 0.0925; 16x: 39.69 0.0921
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # 2x: 58.02 0.0912; 3x: 56.74 0.0917; 5x: 53.60 0.0923; 8x: 49.73 0.0928; 16x: 42.60 0.0935
     ### +++
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
@@ -1284,38 +1284,42 @@ if __name__ == "__main__":
     # 2x: 52.75 0.0312; 8x: 49.15 0.0311; 16x: 42.46 0.0310
 
     ### +++
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 52.62 0.0310; 5x: 52.31 0.0310; 8x: 49.39 0.0309; 16x: 42.88 0.0309
     ### +++
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
     # 2x: 51.82 0.0293; 5x: 51.19 0.0291; 8x: 49.07 0.0290; 16x: 42.53 0.0289
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v2.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v2.pkl"
     # 2x: 50.66 0.0284; 5x: 50.50 0.0279; 8x: 50.05 0.0300; 16x: 42.07 0.0275
     # noTea:
     ### +++
-    model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 54.01 0.0313; 5x: 53.39 0.0312; 8x: 50.03 0.0312; 16x: 43.35 0.0312
     ### +++
-    model_name = "lrest_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # model_name = "lrest_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 52.92 0.0319; 5x: 53.55 0.0312; 8x: 49.44 0.0320; 16x: 42.97 0.0321
-    model_name = "lrest_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_1K_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # model_name = "lrest_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_1K_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 53.30 0.0305; 5x: 53.34 0.0305; 8x: 50.25 0.0305; 16x: 43.63 0.0304
     # a bit better, use only for final experiments
 
     # lrest train as hyperLREST: 
-    model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    # model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 49.86 0.0294; 5x: 51.07 0.0294; OmM_0155_OmB_00235_h_055
     # 2x: 50.52 0.0212; 5x: 52.93 0.0210; OmM_012_OmB_00215_h_055
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    ###
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 48.55 0.0260; 5x: 50.02 0.0259; OmM_0155_OmB_00235_h_055
     # 2x: 49.33 0.0191; 5x: 52.81 0.0189; OmM_012_OmB_00215_h_055
-    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_4e-4_200ep.pkl"
+    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_4e-4_200ep.pkl"
     # 2x: 50.06 0.0253; 5x: 50.16 0.0251; OmM_0155_OmB_00235_h_055
     # 2x: 52.48 0.0177; 5x: 52.13 0.0176; OmM_012_OmB_00215_h_055
-    model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_4e-4_200ep.pkl"
-
-    model_name = "lrest_6Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_4e-4_200ep.pkl"
-
+    ###
+    # model_name = "lrest_5Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_4e-4_200ep.pkl"
+    # 2x: 49.80 0.0249; 5x: 50.75 0.0247; OmM_0155_OmB_00235_h_055
+    # 2x: 53.54 0.0175; 5x: 52.96 0.0174; OmM_012_OmB_00215_h_055
+    # model_name = "lrest_6Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_4e-4_200ep.pkl"
+    # 2x: 52.25 0.0247; 5x: 50.24 0.0247; OmM_0155_OmB_00235_h_055
+    # 2x: 52.88 0.0176; 5x: 51.21 0.0173; OmM_012_OmB_00215_h_055
 
     # hyper best:
     # 2x: 51.79 0.0264; 5x: 50.64 0.0262; OmM_0155_OmB_00235_h_055
@@ -1332,10 +1336,10 @@ if __name__ == "__main__":
 
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
     # 2x: 60.48 0.1239; 5x: 55.11 0.1215; 8x: 50.90 0.1211; 
-
+    ### +++
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma09_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
-    # 2x: 51.29 0.0307; 8x: 49.26 0.0306;
-
+    # 2x: 51.29 0.0307; 5x: 52.44 0.0306; 8x: 49.26 0.0306;
+    ### +++
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # 2x: 50.29 0.0318; 8x: 49.68 0.0319;
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow1e-1_3b_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
@@ -1729,10 +1733,15 @@ if __name__ == "__main__":
             input("x")
             """
 
+            print("original data is in range %f to %f" % (np.min(data_original_interpol), np.max(data_original_interpol)))
+            print("interpol data is in range %f to %f" % (np.min(interpol_data), np.max(interpol_data)))
+            print("original data mean and std:", np.mean(data_original_interpol), np.std(data_original_interpol))
+            print("interpol data mean and std:", np.mean(interpol_data), np.std(interpol_data))
+
             # 3D rendering function
-            # visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
-            #             dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
-            # print("visualize_seq_dens_3d done!")
+            visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
+                        dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
+            print("visualize_seq_dens_3d done!")
 
             """
             original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]

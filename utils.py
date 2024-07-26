@@ -1178,30 +1178,38 @@ def render_volume_yt(volume, save_path, file_name):
     source = sc[0]
 
     source.set_log(True)
-    bounds = (1e6, 1e15)
-    tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+    # bounds = (1e6, 1e15)
+    # tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+    # tf.sample_colormap(np.log10(1e7), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
+    # tf.sample_colormap(np.log10(1e8), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
+    # tf.sample_colormap(np.log10(1e9), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
+    # tf.sample_colormap(np.log10(1e10), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
 
-    tf.sample_colormap(np.log10(1e7), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
-    tf.sample_colormap(np.log10(1e8), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
-    tf.sample_colormap(np.log10(1e9), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
-    tf.sample_colormap(np.log10(1e10), w=0.005, alpha=1e1, col_bounds=np.log10((1e7, 1e10)), colormap="turbo")
+    bounds = (0.1, 0.7)
+    tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+    tf.sample_colormap(np.log10(0.2), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+    tf.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+    tf.sample_colormap(np.log10(0.4), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+    tf.sample_colormap(np.log10(0.5), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
 
     source.tfh.tf = tf
     source.tfh.bounds = bounds
 
     cam = sc.camera
-    cam.resolution = 512
-    cam.zoom(0.5)
+    cam.resolution = 256
+    # cam.zoom(1.75)
+    cam.zoom(1.0)
+    # cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
     im = sc.render()
     im.write_png(os.path.join(save_path, file_name), background=[0.0, 0.0, 0.0, 1.0], sigma_clip=4.0) # 2.0
     print("rendered!")
     # omega - overall brightness, to see more details
 
-
 # Ensure off-screen rendering is possible
 pv.start_xvfb()
 
 # Function to visualize volume with streamlines and save the output image
+"""
 def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path):
     dims = volume.shape
 
@@ -1229,33 +1237,292 @@ def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path)
         streamline = grid.streamlines(
             vectors='velocity',
             source_center=seed,
-            source_radius=0.05,  # Define a small radius around the seed point
-            # integrator_type='4',  # Runge-Kutta 4/5 integrator
-            max_time=10.0  # You can adjust this value as needed
+            source_radius=0.0,  # No radius, single point
+            max_time=0.35  # length of the streamlines
         )
+        # Ensure proper distribution of time values for coloring the streamlines
+        time_scalars = np.linspace(0, 1, streamline.n_points)
+        streamline['time'] = time_scalars
         streamline_collection.append(streamline)
 
     # Combine all streamlines into one PolyData for visualization
-    # combined_streamlines = streamline_collection.combine()
     combined_streamlines = streamline_collection.combine().extract_surface().tube(radius=0.005)
 
     # Create a plotter
     plotter = pv.Plotter(off_screen=True)  # Use off_screen=True for batch rendering
-    
-    # Add the volume
-    opacity = [0, 0, 0, 0.1, 0.3, 0.6, 0.9, 1.0]
+
+    # Add the volume with proper opacity
+    # opacity = [0.2, 0.22, 0.24, 0.25, 0.26, 0.28, 0.3, 0.4]
+    # opacity = [0.9, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]
+    opacity = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    # set to 1
     plotter.add_volume(grid, scalars='density', opacity=opacity, cmap='turbo')
-    
-    # Add the streamlines
-    # plotter.add_mesh(combined_streamlines.tube(radius=0.005), color='red')
-    plotter.add_mesh(combined_streamlines, color='green')
-    
+
+    # Add the streamlines with time-based coloring
+    plotter.add_mesh(combined_streamlines, scalars='time', cmap='turbo')
+
+    # Add the bounding box (outline)
+    outline = grid.outline()
+    plotter.add_mesh(outline, color='black')
+
     # Set the camera position
     plotter.camera_position = 'iso'
-    
+
     # Render and save the image
     plotter.show(screenshot=output_path)
     print(f"Streamlines rendered and saved to {output_path}")
+"""
+
+# """
+def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path):
+    dims = volume.shape
+
+    # Create the grid coordinates
+    x = np.linspace(0, 1, dims[0])
+    y = np.linspace(0, 1, dims[1])
+    z = np.linspace(0, 1, dims[2])
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    points = np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
+
+    # Create a PyVista grid
+    grid = pv.StructuredGrid()
+    grid.points = points
+    grid.dimensions = dims
+
+    # Flatten data to fit grid point format
+    grid['density'] = volume.flatten(order='F')
+    grid['velocity'] = np.c_[u.flatten(order='F'), v.flatten(order='F'), w.flatten(order='F')]
+
+    # Initialize an empty MultiBlock to store streamlines
+    streamline_collection = pv.MultiBlock()
+
+    # Generate streamlines for each seed point
+    for seed in seed_points:
+        streamline = grid.streamlines(
+            vectors='velocity',
+            source_center=seed,
+            source_radius=0.025,  # Small radius to generate multiple streamlines around the seed
+            max_time=1.0,  # Adjusted length of the streamlines
+            initial_step_length=0.1,
+            integration_direction='both'  # Integrate in both forward and backward directions
+        )
+        
+        # Ensure proper distribution of time values for coloring the streamlines
+        time_scalars = np.linspace(0, 1, streamline.n_points)
+        streamline['time'] = time_scalars
+        streamline_collection.append(streamline)
+
+    # Combine all streamlines into one PolyData for visualization
+    combined_streamlines = streamline_collection.combine().extract_surface().tube(radius=0.005)
+
+    # Create a plotter
+    plotter = pv.Plotter(off_screen=True)  # Use off_screen=True for batch rendering
+
+    # Add the volume with proper opacity
+    # opacity = [0.9, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]
+    # plotter.add_volume(grid, scalars='density', opacity=opacity, cmap='turbo')
+
+    # Add the streamlines with time-based coloring
+    plotter.add_mesh(combined_streamlines, scalars='time', cmap='turbo')
+
+    # Add bounding box
+    plotter.add_bounding_box(color="black")
+
+    # Set the camera position
+    plotter.camera_position = 'iso'
+
+    # Render and save the image
+    plotter.show(screenshot=output_path)
+    print(f"Streamlines rendered and saved to {output_path}")
+# """
+
+"""
+def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path):
+    dims = volume.shape
+
+    # Create the grid coordinates
+    x = np.linspace(0, 1, dims[0])
+    y = np.linspace(0, 1, dims[1])
+    z = np.linspace(0, 1, dims[2])
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    points = np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
+
+    # Create a PyVista grid
+    grid = pv.StructuredGrid()
+    grid.points = points
+    grid.dimensions = dims
+
+    # Flatten data to fit grid point format
+    grid['density'] = volume.flatten(order='F')
+    grid['velocity'] = np.c_[u.flatten(order='F'), v.flatten(order='F'), w.flatten(order='F')]
+
+    # Create seed points on the bottom surface of the cube
+    n_points = 5
+    x_seed = np.linspace(0.1, 0.9, int(np.sqrt(n_points)))
+    y_seed = np.linspace(0.1, 0.9, int(np.sqrt(n_points)))
+    xx_seed, yy_seed = np.meshgrid(x_seed, y_seed)
+    zz_seed = np.zeros(xx_seed.shape)  # Bottom plane
+    seed_points = np.c_[xx_seed.ravel(), yy_seed.ravel(), zz_seed.ravel()]
+
+    # Initialize an empty MultiBlock to store streamlines
+    streamline_collection = pv.MultiBlock()
+
+    # Generate streamlines for each seed point
+    for seed in seed_points:
+        streamline = grid.streamlines(
+            vectors='velocity',
+            source_center=seed,
+            source_radius=0.025,  # Small radius to generate multiple streamlines around the seed
+            max_time=1.0,  # Adjusted length of the streamlines
+            initial_step_length=0.1,
+            integration_direction='forward'  # Integrate in the forward direction only
+        )
+        
+        # Ensure proper distribution of time values for coloring the streamlines
+        if streamline.n_points > 0:
+            time_scalars = np.linspace(0, 1, streamline.n_points)
+            streamline['time'] = time_scalars
+            streamline_collection.append(streamline)
+
+    # Combine all streamlines into one PolyData for visualization
+    combined_streamlines = streamline_collection.combine().extract_surface().tube(radius=0.005)
+
+    # Create a plotter
+    plotter = pv.Plotter(off_screen=True)  # Use off_screen=True for batch rendering
+
+    # Add the streamlines with time-based coloring
+    plotter.add_mesh(combined_streamlines, scalars='time', cmap='turbo')
+
+    # Add bounding box
+    plotter.add_bounding_box(color="black")
+
+    # Set the camera position
+    plotter.camera_position = 'iso'
+
+    # Render and save the image
+    plotter.show(screenshot=output_path)
+    print(f"Streamlines rendered and saved to {output_path}")
+"""
+
+"""
+def visualize_volume_with_streamlines(volume, u, v, w, output_path):
+    dims = volume.shape
+
+    # Create the grid coordinates
+    x = np.linspace(0, 1, dims[0])
+    y = np.linspace(0, 1, dims[1])
+    z = np.linspace(0, 1, dims[2])
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    points = np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
+
+    # Create a PyVista grid
+    grid = pv.StructuredGrid()
+    grid.points = points
+    grid.dimensions = dims
+
+    # Flatten data to fit grid point format
+    grid['velocity'] = np.c_[u.flatten(order='F'), v.flatten(order='F'), w.flatten(order='F')]
+
+    # Create seed points on the bottom surface of the cube
+    n_points = 5
+    x_seed = np.linspace(0.1, 0.9, int(np.sqrt(n_points)))
+    y_seed = np.linspace(0.1, 0.9, int(np.sqrt(n_points)))
+    xx_seed, yy_seed = np.meshgrid(x_seed, y_seed)
+    zz_seed = np.full(xx_seed.shape, 0.0)  # Bottom plane
+    seed_points = np.c_[xx_seed.ravel(), yy_seed.ravel(), zz_seed.ravel()]
+
+    # Initialize an empty MultiBlock to store streamlines
+    streamline_collection = pv.MultiBlock()
+
+    # Generate streamlines for each seed point
+    for seed in seed_points:
+        streamline = grid.streamlines(
+            vectors='velocity',
+            source_center=seed,
+            max_time=0.75,  # Adjusted length of the streamlines
+            initial_step_length=0.1,
+            integration_direction='both'  # Integrate in both forward and backward directions
+        )
+        # Ensure proper distribution of time values for coloring the streamlines
+        if streamline.n_points > 0:
+            time_scalars = np.linspace(0, 1, streamline.n_points)
+            streamline['time'] = time_scalars
+            streamline_collection.append(streamline)
+
+    # Combine all streamlines into one PolyData for visualization
+    combined_streamlines = streamline_collection.combine().extract_surface().tube(radius=0.005)
+
+    # Create a plotter
+    plotter = pv.Plotter(off_screen=True)  # Use off_screen=True for batch rendering
+
+    # Add the streamlines with time-based coloring
+    plotter.add_mesh(combined_streamlines, scalars='time', cmap='turbo', clim=[0, 1])
+
+    # Add bounding box
+    plotter.add_bounding_box(color="black")
+
+    # Set the camera position
+    plotter.camera_position = 'iso'
+
+    # Render and save the image
+    plotter.show(screenshot=output_path)
+    print(f"Streamlines rendered and saved to {output_path}")
+"""
+
+"""
+def visualize_volume_with_glyphs(volume, u, v, w, output_path):
+    dims = volume.shape
+
+    # Create the grid coordinates
+    x = np.linspace(0, 1, dims[0])
+    y = np.linspace(0, 1, dims[1])
+    z = np.linspace(0, 1, dims[2])
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    points = np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
+
+    # Create a PyVista grid
+    grid = pv.StructuredGrid()
+    grid.points = points
+    grid.dimensions = dims
+
+    # Flatten data to fit grid point format
+    grid['density'] = volume.flatten(order='F')
+    grid['velocity'] = np.c_[u.flatten(order='F'), v.flatten(order='F'), w.flatten(order='F')]
+
+    # Create a subset of seed points
+    n_points = 1000  # Number of glyphs to visualize
+    np.random.seed(42)
+    random_indices = np.random.choice(points.shape[0], n_points, replace=False)
+    seed_points = points[random_indices]
+
+    # Create a PyVista PolyData for the seed points
+    seed_polydata = pv.PolyData(seed_points)
+
+    # Compute the vectors at the seed points
+    vectors = grid['velocity'][random_indices]
+
+    # Add the vectors to the seed PolyData
+    seed_polydata['vectors'] = vectors
+
+    # Create glyphs
+    glyphs = seed_polydata.glyph(orient='vectors', scale='vectors', factor=1.0)
+
+    # Create a plotter
+    plotter = pv.Plotter(off_screen=True)  # Use off_screen=True for batch rendering
+
+    # Add the glyphs
+    plotter.add_mesh(glyphs, color='white')
+
+    # Add bounding box
+    plotter.add_bounding_box(color="black")
+
+    # Set the camera position
+    plotter.camera_position = 'iso'
+
+    # Render and save the image
+    plotter.show(screenshot=output_path)
+    print(f"Glyphs rendered and saved to {output_path}")
+"""
 
 # Define the function to generate streamlines
 def generate_streamlines(ds, velocity_field, seed_points):
@@ -1263,15 +1530,16 @@ def generate_streamlines(ds, velocity_field, seed_points):
     streamlines.integrate_through_volume()
     return streamlines
 
-np.random.seed(42)
-seed_points = np.random.rand(10, 3)
-# seed_points = np.array(seed_points)
+np.random.seed(10)
+num_seed_points = 30
+print("num_seed_points", num_seed_points)
+seed_points = np.random.rand(num_seed_points, 3)
 
 def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
                           dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
     
     columns = 2 # 2 6
-    rows = 6 # 4 5
+    rows = 6 # 4 6
     skip = 10
     data_to_vis = original_data
     index = 0
@@ -1576,6 +1844,8 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         volume = original_data[round(index)]
         # Call the function to create and save the image
         visualize_volume_with_streamlines(volume, u_gt[i], v_gt[i], w_gt[i], seed_points, output_path)
+        # visualize_volume_with_streamlines(volume, u_gt[i], v_gt[i], w_gt[i], output_path)
+        # visualize_volume_with_glyphs(volume, u_gt[i], v_gt[i], w_gt[i], output_path)
         print("rendered!")
 
         ax = axs[4][i]
@@ -1591,6 +1861,8 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         volume = original_data[round(index)]
         # Call the function to create and save the image
         visualize_volume_with_streamlines(volume, u[i], v[i], w[i], seed_points, output_path)
+        # visualize_volume_with_streamlines(volume, u[i], v[i], w[i], output_path)
+        # visualize_volume_with_glyphs(volume, u[i], v[i], w[i], output_path)
         print("rendered!")
 
         ax = axs[5][i]
