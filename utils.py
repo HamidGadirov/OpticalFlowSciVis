@@ -1273,7 +1273,7 @@ def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path)
     print(f"Streamlines rendered and saved to {output_path}")
 """
 
-# """
+"""
 def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path):
     dims = volume.shape
 
@@ -1334,7 +1334,7 @@ def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path)
     # Render and save the image
     plotter.show(screenshot=output_path)
     print(f"Streamlines rendered and saved to {output_path}")
-# """
+"""
 
 """
 def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path):
@@ -1404,7 +1404,7 @@ def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path)
     print(f"Streamlines rendered and saved to {output_path}")
 """
 
-"""
+# """
 def visualize_volume_with_streamlines(volume, u, v, w, output_path):
     dims = volume.shape
 
@@ -1424,12 +1424,18 @@ def visualize_volume_with_streamlines(volume, u, v, w, output_path):
     grid['velocity'] = np.c_[u.flatten(order='F'), v.flatten(order='F'), w.flatten(order='F')]
 
     # Create seed points on the bottom surface of the cube
-    n_points = 5
-    x_seed = np.linspace(0.1, 0.9, int(np.sqrt(n_points)))
-    y_seed = np.linspace(0.1, 0.9, int(np.sqrt(n_points)))
+    n_points = 9
+    grid_size = int(np.sqrt(n_points))
+    x_seed = np.linspace(0.1, 0.9, grid_size)
+    y_seed = np.linspace(0.1, 0.9, grid_size)
     xx_seed, yy_seed = np.meshgrid(x_seed, y_seed)
-    zz_seed = np.full(xx_seed.shape, 0.0)  # Bottom plane
+    zz_seed = np.full(xx_seed.shape, 0.5)
     seed_points = np.c_[xx_seed.ravel(), yy_seed.ravel(), zz_seed.ravel()]
+
+    # Create a visible surface at the seed points' plane
+    seed_surface = pv.StructuredGrid()
+    seed_surface.points = np.c_[xx_seed.ravel(), yy_seed.ravel(), zz_seed.ravel()]
+    seed_surface.dimensions = (grid_size, grid_size, 1)
 
     # Initialize an empty MultiBlock to store streamlines
     streamline_collection = pv.MultiBlock()
@@ -1440,13 +1446,14 @@ def visualize_volume_with_streamlines(volume, u, v, w, output_path):
             vectors='velocity',
             source_center=seed,
             max_time=0.75,  # Adjusted length of the streamlines
-            initial_step_length=0.1,
-            integration_direction='both'  # Integrate in both forward and backward directions
+            initial_step_length=0.05,
+            n_points = 40,
+            integration_direction='both',  # Integrate in both forward and backward directions
         )
         # Ensure proper distribution of time values for coloring the streamlines
         if streamline.n_points > 0:
-            time_scalars = np.linspace(0, 1, streamline.n_points)
-            streamline['time'] = time_scalars
+            # time_scalars = np.linspace(0, 1, streamline.n_points)
+            # streamline['IntegrationTime'] = time_scalars
             streamline_collection.append(streamline)
 
     # Combine all streamlines into one PolyData for visualization
@@ -1456,7 +1463,17 @@ def visualize_volume_with_streamlines(volume, u, v, w, output_path):
     plotter = pv.Plotter(off_screen=True)  # Use off_screen=True for batch rendering
 
     # Add the streamlines with time-based coloring
-    plotter.add_mesh(combined_streamlines, scalars='time', cmap='turbo', clim=[0, 1])
+    sargs = dict(vertical=True, title_font_size=16)
+    plotter.add_mesh(
+        combined_streamlines,
+        scalars='IntegrationTime',
+        cmap='turbo',
+        clim=[0, 10],
+        scalar_bar_args=sargs,
+    )
+
+    # Add the seed surface
+    # plotter.add_mesh(seed_surface, color='white', opacity=0.5, show_edges=True)
 
     # Add bounding box
     plotter.add_bounding_box(color="black")
@@ -1467,7 +1484,7 @@ def visualize_volume_with_streamlines(volume, u, v, w, output_path):
     # Render and save the image
     plotter.show(screenshot=output_path)
     print(f"Streamlines rendered and saved to {output_path}")
-"""
+# """
 
 """
 def visualize_volume_with_glyphs(volume, u, v, w, output_path):
@@ -1524,6 +1541,7 @@ def visualize_volume_with_glyphs(volume, u, v, w, output_path):
     print(f"Glyphs rendered and saved to {output_path}")
 """
 
+"""
 # Define the function to generate streamlines
 def generate_streamlines(ds, velocity_field, seed_points):
     streamlines = Streamlines(ds, seed_points, velocity_field[0], velocity_field[1], velocity_field[2])
@@ -1532,8 +1550,9 @@ def generate_streamlines(ds, velocity_field, seed_points):
 
 np.random.seed(10)
 num_seed_points = 30
-print("num_seed_points", num_seed_points)
+# print("num_seed_points", num_seed_points)
 seed_points = np.random.rand(num_seed_points, 3)
+"""
 
 def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
                           dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
@@ -1839,12 +1858,12 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         #         ax.plot(streamline[:, 0], streamline[:, 1], streamline[:, 2], color='red', alpha=0.7)
 
         # """
-        # Fifth row: flow gt streamlines on density
+        # Fifth row: flow gt streamlines
         output_path = os.path.join(dir_res, "Flow_streamlines.png")
         volume = original_data[round(index)]
         # Call the function to create and save the image
-        visualize_volume_with_streamlines(volume, u_gt[i], v_gt[i], w_gt[i], seed_points, output_path)
-        # visualize_volume_with_streamlines(volume, u_gt[i], v_gt[i], w_gt[i], output_path)
+        # visualize_volume_with_streamlines(volume, u_gt[i], v_gt[i], w_gt[i], seed_points, output_path)
+        visualize_volume_with_streamlines(volume, u_gt[i], v_gt[i], w_gt[i], output_path)
         # visualize_volume_with_glyphs(volume, u_gt[i], v_gt[i], w_gt[i], output_path)
         print("rendered!")
 
@@ -1856,12 +1875,12 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         ax.axis('off')
 
 
-        # Sixth row: flow streamlines on density
+        # Sixth row: flow streamlines
         output_path = os.path.join(dir_res, "Flow_streamlines.png")
         volume = original_data[round(index)]
         # Call the function to create and save the image
-        visualize_volume_with_streamlines(volume, u[i], v[i], w[i], seed_points, output_path)
-        # visualize_volume_with_streamlines(volume, u[i], v[i], w[i], output_path)
+        # visualize_volume_with_streamlines(volume, u[i], v[i], w[i], seed_points, output_path)
+        visualize_volume_with_streamlines(volume, u[i], v[i], w[i], output_path)
         # visualize_volume_with_glyphs(volume, u[i], v[i], w[i], output_path)
         print("rendered!")
 

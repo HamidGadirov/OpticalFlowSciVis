@@ -926,7 +926,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=200, type=int) # 120 200
+    parser.add_argument('--epoch', default=10, type=int) # 120 200
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
     parser.add_argument('--local-rank', default=0, type=int, help='local rank') # local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -1284,7 +1284,7 @@ if __name__ == "__main__":
     # 2x: 52.75 0.0312; 8x: 49.15 0.0311; 16x: 42.46 0.0310
 
     ### +++
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 52.62 0.0310; 5x: 52.31 0.0310; 8x: 49.39 0.0309; 16x: 42.88 0.0309
     ### +++
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_200ep_v1.pkl"
@@ -1366,7 +1366,7 @@ if __name__ == "__main__":
     # 2x: 60.95 0.1455; 3x: 56.67 0.1458; 5x: 53.17 0.1461; 8x: 48.14 0.1465; 16x: 39.54 0.1475
     # no rec:
     # model_name = "lrest_4Blocks_3convDown3convUp3conv_flow2e-1_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
-    # 2x: 47.15 0.1454
+    # 2x: 47.15 0.1454; 32x: 31.11 0.0479; stsr-inr
     # w/o s-t:
     # model_name = "lrest_noTea_4Blocks_3convDown3convUp3conv_l1_flow2e-1_3b_v1_128_nyx_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # 2x: 59.44 0.1389; 8x: 47.37 0.1391
@@ -1649,9 +1649,9 @@ if __name__ == "__main__":
 
         if "3d" in dataset: 
             # factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
-            factors = [2, 3, 5, 8, 16, 32]
+            factors = [2, 3, 5, 8, 16, 32, 64]
             # factors = [2, 10, 15, 20] # 30, 40, 60]
-            # factors = [20]
+            # factors = [32]
         for factor in factors:
             dir_res = "Results"
             dir_res = os.path.join(dir_res, dataset)
@@ -1721,16 +1721,19 @@ if __name__ == "__main__":
             """
             # save data for 3d figure:
             # data = [data_original_interpol, interpol_data, flow_original_pred, flow]
-            data = [interpol_data]
+            # data = [data_original_interpol[:60], interpol_data[:60], flow_original_pred[:60], flow[:60]]
+            # data = [interpol_data]
+            data = [interpol_data[:60]]
             save_path = "Results"
             save_path = os.path.join(save_path, dataset)
             save_path = os.path.join(save_path, "paper_figure")
             # filenames = ["data_original_interpol.pkl", "interpol_data.pkl", "flow_original_pred.pkl", "flow.pkl"]
-            filenames = ["data_coordnet_interpol.pkl"]
+            # filenames = ["data_coordnet_interpol.pkl"]
+            filenames = ["data_stsr_interpol.pkl"]
             for d, fn in zip(data, filenames):
                 with open(os.path.join(save_path, fn), 'wb') as f:
                     pickle.dump(d, f, protocol=4)
-            input("x")
+            input("saved data for 3d figure")
             """
 
             print("original data is in range %f to %f" % (np.min(data_original_interpol), np.max(data_original_interpol)))

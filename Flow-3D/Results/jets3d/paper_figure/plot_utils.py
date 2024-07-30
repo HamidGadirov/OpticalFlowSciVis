@@ -83,7 +83,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
     # print("mean: ", np.mean(original_data))
     # print("std: ", np.std(original_data))
 
-    cam_resolution = 512 # 256 512
+    cam_resolution = 256 # 256 512
 
     def add_zoom(ax):
         # Define the coordinates and size of the region to be zoomed in
@@ -139,7 +139,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -166,7 +166,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
         ax.axis('off')
 
         # add zoomings
-        add_zoom(ax)
+        # add_zoom(ax)
 
         # Second row: interpolated data
         volume = interpol_data[round(index)]
@@ -181,7 +181,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -196,7 +196,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
         ax.axis('off')
 
         # add zoomings
-        add_zoom(ax)
+        # add_zoom(ax)
 
 
         # Third row: interpolated data coordnet
@@ -212,7 +212,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -227,7 +227,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
         ax.axis('off')
 
         # add zoomings
-        add_zoom(ax)
+        # add_zoom(ax)
 
 
         # Fourth row: flow gt
@@ -245,7 +245,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         # cam = sc.camera
         # cam.resolution = cam_resolution
-        # cam.zoom(1.75)
+        # cam.zoom(0.75)
         # cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         # im = sc.render()
         # # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -276,7 +276,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -300,7 +300,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -324,7 +324,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -354,7 +354,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         # cam = sc.camera
         # cam.resolution = cam_resolution
-        # cam.zoom(1.75)
+        # cam.zoom(0.75)
         # cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         # im = sc.render()
         # # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -385,7 +385,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -408,7 +408,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -431,7 +431,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
 
         cam = sc.camera
         cam.resolution = cam_resolution
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         im = sc.render()
         # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
@@ -488,7 +488,7 @@ def render_density(gt, interpol, dir_res="Results"):
         # source.tfh.plot(f"{save_path}/transfer_function.png", profile_field=("gas", "density"))
         cam = sc.camera
         cam.resolution = 256
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         # cam.rotate(30 / 180 * np.pi, rot_vector=np.array([1.0, 0.0, 0.0]))
         im = sc.render()
@@ -517,7 +517,7 @@ def render_density(gt, interpol, dir_res="Results"):
         # source.tfh.plot(f"{save_path}/transfer_function.png", profile_field=("gas", "density"))
         cam = sc.camera
         cam.resolution = 256
-        cam.zoom(1.75)
+        cam.zoom(0.75)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         # cam.rotate(30 / 180 * np.pi, rot_vector=np.array([1.0, 0.0, 0.0]))
         im = sc.render()
