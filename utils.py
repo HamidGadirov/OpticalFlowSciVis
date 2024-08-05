@@ -1557,7 +1557,7 @@ seed_points = np.random.rand(num_seed_points, 3)
 def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
                           dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
     
-    columns = 2 # 2 6
+    columns = 3 # 2 6
     rows = 6 # 4 6
     skip = 10
     data_to_vis = original_data
@@ -1880,7 +1880,8 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         volume = original_data[round(index)]
         # Call the function to create and save the image
         # visualize_volume_with_streamlines(volume, u[i], v[i], w[i], seed_points, output_path)
-        visualize_volume_with_streamlines(volume, u[i], v[i], w[i], output_path)
+        # visualize_volume_with_streamlines(volume, u[i], v[i], w[i], output_path)
+        visualize_volume_with_streamlines(volume, u_gt[i], v_gt[i], w_gt[i], output_path)
         # visualize_volume_with_glyphs(volume, u[i], v[i], w[i], output_path)
         print("rendered!")
 

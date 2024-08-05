@@ -87,6 +87,9 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         #     break
         ax = fig.add_subplot(rows, columns, i)
         # print(int(i/columns))
+        if round(index) % factor == 0: # bug fix
+            index_pred += skip
+
         if int((i-1)/columns) == 0: # gt
             img = original_data[round(index)]
             if dataset == "lbs2d":
@@ -104,7 +107,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             if dataset == "lbs2d":
                 ax_title = "t=" + str(index + 3000 + 1605)
             elif dataset == "droplet2d":
-                ax_title = "t=" + str(index + 25)
+                ax_title = "t=" + str(index + 35) # 25
             if index % factor != 0: # if index % 3 == 1:
                 ax_title += "*"
             if dataset == "lbs2d":
@@ -318,6 +321,16 @@ factor = 3 # 6
 # dataset = "lbs2d"
 dataset = "droplet2d"
 title = "Droplet_GT_Interpol_Diff_Flow_3x_new"
+
+# test:
+original_data = original_data[10:]
+interpol_data = interpol_data[10:]
+diffs = diffs[10:]
+flow = flow[10:]
+interpol_data_RIFE = interpol_data_RIFE[10:]
+diffs_RIFE = diffs_RIFE[10:]
+flow_RIFE = flow_RIFE[10:]
+
 visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, diffs_RIFE,
         flow, flow_RIFE,
         factor, dataset, dir_res="./", title=title, show=True, save=True)

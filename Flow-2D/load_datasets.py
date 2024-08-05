@@ -782,7 +782,8 @@ def load_data(dataset, factor, mode):
                 #     data_test = data # random triplets
                 # data_test = data[:2700] # 36.81
                 # data_test = data[0:1000] # for video
-                data_test = data[360:660] # for plots
+                data_test = data[360:660] # for plots used before!
+                # data_test = data[1550:1850] # for plots new
                 # data_test = data[635:935] # for plots 1
                 # data_test = data[2700:5400] # 34.26
                 # data_test = data[0:2700] # 35.12

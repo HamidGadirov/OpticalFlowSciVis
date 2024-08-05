@@ -15,7 +15,7 @@ from model.refine import *
 
 device = torch.device("cuda")
 
-flow_available = True # True False
+flow_available = False # True False
 
 student_teacher = True # True False
     

@@ -111,6 +111,10 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         #     break
         ax = fig.add_subplot(rows, columns, i)
         # print(int(i/columns))
+
+        if round(index) % factor == 0: # bug fix
+            index_pred += skip
+        
         if int((i-1)/columns) == 0: # gt
             img = original_data[round(index)]
             if dataset == "lbs2d":

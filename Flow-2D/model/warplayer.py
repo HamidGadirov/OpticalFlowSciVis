@@ -5,7 +5,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 backwarp_tenGrid = {}
 
 def warp(tenInput, tenFlow):
-    print(tenInput.shape, tenFlow.shape)
+    # print(tenInput.shape, tenFlow.shape)
     # input("x")
     k = (str(tenFlow.device), str(tenFlow.size()))
     if k not in backwarp_tenGrid:

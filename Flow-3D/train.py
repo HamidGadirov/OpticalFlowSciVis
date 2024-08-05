@@ -84,8 +84,8 @@ def get_learning_rate(step):
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (1e-4 - 4e-4) * mul + 4e-4
-        # return (1e-4 - 1e-5) * mul + 1e-5
+        # return (1e-4 - 4e-4) * mul + 4e-4
+        return (1e-4 - 1e-5) * mul + 1e-5
         # return (1e-4 - 1e-5) * mul + 1e-5
         # return (1e-4 - 5e-5) * mul + 5e-5
         # return (1e-4 - 1e-6) * mul + 1e-6
@@ -926,7 +926,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=10, type=int) # 120 200
+    parser.add_argument('--epoch', default=120, type=int) # 120 200
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
     parser.add_argument('--local-rank', default=0, type=int, help='local rank') # local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -1301,6 +1301,8 @@ if __name__ == "__main__":
     # model_name = "lrest_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_1K_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 53.30 0.0305; 5x: 53.34 0.0305; 8x: 50.25 0.0305; 16x: 43.63 0.0304
     # a bit better, use only for final experiments
+    model_name = "lrest_4Blocks_8conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # 5x: 52.79 0.0418;
 
     # lrest train as hyperLREST: 
     # model_name = "lrest_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
