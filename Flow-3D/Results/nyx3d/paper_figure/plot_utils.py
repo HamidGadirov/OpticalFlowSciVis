@@ -93,11 +93,11 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
             x2, y2, width2, height2 = 216, 160, 80, 80  # For the top right zoomed-in version
 
         # Create a rectangle patch to highlight the region for the top right zoomed-in version
-        rect1 = patches.Rectangle((x1, y1), width1, height1, linewidth=1.5, edgecolor='purple', facecolor='none')
+        rect1 = patches.Rectangle((x1, y1), width1, height1, linewidth=1.0, edgecolor='purple', facecolor='none')
         ax.add_patch(rect1)
 
         # Create a rectangle patch to highlight the region for the top left zoomed-in version
-        rect2 = patches.Rectangle((x2, y2), width2, height2, linewidth=1.5, edgecolor='orange', facecolor='none')
+        rect2 = patches.Rectangle((x2, y2), width2, height2, linewidth=1.0, edgecolor='orange', facecolor='none')
         ax.add_patch(rect2)
 
         # Create inset axes for the zoomed-in version on the top right

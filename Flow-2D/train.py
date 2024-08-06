@@ -30,7 +30,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir) 
 import tqdm
 
-from model.RIFE import Model
+from model.LREST import Model
 from dataset import *
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
@@ -177,7 +177,7 @@ def train(model, dataset, factor, model_name, mode, local_rank):
     # model_name += "_" + dataset
     # model_name += ".pkl"
 
-    # model.load_model(model_name, log_path)
+    model.load_model(model_name, log_path)
     try:
         model.load_model(model_name, log_path)
         # print("Loaded RIFE model:", model_name)
@@ -1500,16 +1500,17 @@ if __name__ == "__main__":
     # 2x: 41.13 0.0103; 3x: 39.07 0.0197; 4x: 37.75 0.0258; 5x: 36.69 0.0312; 8x: 34.30 0.0389; 16x: 30.91 0.062
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4.pkl" # flowScale2
     # 2x: 41.12 0.0109; 3x: 39.09 0.0167; 4x: 37.65 0.023; 5x: 36.60 0.029; 8x: 34.22 0.038; 16x: 30.84 0.060 ++
-    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W6_deconv_lr6e-4.pkl"
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop60KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 41.11 0.0102; 3x: 39.02 0.022; 5x: 36.75 0.0296; 8x: 34.20 0.037; 16x: 30.81 0.060 ++
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop30KrandTripl_W6_deconv_lr6e-4.pkl"
     # 2x: 40.96 0.0111; 3x: 39.11 0.0189; 5x: 36.76 0.0301; 8x: 34.36 0.0377; 16x: 30.97 0.060
 
     ### +++
-    model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4.pkl" # 80ep
     # 2x: 41.16 0.0087; 3x: 39.09 0.0177; 4x: 37.66 0.0238; 5x: 36.60 0.0293; 8x: 34.26 0.0367; 16x: 30.93 0.0585 +++
     ### +++
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W6_deconv_lr6e-4_150ep.pkl"
+    # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop10KrandTripl_W6_deconv_lr6e-4_150ep_test.pkl"
 
 
     # model_name = "flownet_4Blocks_3convDown3convUp3conv_l1_dist1e-4_reg1e-8_photo1e-6_v1_256_drop40KrandTripl_W10simple_deconv_lr6e-4.pkl" #
@@ -1762,7 +1763,7 @@ if __name__ == "__main__":
         elif dataset == "lbs2d":
             # factors = [2, 3, 4, 5, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
             # factors = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-            factors = [18]
+            factors = [6, 16]
         # factors = [8, 16, 32]
         for factor in factors:
             dir_res = "Results"
@@ -2074,11 +2075,11 @@ if __name__ == "__main__":
                 title = "Flow_gt_pred_diff"
                 visualize_seq_flow(flow_original_pred, flow, u_diff, v_diff,
                         factor, dataset, dir_model, title=title, show=False, save=True)
-            if dataset == "droplet2d":
-                flow_filename = os.path.join(dir_model, 'flow_pred_LREST.pkl')
-                # flow_filename = os.path.join(dir_model, 'flow_pred_RIFE.pkl')
-                with open(flow_filename, 'wb') as f:
-                    pickle.dump(flow, f)
+            # if dataset == "droplet2d":
+            #     flow_filename = os.path.join(dir_model, 'flow_pred_LREST.pkl')
+            #     # flow_filename = os.path.join(dir_model, 'flow_pred_RIFE.pkl')
+            #     with open(flow_filename, 'wb') as f:
+            #         pickle.dump(flow, f)
             # """
             
             # input("metrics")

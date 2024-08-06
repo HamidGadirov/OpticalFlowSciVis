@@ -33,7 +33,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         columns = 24
     elif dataset == "lbs2d":
         columns = 7 # 9 30
-    rows = 10
+    rows = 12 # 10
     skip = 1
     if factor == 16:
         skip = 3
@@ -310,6 +310,54 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
 
             index_pred += skip_flow
 
+        if int((i-1)/columns) == 10 and round(index) % factor != 0 and dataset == "lbs2d":  # streamlines gt
+            u_gt = flow_u_gt[round(index_pred)]
+            v_gt = flow_v_gt[round(index_pred)]
+
+            # Generate a meshgrid for the 2D flow field
+            y, x = np.mgrid[0:u_gt.shape[0], 0:u_gt.shape[1]]
+
+            if dataset == "lbs2d" and index_pred < 33:
+                # Plot the streamlines with finer control over density, line width, and arrow size
+                plt.streamplot(x, y, u_gt, v_gt, color=np.sqrt(u_gt**2 + v_gt**2), cmap='turbo', density=1.5,
+                            linewidth=0.5, arrowsize=0.2, minlength=0.2)
+
+            # Set plot limits and aspect ratio
+            plt.xlim(0, u_gt.shape[1])
+            plt.ylim(0, v_gt.shape[0])
+            plt.gca().set_aspect('equal', adjustable='box')
+            plt.gca().invert_yaxis()  # To match image origin
+            
+            index_pred += skip_flow
+
+        if int((i-1)/columns) == 11 and round(index) % factor != 0 and dataset == "lbs2d":  # streamlines pred
+            u = flow_u[round(index_pred)]
+            v = flow_v[round(index_pred)]
+
+            # Generate a meshgrid for the 2D flow field
+            y, x = np.mgrid[0:u.shape[0], 0:v.shape[1]]
+
+            magnitude = np.sqrt(u**2 + v**2)
+            # print("magnitude", magnitude)
+
+            # Apply a threshold to filter out low magnitude streamlines
+            threshold = 0.01  # Adjust this value based on your data
+            u[magnitude < threshold] = 0
+            v[magnitude < threshold] = 0
+
+            if dataset == "lbs2d" and index_pred < 33:
+                # Plot the streamlines with finer control over density, line width, and arrow size
+                plt.streamplot(x, y, u, v, color=np.sqrt(u_gt**2 + v_gt**2), cmap='turbo', density=1.5,
+                            linewidth=0.5, arrowsize=0.2, minlength=0.2)
+
+            # Set plot limits and aspect ratio
+            plt.xlim(0, u.shape[1])
+            plt.ylim(0, v.shape[0])
+            plt.gca().set_aspect('equal', adjustable='box')
+            plt.gca().invert_yaxis()  # To match image origin
+            
+            index_pred += skip_flow
+
         plt.axis('off')
         # cmap='viridis'
         if "rectangle2d" in dataset:
@@ -342,7 +390,8 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             # cb_ax = fig.add_axes([0.91, 0.5, 0.005, 0.3])
             # cb_ax = fig.add_axes([0.82, 0.5, 0.005, 0.35]) # 9 cols
             # cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.35]) 
-            cb_ax = fig.add_axes([0.69, 0.54, 0.003, 0.23]) 
+            # cb_ax = fig.add_axes([0.69, 0.54, 0.003, 0.23]) # 7 cols 10 rows
+            cb_ax = fig.add_axes([0.66, 0.575, 0.003, 0.22]) # 7 cols 12 rows
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
         # cb.ax.tick_params(labelsize=font_size)
@@ -357,10 +406,11 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             # cb_ax = fig.add_axes([0.91, 0.2, 0.005, 0.25])
             # cb_ax = fig.add_axes([0.82, 0.15, 0.005, 0.25]) # 9 cols
             # cb_ax = fig.add_axes([0.75, 0.15, 0.005, 0.25])
-            cb_ax = fig.add_axes([0.69, 0.15, 0.003, 0.3])
+            # cb_ax = fig.add_axes([0.69, 0.15, 0.003, 0.3]) # 7 cols 10 rows
+            cb_ax = fig.add_axes([0.66, 0.15, 0.003, 0.37]) # 7 cols 12 rows
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.12, 0.005, 0.3])
-        bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
+        bar = np.linspace(0., max_flow_gt, 5, endpoint=True)
         fmt = lambda x, pos: '{:0.2f}'.format(x)
         cbar = plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
         cbar.ax.tick_params(labelsize=6)
@@ -396,7 +446,8 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         # plt.subplots_adjust(wspace=0.01, hspace=-0.75) # hspace=-0.9
         # plt.subplots_adjust(wspace=-0.73, hspace=0.02) # 9 cols
         # plt.subplots_adjust(wspace=-0.825, hspace=0.02) # 7 cols
-        plt.subplots_adjust(wspace=-0.85, hspace=0.02) # 7 cols 10 rows
+        # plt.subplots_adjust(wspace=-0.85, hspace=0.02) # 7 cols 10 rows
+        plt.subplots_adjust(wspace=-0.89, hspace=0.02) # 7 cols 12 rows
         # x = 0.075
         # y = 0.7
         # step = (y - 0.25) / 6.
@@ -452,7 +503,7 @@ diffs_flow_RIFE = load_data('flow_diff_RIFE.pkl')
 
 factor = 16
 dataset = "lbs2d"
-title = "GT_Interpol_Diff_Flow_16x_new"
+title = "GT_Interpol_Diff_Flow_16x_new_streamlines"
 visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, diffs_RIFE,
         flow, flow_gt, diffs_flow, flow_RIFE, diffs_flow_RIFE,
         factor, dataset, dir_res="./", title=title, show=True, save=True)

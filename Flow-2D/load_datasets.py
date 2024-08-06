@@ -111,6 +111,7 @@ def load_data(dataset, factor, mode):
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W5_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_30K_train.pkl"
                     filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_40K_train.pkl"
+                    # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W6_10K_train_test.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W8simple_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W10simple_40K_train.pkl"
                     # filename = "../../../DataSSD/Datasets/drop2D/droplet2d_triplets_W12simple_40K_train.pkl"
@@ -458,7 +459,10 @@ def load_data(dataset, factor, mode):
                 # data = np.float16(data)
                 # data_train = data[2700:51300] # 46800 15120
                 # data_val = data[51300:54000] # 18000 54000
-                    if "30K" in filename:
+                    if "10K" in filename:
+                        data_train = data[:8500]
+                        data_val = data[8500:10000]
+                    elif "30K" in filename:
                         data_train = data[:27000]
                         data_val = data[27000:30000]
                     elif "40K" in filename:
