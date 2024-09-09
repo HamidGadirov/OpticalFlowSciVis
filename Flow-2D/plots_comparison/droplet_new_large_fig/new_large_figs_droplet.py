@@ -33,7 +33,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         columns = 24
     elif dataset == "lbs2d":
         columns = 7 # 9 30
-    rows = 7
+    rows = 9 # 7
     skip = 1
     # if factor == 16:
     #     skip = 3
@@ -44,6 +44,35 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
     data_to_vis = original_data
     flow_u = flow[:, 0, ...]
     flow_v = flow[:, 1, ...]
+
+    threshold_u = 0.6  # Adjust based on flow_u's range
+    threshold_v = 0.6  # Adjust based on flow_v's range
+
+    # Calculate the magnitude
+    magnitude_u = np.abs(flow_u)
+    magnitude_v = np.abs(flow_v)
+
+    # Copy the original data to new variables
+    filtered_flow_u = np.copy(flow_u)
+    filtered_flow_v = np.copy(flow_v)
+
+    # Apply the threshold to filter out small magnitude values
+    filtered_flow_u[(magnitude_u < threshold_u)] = 0
+    filtered_flow_v[(magnitude_v < threshold_v)] = 0
+
+    threshold = 0.5
+
+    # Calculate the magnitude
+    magnitude_u_arrow = np.abs(flow_u)
+    magnitude_v_arrow = np.abs(flow_v)
+
+    # Copy the original data to new variables
+    filtered_flow_u_arrow = np.copy(flow_u)
+    filtered_flow_v_arrow = np.copy(flow_v)
+
+    # Apply the threshold to filter out small magnitude values
+    filtered_flow_u_arrow[(magnitude_u_arrow < threshold)] = 0
+    filtered_flow_v_arrow[(magnitude_v_arrow < threshold)] = 0
 
     flow_u_RIFE = flow_RIFE[:, 0, ...]
     flow_v_RIFE = flow_RIFE[:, 1, ...]
@@ -66,13 +95,13 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         print("vis range:", vmin, data_to_vis.max())
         print("vis flow range:", 0, max_flow_gt)
         cmap ='gray'
-        quiver_steps = 4
+        quiver_steps = 9
         # scale = None
 
         # magnitude = np.sqrt(flow_u**2 + flow_v**2)
         # max_magnitude = np.max(magnitude)
         # scale = 0.5 / max_magnitude  # Adjust the scale factor as needed
-        scale = 0.5
+        scale = None # 0.25
 
     # print("flow_u & flow_u_diff:", flow_u.shape, flow_u_diff.shape)
 
@@ -111,9 +140,9 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             if index % factor != 0: # if index % 3 == 1:
                 ax_title += "*"
             if dataset == "lbs2d":
-                ax.set_title(ax_title, fontsize=6, pad=-10)
+                ax.set_title(ax_title, fontsize=5, pad=-10)
             elif dataset == "droplet2d":
-                ax.set_title(ax_title, fontsize=6, pad=-10)
+                ax.set_title(ax_title, fontsize=4, pad=-10)
         if int((i-1)/columns) == 1 and round(index) % factor != 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
             img = interpol_data[round(index_pred)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)
@@ -156,7 +185,9 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
                 hsv = np.empty(shape=(flow_u.shape[1], flow_u.shape[2], 3), dtype=np.uint8)
                 hsv[:,:,1] = 255
                 # mag, ang = cv2.cartToPolar(flow_u[round((index - 1) / 3)], flow_v[round((index - 1) / 3)])
-                mag, ang = cv2.cartToPolar(flow_u[round(index_pred)], flow_v[round(index_pred)])
+                # mag, ang = cv2.cartToPolar(flow_u[round(index_pred)], flow_v[round(index_pred)])  
+                mag, ang = cv2.cartToPolar(filtered_flow_u[round(index_pred)], filtered_flow_v[round(index_pred)])
+                
                 hsv[..., 0] = ang * 180 / np.pi / 2
                 hsv[..., 2] = cv2.normalize(mag, None, 0, 255, cv2.NORM_MINMAX)
 
@@ -166,7 +197,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
                 # plt.imshow(bgr, vmin=data_to_vis.min(), vmax=data_to_vis.max())
                 plt.imshow(bgr)
                 index_pred += skip
-        if int((i-1)/columns) == 6 and round(index) % factor != 0: # # flow RIFE
+        if int((i-1)/columns) == 6 and round(index) % factor != 0: # flow RIFE
             if dataset == "vimeo2d" or dataset == "droplet2d": # show pred flow in hsv-rgb instead of gt
                 hsv = np.empty(shape=(flow_u_RIFE.shape[1], flow_u_RIFE.shape[2], 3), dtype=np.uint8)
                 hsv[:,:,1] = 255
@@ -181,6 +212,125 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
                 # plt.imshow(bgr, vmin=data_to_vis.min(), vmax=data_to_vis.max())
                 plt.imshow(bgr)
                 index_pred += skip
+
+        if int((i-1)/columns) == 7 and round(index) % factor != 0: # flow arrows LREST
+            u = flow_u[round(index_pred)]
+            v = flow_v[round(index_pred)]
+            norm = np.sqrt(u * u + v * v) # / norm_coeff
+            # print(norm.mean())
+            # img = interpol_data[round(index)] # [index-columns*2*2*2]
+            img = np.zeros((original_data.shape[1], original_data.shape[2]))
+            plt.axis('off')
+            # ax = plt.gca()
+            # print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
+            filtered_u = filtered_flow_u_arrow[round(index_pred)]
+            filtered_v = filtered_flow_v_arrow[round(index_pred)]
+            # filtered_norm = np.sqrt(filtered_u * filtered_u + filtered_v * filtered_v) # / norm_coeff
+
+            # print("norm ", norm)
+
+            # # Set the threshold for arrow length (magnitude)
+            # magnitude_threshold = 0.8  # Adjust this value as needed
+
+            # # Calculate the magnitude of the flow vectors
+            # magnitude = np.sqrt(u**2 + v**2)
+
+            # # Mask the arrows that are smaller than the threshold
+            # mask = magnitude >= magnitude_threshold
+            # u_filtered = np.ma.masked_where(~mask, u)
+            # v_filtered = np.ma.masked_where(~mask, v)
+
+            # Threshold value
+            threshold = 0.8
+
+            # For vectors with magnitude smaller than the threshold, divide the vectors by 2
+            u_filtered = np.where(threshold < threshold, u / 10, u)
+            v_filtered = np.where(threshold < threshold, v / 10, v)
+
+            filtered_norm = np.sqrt(filtered_u * filtered_u + filtered_v * filtered_v) # / norm_coeff
+            
+            pyimof.display.quiver(u_filtered, v_filtered, c=filtered_norm, bg=img, ax=ax, cmap='turbo', clim=(0.5, 12), scale = scale, 
+                                  bg_cmap='gray', step=quiver_steps, width=0.3)
+
+            # # Define the region to zoom into (change these coordinates to focus on the region you want)
+            # x1, x2, y1, y2 = 30, 50, 30, 50  # These values should be set based on the specific area of interest
+
+            # # Create an inset axis for the zoomed region
+            # ax_inset = ax.inset_axes([0.6, 0.6, 0.3, 0.3])  # This defines the location and size of the inset in the main plot
+            # ax_inset.axis('off')
+
+            # # Plot the zoomed-in region
+            # pyimof.display.quiver(u_filtered[y1:y2, x1:x2], v_filtered[y1:y2, x1:x2], 
+            #                     c=filtered_norm[y1:y2, x1:x2], 
+            #                     bg=img[y1:y2, x1:x2], 
+            #                     ax=ax_inset, 
+            #                     cmap='turbo', 
+            #                     clim=(0.5, 12), 
+            #                     scale=scale, 
+            #                     bg_cmap='gray', 
+            #                     step=quiver_steps, 
+            #                     width=0.3)
+
+            # # Optionally, add a rectangle on the main plot to indicate the zoomed region
+            # rect = plt.Rectangle((x1, y1), x2 - x1, y2 - y1, edgecolor='red', facecolor='none', linewidth=0.25)
+            # ax.add_patch(rect)
+
+            data_range = min(original_data.shape[0], interpol_data.shape[0], flow_u.shape[0])
+            # print(data_range)
+            if round(index) >= data_range:
+                break
+            if dataset == "droplet2d":
+                index_pred += skip
+
+        if int((i-1)/columns) == 8 and round(index) % factor != 0: # flow arrows RIFE
+            u = flow_u_RIFE[round(index_pred)]
+            v = flow_v_RIFE[round(index_pred)]
+            norm = np.sqrt(u * u + v * v) # / norm_coeff
+            # print(norm.mean())
+            # img = interpol_data[round(index)] # [index-columns*2*2*2]
+            img = np.zeros((original_data.shape[1], original_data.shape[2]))
+            plt.axis('off')
+
+            # print("norm ", norm)
+
+            # ax = plt.gca()
+            # print("norm is in range %f to %f" % (np.min(norm), np.max(norm)))
+            pyimof.display.quiver(u, v, c=norm, bg=img, ax=ax, cmap='turbo', clim=(0, max_flow_gt), scale = scale, 
+                                  bg_cmap='gray', step=quiver_steps, width=0.3)
+
+            data_range = min(original_data.shape[0], interpol_data.shape[0], flow_u.shape[0])
+            # print(data_range)
+            if round(index) >= data_range:
+                break
+            if dataset == "droplet2d":
+                index_pred += skip
+
+        # if int((i-1)/columns) == 7 and round(index) % factor != 0:  # streamlines pred
+        #     u = flow_u[round(index_pred)]
+        #     v = flow_v[round(index_pred)]
+
+        #     # Generate a meshgrid for the 2D flow field
+        #     y, x = np.mgrid[0:u.shape[0], 0:v.shape[1]]
+
+        #     magnitude = np.sqrt(u**2 + v**2)
+        #     # print("magnitude", magnitude)
+
+        #     # # Apply a threshold to filter out low magnitude streamlines
+        #     # threshold = 0.1  # Adjust this value based on your data
+        #     # u[magnitude < threshold] = 0
+        #     # v[magnitude < threshold] = 0
+
+        #     # Plot the streamlines with finer control over density, line width, and arrow size
+        #     plt.streamplot(x, y, u, v, color=np.sqrt(u**2 + v**2), cmap='turbo', density=1.5,
+        #                 linewidth=0.5, arrowsize=0.2, minlength=0.2)
+
+        #     # Set plot limits and aspect ratio
+        #     plt.xlim(0, u.shape[1])
+        #     plt.ylim(0, v.shape[0])
+        #     plt.gca().set_aspect('equal', adjustable='box')
+        #     plt.gca().invert_yaxis()  # To match image origin
+
+        #     index_pred += skip
 
         plt.axis('off')
         # cmap='viridis'
@@ -253,6 +403,15 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         fmt = lambda x, pos: '{:0.2f}'.format(x)
         plt.colorbar(im, cax=cb_ax, cmap=cmap, ticks=bar, format=FuncFormatter(fmt))
 
+        # colorbar for flow
+        normalizer=Normalize(vmin=0., vmax=max_flow_gt)
+        im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
+        cb_ax = fig.add_axes([0.445, 0.12, 0.002, 0.15])
+        bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
+        fmt = lambda x, pos: '{:0.1f}'.format(x)
+        cbar = plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
+        cbar.ax.tick_params(labelsize=4)
+
     fig = plt.gcf()
     suptitle = dataset + "_" + str(factor) + "x"
     # plt.suptitle(suptitle) 
@@ -260,7 +419,8 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
     fig.set_size_inches(20, 3)
     # wspace is x; hspace is y 
     if "droplet2d" in dataset:
-        plt.subplots_adjust(wspace=-0.5, hspace=0.01)
+        # plt.subplots_adjust(wspace=-0.5, hspace=0.01) # 7 rows
+        plt.subplots_adjust(wspace=-0.89, hspace=0.01) # 9 rows
         x = 0.16
         y = 0.8
         step = (y - 0.15) / 6.
@@ -321,15 +481,11 @@ factor = 3 # 6
 # dataset = "lbs2d"
 dataset = "droplet2d"
 title = "Droplet_GT_Interpol_Diff_Flow_3x_new"
+title = "Droplet_GT_Interpol_Diff_Flow_3x_new_arrows"
+# title = "Droplet_GT_Interpol_Diff_Flow_3x_new_streamlines"
 
 # test:
-# original_data = original_data[10:]
-# interpol_data = interpol_data[10:]
-# diffs = diffs[10:]
-# flow = flow[10:]
-# interpol_data_RIFE = interpol_data_RIFE[10:]
-# diffs_RIFE = diffs_RIFE[10:]
-# flow_RIFE = flow_RIFE[10:]
+input("didn't forget anything?..")
 
 visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, diffs_RIFE,
         flow, flow_RIFE,

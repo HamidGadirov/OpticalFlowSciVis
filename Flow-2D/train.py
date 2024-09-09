@@ -1209,7 +1209,7 @@ if __name__ == "__main__":
     # model_name = "flownet_4Blocks_l1_5convDown5convUp5conv_flow2e-1_v1_256_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # +++ 90 ep
     # 2x: 51.46 0.0064; 3x: 57.65 0.0096; 4x: 49.29 0.0115; 5x: 51.64 0.0135; 8x: 48.98 0.0193; 16x: 45.82 0.0388; 32x: 40.87 0.0550
     ###
-    model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # no deconv
+    # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4.pkl" # no deconv
     # 2x: 51.21 0.0042; 3x: 58.50 0.0089; 5x: 51.96 0.0135; 8x: 49.31 0.0192; 16x: 45.87 0.0321; 32x: 40.16 0.0494
     ###
     # model_name = "flownet_4Blocks_l1_3convDown3convUp3conv_flow2e-1_v1_320_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_gamma_eqRes_deconv_lr6e-4_v2.pkl"
@@ -1228,7 +1228,7 @@ if __name__ == "__main__":
     # model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline.pkl" # baseline
     # 2x: 52.16 0.0935; 3x: 58.12 0.1039; 5x: 51.02 0.1310; 16x: 44.28 0.2132; 32x: 40.05 0.2030
     # Baseline Baseline Baseline
-    model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline_v2.pkl" # 100 ep
+    # model_name = "flownet_lapl_dist_v1_240_lbs2d_triplets_W6_40K_ens21_DensNormScaleVel10_lr3e-4_RIFEbaseline_v2.pkl" # 100 ep
     # Baseline 2x: 51.90 0.0919; 3x: 56.12 0.0987; 5x: 50.96 0.1168; 8x: 49.26 0.1467; 16x: 44.15 0.1644; 32x: 39.57 0.1582
     # Baseline Baseline Baseline
 
@@ -1763,7 +1763,7 @@ if __name__ == "__main__":
         elif dataset == "lbs2d":
             # factors = [2, 3, 4, 5, 6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
             # factors = [6, 8, 12, 16, 24, 32, 48, 64, 96, 128]
-            factors = [6, 16]
+            factors = [6]
         # factors = [8, 16, 32]
         for factor in factors:
             dir_res = "Results"
@@ -1775,7 +1775,14 @@ if __name__ == "__main__":
             print("Saving at:", dir_model)
 
             # data_test, data_test_no_skip, interpol_data, flow, flow_test, mask, statistics = train(model, args.dataset, args.factor, model_name, args.mode, args.local_rank)
+            start_time = time.time()
             data_test, data_test_no_skip, interpol_data, flow, mask, statistics = train(model, args.dataset, factor, model_name, args.mode, args.local_rank)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"Inference time: {elapsed_time:.2f} seconds") 
+            # FLINT: 
+            # RIFE: 0.033s
+
             # data_test is data_test_non_overlap
             print("data_test:", data_test.shape)
             print("interpol_data:", interpol_data.shape)

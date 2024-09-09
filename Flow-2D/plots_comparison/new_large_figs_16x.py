@@ -77,7 +77,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
     # input(norm_gt)
 
     if "lbs2d" in dataset:
-        quiver_steps = 4
+        quiver_steps = 12
         max_flow_gt = flow_gt.max() # None # 0.1
         max_flow_pred = 0.5
         scale = None
@@ -132,7 +132,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             # print('index', index)
             if dataset == "lbs2d" and index == 18:
                 ax_title = "t=" + str(3000 + 1623)
-                ax.set_title(ax_title, fontsize=6, pad=-10)
+                ax.set_title(ax_title, fontsize=5, pad=-10)
             else:
                 if dataset == "lbs2d":
                     ax_title = "t=" + str(index + 3000 + 1605)
@@ -141,9 +141,9 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
                 if index % factor != 0: # if index % 3 == 1:
                     ax_title += "*"
                 if dataset == "lbs2d":
-                    ax.set_title(ax_title, fontsize=6, pad=-10)
+                    ax.set_title(ax_title, fontsize=5, pad=-10)
                 elif dataset == "droplet2d":
-                    ax.set_title(ax_title, fontsize=6, pad=-10)
+                    ax.set_title(ax_title, fontsize=5, pad=-10)
         if int((i-1)/columns) == 1 and round(index) % factor != 0: # interpol
             # if index_pred >= 15:
             #     pass
@@ -250,13 +250,15 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             u_diff = flow_u_diff[round(index_pred)]
             v_diff = flow_v_diff[round(index_pred)]
             norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff) # / norm_coeff
-            # print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
+            print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
+            norm_diff = np.clip(norm_diff, 0, 0.05)
+            print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
             if dataset == "lbs2d" and index_pred < 33:
-                pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap=cmap, scale = scale, bg_cmap='gray', step=quiver_steps)
+                pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap=cmap, scale = 0.002, bg_cmap='gray', step=quiver_steps)
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
             data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
             # print(data_range)
@@ -398,7 +400,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         fmt = lambda x, pos: '{:0.1f}'.format(x)
         bar = np.linspace(vmin, data_to_vis.max(), 5, endpoint=True)
         cbar = plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
-        cbar.ax.tick_params(labelsize=6)
+        cbar.ax.tick_params(labelsize=5)
         # colorbar for flow
         normalizer=Normalize(vmin=0., vmax=max_flow_gt)
         im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
@@ -413,7 +415,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         bar = np.linspace(0., max_flow_gt, 5, endpoint=True)
         fmt = lambda x, pos: '{:0.2f}'.format(x)
         cbar = plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
-        cbar.ax.tick_params(labelsize=6)
+        cbar.ax.tick_params(labelsize=5)
 
     if dataset == "droplet2d":
         # colorbar for density
@@ -480,30 +482,30 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
 
     
 # Load density data
-original_data = load_data('original_data.pkl')
+original_data = load_data('original_data_16.pkl')
 
 # Load LREST density data
-interpol_data = load_data('interpol_data_LREST.pkl')
-diffs = load_data('diffs_LREST.pkl')
+interpol_data = load_data('interpol_data_LREST_16.pkl')
+diffs = load_data('diffs_LREST_16.pkl')
 
 # Load RIFE density data
-interpol_data_RIFE = load_data('interpol_data_RIFE.pkl')
-diffs_RIFE = load_data('diffs_RIFE.pkl')
+interpol_data_RIFE = load_data('interpol_data_RIFE_16.pkl')
+diffs_RIFE = load_data('diffs_RIFE_16.pkl')
 
 # Load ground truth flow data
-flow_gt = load_data('flow_gt.pkl')
+flow_gt = load_data('flow_gt_16.pkl')
 
 # Load LREST flow data and differences
-flow = load_data('flow_pred_LREST.pkl')
-diffs_flow = load_data('flow_diff_LREST.pkl')
+flow = load_data('flow_pred_LREST_16.pkl')
+diffs_flow = load_data('flow_diff_LREST_16.pkl')
 
 # Load RIFE flow data and differences
-flow_RIFE = load_data('flow_pred_RIFE.pkl')
-diffs_flow_RIFE = load_data('flow_diff_RIFE.pkl')
+flow_RIFE = load_data('flow_pred_RIFE_16.pkl')
+diffs_flow_RIFE = load_data('flow_diff_RIFE_16.pkl')
 
 factor = 16
 dataset = "lbs2d"
-title = "GT_Interpol_Diff_Flow_16x_new_streamlines"
+title = "GT_Interpol_Diff_Flow_18x_new_streamlines"
 visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, diffs_RIFE,
         flow, flow_gt, diffs_flow, flow_RIFE, diffs_flow_RIFE,
         factor, dataset, dir_res="./", title=title, show=True, save=True)

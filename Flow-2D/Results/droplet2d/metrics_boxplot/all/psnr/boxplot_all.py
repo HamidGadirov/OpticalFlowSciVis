@@ -4,19 +4,21 @@ import numpy as np
 
 # Define custom colors for each model (lighter shades)
 colors = {
-    'LREST': '#6699cc',
+    'FLINT': '#6699cc',
     'RIFE': '#ff6666',
     'Linear': '#99cc99'
 }
 
 # Load and process PSNR data for each model and factor
 data = {}
-models = ['LREST', 'RIFE', 'Linear']
+models = ['FLINT', 'RIFE', 'Linear']
 factors = ['2x', '3x', '4x', '5x', '8x', '12x', '16x']
 # factors = ['2x', '3x', '4x', '5x', '8x', '12x', '16x', '24x', '32x', '48x', '64x']
 # factors = ['3x', '5x', '8x', '12x', '16x', '32x', '48x', '64x']
 
 for model in models:
+    if model == "FLINT": 
+        model = "LREST"
     data[model] = []
     for factor in factors:
         filename = f'psnr_{model}_{factor}.pkl'
@@ -39,6 +41,8 @@ plt.rcParams.update({'font.size': font_size})
 boxplots = []
 positions = np.arange(len(factors))
 for i, model in enumerate(models):
+    if model == "FLINT": 
+        model = "LREST"
     bp = ax1.boxplot(data[model], positions=positions + i * 0.25, widths=0.25, patch_artist=True, showfliers=False)
     boxplots.append(bp)
 

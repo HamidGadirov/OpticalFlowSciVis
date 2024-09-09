@@ -39,7 +39,7 @@ from load_datasets import load_data
 from metrics import calculate_diff, calculate_avg_epe
 from metrics import calculate_avg_psnr, calculate_avg_ssim, calculate_avg_lpips, calculate_psnr
 from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_ind_flow, visualize_series, visualize_series_flow, visualize_large, \
-    visualize_seq_dens, visualize_seq_flow, render_volume_yt, visualize_seq_dens_3d, render_density, make_video
+    visualize_seq_dens, visualize_seq_flow, render_volume_yt, visualize_seq_dens_3d, render_density, render_flow, make_video
 from baseline_interpol import *
 
 # If your model is returning NaNs, you could set 
@@ -1093,7 +1093,7 @@ if __name__ == "__main__":
     # 2x: 34.89 0.7382; 10x: 35.82 0.7387 20x: 38.92 0.7392
 
     ### +++
-    # model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W6_500_gamma_eqRes_deconv_lr1e-4.pkl"
+    model_name = "lrest_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_jets_skip10_1000_triplets_W6_500_gamma_eqRes_deconv_lr1e-4.pkl"
     # 2x: 46.39 0.732; 10x: 41.76 0.7326; 15x: 41.11 0.7328; 20x: 47.32 0.7328
     # LREST 20x
     ### +++
@@ -1301,7 +1301,7 @@ if __name__ == "__main__":
     # model_name = "lrest_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_1K_gamma_eqRes_deconv_lr1e-4_1e-5_200ep.pkl"
     # 2x: 53.30 0.0305; 5x: 53.34 0.0305; 8x: 50.25 0.0305; 16x: 43.63 0.0304
     # a bit better, use only for final experiments
-    model_name = "lrest_4Blocks_8conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
+    # model_name = "lrest_4Blocks_8conv_l1_flow2e-1_v1_128_nyx_ens5m_skip5_log10norm_triplets_W12_200_gamma_eqRes_deconv_lr1e-4_1e-5.pkl"
     # 5x: 52.79 0.0418;
 
     # lrest train as hyperLREST: 
@@ -1651,9 +1651,9 @@ if __name__ == "__main__":
 
         if "3d" in dataset: 
             # factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
-            factors = [2, 3, 5, 8, 16, 32, 64]
+            # factors = [2, 3, 5, 8, 16, 32, 64]
             # factors = [2, 10, 15, 20] # 30, 40, 60]
-            # factors = [32]
+            factors = [5]
         for factor in factors:
             dir_res = "Results"
             dir_res = os.path.join(dir_res, dataset)
@@ -1665,7 +1665,34 @@ if __name__ == "__main__":
 
             # train(model, args.dataset, args.mode, args.local_rank)
             # data_test, interpol_data, flow, flow_original, mask = train(model, args.dataset, args.exp, model_name, args.mode, args.local_rank)
+            start_time = time.time()
             data_test, interpol_data, flow, mask = train(model, args.dataset, factor, model_name, args.mode, args.local_rank)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"Inference time: {elapsed_time:.2f} seconds") 
+            # FLINT: 31s Nyx; 25s Jets
+
+            # List to store the timings
+            # timings = []
+
+            # # Perform 15 iterations to account for the first 5 warm-up runs
+            # for i in range(15):
+            #     start_time = time.time()
+            #     data_test, interpol_data, flow, mask = train(model, args.dataset, factor, model_name, args.mode, args.local_rank)
+            #     end_time = time.time()
+                
+            #     # Calculate the elapsed time
+            #     elapsed_time = end_time - start_time
+                
+            #     # Skip the first 5 runs and store the timing of the remaining 10 runs
+            #     if i >= 5:
+            #         timings.append(elapsed_time)
+
+            # # Calculate the average time taken over the 10 iterations
+            # average_time = sum(timings) / len(timings)
+
+            # # Print out the average inference time
+            # print(f"Average inference time over 10 runs: {average_time:.2f} seconds")
 
             # data_test = np.transpose(data_test, (0, 1, 4, 2, 3)) # 3rd is dim0
 
@@ -1743,10 +1770,10 @@ if __name__ == "__main__":
             print("original data mean and std:", np.mean(data_original_interpol), np.std(data_original_interpol))
             print("interpol data mean and std:", np.mean(interpol_data), np.std(interpol_data))
 
-            # 3D rendering function
-            visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
-                        dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
-            print("visualize_seq_dens_3d done!")
+            # # 3D rendering function
+            # visualize_seq_dens_3d(data_original_interpol, interpol_data, flow_original_pred, flow,
+            #             dataset, dir_res=dir_model, title="Dens_GT_Interpol", show=False, save=True)
+            # print("visualize_seq_dens_3d done!")
 
             """
             original_data_gt = [data for i, data in enumerate(original_data) if (i - 1) % 3 == 0]
@@ -1928,19 +1955,28 @@ if __name__ == "__main__":
                 print(flow_original_pred.shape, flow.shape)
                 avg_epe = calculate_avg_epe(flow_original_pred, flow, dir_model, factor)
 
-            # # """
-            # # fn = "data_original_interpol.pkl"
-            # # with open(os.path.join(dir_model, fn), 'wb') as f:
-            # #     pickle.dump(data_original_interpol, f, protocol=4)
-            # # fn = "interpol_data.pkl"
-            # # with open(os.path.join(dir_model, fn), 'wb') as f:
-            # #     pickle.dump(interpol_data, f, protocol=4)
-            # # print("saved for renderings!")
-            # render_density(data_original_interpol, interpol_data, dir_model)
+            # """
+            # fn = "data_original_interpol.pkl"
+            # with open(os.path.join(dir_model, fn), 'wb') as f:
+            #     pickle.dump(data_original_interpol, f, protocol=4)
+            # fn = "interpol_data.pkl"
+            # with open(os.path.join(dir_model, fn), 'wb') as f:
+            #     pickle.dump(interpol_data, f, protocol=4)
+            # print("saved for renderings!")
+            # render_density(data_original_interpol, interpol_data, dataset, dir_model)
             # make_video(dir_model)
             # print("video created!")
-            # # input("xxx")
-            # # """
+
+            # fn = "flow_original_pred.pkl"
+            # with open(os.path.join(dir_model, fn), 'wb') as f:
+            #     pickle.dump(flow_original_pred, f, protocol=4)
+            # fn = "flow.pkl"
+            # with open(os.path.join(dir_model, fn), 'wb') as f:
+            #     pickle.dump(flow_original_pred, f, protocol=4)
+            # print("flow saved for renderings!")
+            render_flow(flow_original_pred, flow_original_pred, dataset, dir_model)
+            input("xxx")
+            # """
 
             """
             original_min = 17610006. # 17327866.

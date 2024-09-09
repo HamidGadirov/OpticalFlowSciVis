@@ -4,17 +4,19 @@ import numpy as np
 
 # Define custom colors for each model (lighter shades)
 colors = {
-    'LREST': '#6699cc',
+    'FLINT': '#6699cc',
     'RIFE': '#ff6666',
     'Linear': '#99cc99'
 }
 
 # Load and process LPIPS data for each model and factor
 data = {}
-models = ['LREST', 'RIFE', 'Linear']
+models = ['FLINT', 'RIFE', 'Linear']
 factors = ['3x', '5x', '8x', '12x', '16x', '32x', '48x', '64x']
 
 for model in models:
+    if model == "FLINT": 
+        model = "LREST"
     data[model] = []
     for factor in factors:
         filename = f'lpips_{model}_{factor}.pkl'
@@ -37,6 +39,8 @@ plt.rcParams.update({'font.size': font_size})
 boxplots = []
 positions = np.arange(len(factors))
 for i, model in enumerate(models):
+    if model == "FLINT": 
+        model = "LREST"
     bp = ax1.boxplot(data[model], positions=positions + i * 0.25, widths=0.25, patch_artist=True, showfliers=False)
     boxplots.append(bp)
 
@@ -62,7 +66,7 @@ legend_labels = [plt.Rectangle((0, 0), 1, 1, color=colors[model], label=model) f
 ax1.legend(handles=legend_labels, loc='upper left')
 
 # Save the plot as an image file
-plt.savefig('lpips_boxplot_lbs.pdf')
+plt.savefig('lpips_boxplot_lbs_new.pdf')
 
 # Show the plot
 plt.show()

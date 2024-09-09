@@ -73,7 +73,7 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
     # input(norm_gt)
 
     if "lbs2d" in dataset:
-        quiver_steps = 4
+        quiver_steps = 12
         max_flow_gt = flow_gt.max() # None # 0.1
         max_flow_pred = 0.5
         scale = None
@@ -128,9 +128,9 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             if index % factor != 0: # if index % 3 == 1:
                 ax_title += "*"
             if dataset == "lbs2d":
-                ax.set_title(ax_title, fontsize=6, pad=-10)
+                ax.set_title(ax_title, fontsize=5, pad=-10)
             elif dataset == "droplet2d":
-                ax.set_title(ax_title, fontsize=6, pad=-10)
+                ax.set_title(ax_title, fontsize=5, pad=-10)
         if int((i-1)/columns) == 1 and round(index) % factor != 0: # interpol
             # img = data_to_vis[index+int(data_to_vis.shape[0]/3),...]
             img = interpol_data[round(index_pred)] # [index-columns*2,...] # (index - 1) % 3 round((index - 1) / 2)
@@ -236,12 +236,14 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             u_diff = flow_u_diff[round(index_pred)]
             v_diff = flow_v_diff[round(index_pred)]
             norm_diff = np.sqrt(u_diff * u_diff + v_diff * v_diff) # / norm_coeff
-            # print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
+            print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
+            norm_diff = np.clip(norm_diff, 0, 0.01)
+            print("norm_diff is in range %f to %f" % (np.min(norm_diff), np.max(norm_diff)))
             # img = interpol_data[round(index)] # [index-columns*2*2*2]
             img = np.zeros((original_data.shape[1], original_data.shape[2]))
             plt.axis('off')
             # ax = plt.gca()
-            pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap=cmap, scale = scale, bg_cmap='gray', step=quiver_steps)
+            pyimof.display.quiver(u_diff, v_diff, c=norm_diff, bg=img, ax=ax, clim=(0, max_flow_gt), cmap=cmap, scale = 0.001, bg_cmap='gray', step=quiver_steps)
             # plt.imshow(pyimof.display.quiver(u, v, c=norm, bg=img, cmap='jet', bg_cmap='gray'), cmap='viridis')
             data_range = min(original_data.shape[0], interpol_data.shape[0], u_diff.shape[0])
             # print(data_range)
@@ -370,14 +372,15 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             # cb_ax = fig.add_axes([0.91, 0.5, 0.005, 0.3])
             # cb_ax = fig.add_axes([0.82, 0.5, 0.005, 0.35]) # 9 cols
             # cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.35]) 
-            cb_ax = fig.add_axes([0.69, 0.54, 0.003, 0.23]) 
+            # cb_ax = fig.add_axes([0.69, 0.54, 0.003, 0.23]) # 7 cols 10 rows
+            cb_ax = fig.add_axes([0.66, 0.575, 0.003, 0.22]) # 7 cols 12 rows
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.5, 0.005, 0.4])
         # cb.ax.tick_params(labelsize=font_size)
         fmt = lambda x, pos: '{:0.1f}'.format(x)
         bar = np.linspace(vmin, data_to_vis.max(), 5, endpoint=True)
         cbar = plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
-        cbar.ax.tick_params(labelsize=6)
+        cbar.ax.tick_params(labelsize=5)
         # colorbar for flow
         normalizer=Normalize(vmin=0., vmax=max_flow_gt)
         im=cm.ScalarMappable(norm=normalizer, cmap='turbo')
@@ -385,13 +388,14 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
             # cb_ax = fig.add_axes([0.91, 0.2, 0.005, 0.25])
             # cb_ax = fig.add_axes([0.82, 0.15, 0.005, 0.25]) # 9 cols
             # cb_ax = fig.add_axes([0.75, 0.15, 0.005, 0.25])
-            cb_ax = fig.add_axes([0.69, 0.15, 0.003, 0.3])
+            # cb_ax = fig.add_axes([0.69, 0.15, 0.003, 0.3]) # 7 cols 10 rows
+            cb_ax = fig.add_axes([0.66, 0.15, 0.003, 0.37]) # 7 cols 12 rows
         elif "rectangle2d" in dataset:
             cb_ax = fig.add_axes([0.75, 0.12, 0.005, 0.3])
-        bar = np.linspace(0., max_flow_gt, 4, endpoint=True)
+        bar = np.linspace(0., max_flow_gt, 5, endpoint=True)
         fmt = lambda x, pos: '{:0.2f}'.format(x)
         cbar = plt.colorbar(im, cax=cb_ax, cmap='turbo', ticks=bar, format=FuncFormatter(fmt))
-        cbar.ax.tick_params(labelsize=6)
+        cbar.ax.tick_params(labelsize=5)
 
     if dataset == "droplet2d":
         # colorbar for density
@@ -424,7 +428,9 @@ def visualize_large(original_data, interpol_data, diffs, interpol_data_RIFE, dif
         # plt.subplots_adjust(wspace=0.01, hspace=-0.75) # hspace=-0.9
         # plt.subplots_adjust(wspace=-0.73, hspace=0.02) # 9 cols
         # plt.subplots_adjust(wspace=-0.825, hspace=0.02) # 7 cols
-        plt.subplots_adjust(wspace=-0.85, hspace=0.02) # 7 cols 10 rows
+        # plt.subplots_adjust(wspace=-0.85, hspace=0.02) # 7 cols 10 rows
+        plt.subplots_adjust(wspace=-0.89, hspace=0.02) # 7 cols 12 rows
+        
         # x = 0.075
         # y = 0.7
         # step = (y - 0.25) / 6.

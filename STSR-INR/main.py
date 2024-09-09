@@ -69,13 +69,19 @@ def main(opt):
 	t.trainNet()
 
 if __name__ == "__main__":
-    """
+    # """
     p = argparse.ArgumentParser()
     # p.add_argument('--config_path', type=str, default='./tasks/configs/CylinderVelM.yml', help='The path of the config file') 
     p.add_argument('--config_path', type=str, default='./configs/nyx_train.yml', help='The path of the config file')
     opt = p.parse_args()
+    print("start")
+    start_time = time.time()
     main(opt)
-    """
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Inference time: {elapsed_time:.2f} seconds") 
+    print("end")
+    # """
 
     GT_filePath = '../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_01375_OmB_00225_h_055_STSRINR_train.pkl'
     eval_dirPath = './Exp/nyx/vnyx/Results/nyx_Scalar/'

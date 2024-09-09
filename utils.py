@@ -324,15 +324,15 @@ def visualize_seq_dens(original_data, interpol_data, diffs,
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
         # save data for plots
         # """
-        # original_data_filename = os.path.join(dir_res, 'original_data.pkl')
-        # with open(original_data_filename, 'wb') as f:
-        #     pickle.dump(original_data, f)
-        interpol_data_filename = os.path.join(dir_res, 'interpol_data_LREST.pkl')
-        # interpol_data_filename = os.path.join(dir_res, 'interpol_data_RIFE.pkl')
+        original_data_filename = os.path.join(dir_res, 'original_data.pkl')
+        with open(original_data_filename, 'wb') as f:
+            pickle.dump(original_data, f)
+        # interpol_data_filename = os.path.join(dir_res, 'interpol_data_LREST.pkl')
+        interpol_data_filename = os.path.join(dir_res, 'interpol_data_RIFE.pkl')
         with open(interpol_data_filename, 'wb') as f:
             pickle.dump(interpol_data, f)
-        diffs_filename = os.path.join(dir_res, 'diffs_LREST.pkl')
-        # diffs_filename = os.path.join(dir_res, 'diffs_RIFE.pkl')
+        # diffs_filename = os.path.join(dir_res, 'diffs_LREST.pkl')
+        diffs_filename = os.path.join(dir_res, 'diffs_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
             pickle.dump(diffs, f)
         # """
@@ -433,18 +433,18 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         if not os.path.isdir(dir_res):
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
-        """
+        # """
         flow_gt_filename = os.path.join(dir_res, 'flow_gt.pkl')
         with open(flow_gt_filename, 'wb') as f:
             pickle.dump(flow_gt, f)
         # save data for plots   flow_pred, flow_u_diff, flow_v_diff
-        interpol_data_filename = os.path.join(dir_res, 'flow_pred_LREST.pkl')
-        # interpol_data_filename = os.path.join(dir_res, 'flow_pred_RIFE.pkl')
+        # interpol_data_filename = os.path.join(dir_res, 'flow_pred_LREST.pkl')
+        interpol_data_filename = os.path.join(dir_res, 'flow_pred_RIFE.pkl')
         with open(interpol_data_filename, 'wb') as f:
             pickle.dump(flow_pred, f)
         flow_diff = np.stack((flow_u_diff, flow_v_diff), axis=1)
-        diffs_filename = os.path.join(dir_res, 'flow_diff_LREST.pkl')
-        # diffs_filename = os.path.join(dir_res, 'flow_diff_RIFE.pkl')
+        # diffs_filename = os.path.join(dir_res, 'flow_diff_LREST.pkl')
+        diffs_filename = os.path.join(dir_res, 'flow_diff_RIFE.pkl')
         with open(diffs_filename, 'wb') as f:
             pickle.dump(flow_diff, f)
         # # diffs_filename = os.path.join(dir_res, 'flow_u_diff_LREST.pkl')
@@ -455,7 +455,7 @@ def visualize_seq_flow(flow_gt, flow_pred, flow_u_diff, flow_v_diff,
         # diffs_filename = os.path.join(dir_res, 'flow_v_diff_RIFE.pkl')
         # with open(diffs_filename, 'wb') as f:
         #     pickle.dump(flow_v_diff, f)
-        """
+        # """
 
 def visualize_large(original_data, interpol_data, diffs,
         flow, flow_gt, diffs_flow, flow_u_diff, flow_v_diff, mask,
@@ -1229,133 +1229,6 @@ def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path)
     grid['density'] = volume.flatten(order='F')
     grid['velocity'] = np.c_[u.flatten(order='F'), v.flatten(order='F'), w.flatten(order='F')]
 
-    # Initialize an empty MultiBlock to store streamlines
-    streamline_collection = pv.MultiBlock()
-
-    # Generate streamlines for each seed point
-    for seed in seed_points:
-        streamline = grid.streamlines(
-            vectors='velocity',
-            source_center=seed,
-            source_radius=0.0,  # No radius, single point
-            max_time=0.35  # length of the streamlines
-        )
-        # Ensure proper distribution of time values for coloring the streamlines
-        time_scalars = np.linspace(0, 1, streamline.n_points)
-        streamline['time'] = time_scalars
-        streamline_collection.append(streamline)
-
-    # Combine all streamlines into one PolyData for visualization
-    combined_streamlines = streamline_collection.combine().extract_surface().tube(radius=0.005)
-
-    # Create a plotter
-    plotter = pv.Plotter(off_screen=True)  # Use off_screen=True for batch rendering
-
-    # Add the volume with proper opacity
-    # opacity = [0.2, 0.22, 0.24, 0.25, 0.26, 0.28, 0.3, 0.4]
-    # opacity = [0.9, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]
-    opacity = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    # set to 1
-    plotter.add_volume(grid, scalars='density', opacity=opacity, cmap='turbo')
-
-    # Add the streamlines with time-based coloring
-    plotter.add_mesh(combined_streamlines, scalars='time', cmap='turbo')
-
-    # Add the bounding box (outline)
-    outline = grid.outline()
-    plotter.add_mesh(outline, color='black')
-
-    # Set the camera position
-    plotter.camera_position = 'iso'
-
-    # Render and save the image
-    plotter.show(screenshot=output_path)
-    print(f"Streamlines rendered and saved to {output_path}")
-"""
-
-"""
-def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path):
-    dims = volume.shape
-
-    # Create the grid coordinates
-    x = np.linspace(0, 1, dims[0])
-    y = np.linspace(0, 1, dims[1])
-    z = np.linspace(0, 1, dims[2])
-    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-    points = np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
-
-    # Create a PyVista grid
-    grid = pv.StructuredGrid()
-    grid.points = points
-    grid.dimensions = dims
-
-    # Flatten data to fit grid point format
-    grid['density'] = volume.flatten(order='F')
-    grid['velocity'] = np.c_[u.flatten(order='F'), v.flatten(order='F'), w.flatten(order='F')]
-
-    # Initialize an empty MultiBlock to store streamlines
-    streamline_collection = pv.MultiBlock()
-
-    # Generate streamlines for each seed point
-    for seed in seed_points:
-        streamline = grid.streamlines(
-            vectors='velocity',
-            source_center=seed,
-            source_radius=0.025,  # Small radius to generate multiple streamlines around the seed
-            max_time=1.0,  # Adjusted length of the streamlines
-            initial_step_length=0.1,
-            integration_direction='both'  # Integrate in both forward and backward directions
-        )
-        
-        # Ensure proper distribution of time values for coloring the streamlines
-        time_scalars = np.linspace(0, 1, streamline.n_points)
-        streamline['time'] = time_scalars
-        streamline_collection.append(streamline)
-
-    # Combine all streamlines into one PolyData for visualization
-    combined_streamlines = streamline_collection.combine().extract_surface().tube(radius=0.005)
-
-    # Create a plotter
-    plotter = pv.Plotter(off_screen=True)  # Use off_screen=True for batch rendering
-
-    # Add the volume with proper opacity
-    # opacity = [0.9, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]
-    # plotter.add_volume(grid, scalars='density', opacity=opacity, cmap='turbo')
-
-    # Add the streamlines with time-based coloring
-    plotter.add_mesh(combined_streamlines, scalars='time', cmap='turbo')
-
-    # Add bounding box
-    plotter.add_bounding_box(color="black")
-
-    # Set the camera position
-    plotter.camera_position = 'iso'
-
-    # Render and save the image
-    plotter.show(screenshot=output_path)
-    print(f"Streamlines rendered and saved to {output_path}")
-"""
-
-"""
-def visualize_volume_with_streamlines(volume, u, v, w, seed_points, output_path):
-    dims = volume.shape
-
-    # Create the grid coordinates
-    x = np.linspace(0, 1, dims[0])
-    y = np.linspace(0, 1, dims[1])
-    z = np.linspace(0, 1, dims[2])
-    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
-    points = np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
-
-    # Create a PyVista grid
-    grid = pv.StructuredGrid()
-    grid.points = points
-    grid.dimensions = dims
-
-    # Flatten data to fit grid point format
-    grid['density'] = volume.flatten(order='F')
-    grid['velocity'] = np.c_[u.flatten(order='F'), v.flatten(order='F'), w.flatten(order='F')]
-
     # Create seed points on the bottom surface of the cube
     n_points = 5
     x_seed = np.linspace(0.1, 0.9, int(np.sqrt(n_points)))
@@ -1557,8 +1430,8 @@ seed_points = np.random.rand(num_seed_points, 3)
 def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
                           dataset, dir_res="Results", title="Lots of Data", show=True, save=False):
     
-    columns = 3 # 2 6
-    rows = 6 # 4 6
+    columns = 6 # 2 6
+    rows = 4 # 4 6
     skip = 10
     data_to_vis = original_data
     index = 0
@@ -1857,7 +1730,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
         #     if len(streamline) > 1:
         #         ax.plot(streamline[:, 0], streamline[:, 1], streamline[:, 2], color='red', alpha=0.7)
 
-        # """
+        """
         # Fifth row: flow gt streamlines
         output_path = os.path.join(dir_res, "Flow_streamlines.png")
         volume = original_data[round(index)]
@@ -1891,7 +1764,7 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
 
         ax.imshow(img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
         ax.axis('off')
-        # """
+        """
 
         index += skip
 
@@ -1915,12 +1788,41 @@ def visualize_seq_dens_3d(original_data, interpol_data, flow_gt, flow,
             os.makedirs(dir_res)
         fig.savefig(os.path.join(dir_res, title), dpi = 300)
 
-def render_density(gt, interpol, dir_res="Results"):
+def render_density(gt, interpol, dataset, dir_res="Results"):
 
-    bounds = (0.1, 0.9)
-    tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
-    # density
-    tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.05, 0.1, 1.0, 1e2]) # blue 700-800
+    if "jets3d" in dataset:
+        bounds = (0.1, 0.9)
+        # 100-200 t:
+        # density
+        tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        # tf.add_gaussian(np.log10(0.3), width=1e-4, height=[1.0, 0.1, 0.3, 1e2]) # red 100-200
+        # tf.add_gaussian(np.log10(0.4), width=4e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 100-200
+        # tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 700-800
+        tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.05, 0.1, 1.0, 1e2]) # blue 700-800
+        # velocity
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        # tf_vel.add_gaussian(np.log10(0.5), width=1e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 100-200
+        # tf_vel.add_gaussian(np.log10(0.7), width=4e-4, height=[0.8, 0.6, 0.1, 1e2]) # orange 100-200
+        # tf_vel.add_gaussian(np.log10(0.7), width=2e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 700-800
+        tf_vel.add_gaussian(np.log10(0.55), width=1e-4, height=[1.0, 0.6, 0.1, 1e2]) # orange 700-800
+    elif "nyx3d" in dataset:
+        bounds = (0.1, 0.7)
+        tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        # tf.sample_colormap(np.log10(0.2), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # tf.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # tf.sample_colormap(np.log10(0.4), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # tf.sample_colormap(np.log10(0.5), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # 
+        tf.sample_colormap(np.log10(0.17), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.42), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.52), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # velocity
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf_vel.sample_colormap(np.log10(0.2), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf_vel.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf_vel.sample_colormap(np.log10(0.4), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf_vel.sample_colormap(np.log10(0.5), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
 
     # pickle_file = "data_original_interpol.pkl"
     # with open(os.path.join(dir_res, pickle_file), 'rb') as dens_file:
@@ -1945,7 +1847,10 @@ def render_density(gt, interpol, dir_res="Results"):
         # source.tfh.plot(f"{save_path}/transfer_function.png", profile_field=("gas", "density"))
         cam = sc.camera
         cam.resolution = 256
-        cam.zoom(1.75)
+        if "jets3d" in dataset:
+            cam.zoom(1.75)
+        elif "nyx3d" in dataset:
+            cam.zoom(1.0)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         # cam.rotate(30 / 180 * np.pi, rot_vector=np.array([1.0, 0.0, 0.0]))
         im = sc.render()
@@ -1974,11 +1879,253 @@ def render_density(gt, interpol, dir_res="Results"):
         # source.tfh.plot(f"{save_path}/transfer_function.png", profile_field=("gas", "density"))
         cam = sc.camera
         cam.resolution = 256
-        cam.zoom(1.75)
+        if "jets3d" in dataset:
+            cam.zoom(1.75)
+        elif "nyx3d" in dataset:
+            cam.zoom(1.0)
         cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
         # cam.rotate(30 / 180 * np.pi, rot_vector=np.array([1.0, 0.0, 0.0]))
         im = sc.render()
         im.write_png(os.path.join(save_path, f'density_{700+idx}.png'), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+
+def render_flow(flow_gt, flow, dataset, dir_res="Results"):
+
+    cam_resolution = 256
+
+    u_gt = flow_gt[:, 0, ...] 
+    v_gt = flow_gt[:, 1, ...] 
+    w_gt = flow_gt[:, 2, ...] 
+    flow_norm_gt = np.linalg.norm(flow_gt, axis=1)
+    u = flow[:, 0, ...] 
+    v = flow[:, 1, ...] 
+    w = flow[:, 2, ...] 
+    flow_norm = np.linalg.norm(flow, axis=1)
+
+    if "jets3d" in dataset:
+        bounds = (0.1, 0.9)
+        # 100-200 t:
+        # density
+        tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        # tf.add_gaussian(np.log10(0.3), width=1e-4, height=[1.0, 0.1, 0.3, 1e2]) # red 100-200
+        # tf.add_gaussian(np.log10(0.4), width=4e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 100-200
+        # tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.25, 0.0, 1.0, 1e2]) # blue 700-800
+        tf.add_gaussian(np.log10(0.5), width=1e-4, height=[0.05, 0.1, 1.0, 1e2]) # blue 700-800
+        # velocity
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        # tf_vel.add_gaussian(np.log10(0.5), width=1e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 100-200
+        # tf_vel.add_gaussian(np.log10(0.7), width=4e-4, height=[0.8, 0.6, 0.1, 1e2]) # orange 100-200
+        # tf_vel.add_gaussian(np.log10(0.7), width=2e-4, height=[0.2, 0.8, 0.2, 1e2]) # green 700-800
+        tf_vel.add_gaussian(np.log10(0.55), width=1e-4, height=[1.0, 0.6, 0.1, 1e2]) # orange 700-800
+    elif "nyx3d" in dataset:
+        bounds = (0.1, 0.7)
+        tf = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        # tf.sample_colormap(np.log10(0.2), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # tf.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # tf.sample_colormap(np.log10(0.4), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # tf.sample_colormap(np.log10(0.5), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # 
+        tf.sample_colormap(np.log10(0.17), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.42), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf.sample_colormap(np.log10(0.52), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        # velocity
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf_vel.sample_colormap(np.log10(0.2), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf_vel.sample_colormap(np.log10(0.3), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf_vel.sample_colormap(np.log10(0.4), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+        tf_vel.sample_colormap(np.log10(0.5), w=0.00025, alpha=1.5e1, col_bounds=np.log10((0.2, 0.6)), colormap="turbo")
+
+    # pickle_file = "data_original_interpol.pkl"
+    # with open(os.path.join(dir_res, pickle_file), 'rb') as dens_file:
+    #     data_test = pickle.load(dens_file)
+    data_flow = np.array(flow_gt) # [:, 0]  # density
+    # data_velocity = np.array(data_test)[:, 1:]  # velocity
+    # print(data_velocity.shape)
+
+    save_path = dir_res + "/Renderings_flow_GT"
+    if not os.path.isdir(save_path):
+        os.makedirs(save_path)
+
+    # render density
+    for idx in range(len(data_flow)):
+
+        volume = u_gt[idx]
+        # volume = flow_gt[round(index)]
+        # print("volume", volume)
+        # ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        ds = yt.load_uniform_grid(dict(velocity_x=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("stream", "velocity_x"))
+        source = sc[0]
+        source.set_log(True)
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf_vel.add_gaussian(np.log10(0.15), width=0.0005, height=[1.0, 0.50, 0.05, 1e2]) # orange
+        source.tfh.tf = tf_vel
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "flow_x_gt_tf.png"), profile_field=("stream", "velocity_x"))
+
+        cam = sc.camera
+        cam.resolution = cam_resolution
+        cam.zoom(1.0)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        im.write_png(os.path.join(dir_res, "Flow_x.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        volume = v_gt[idx]
+        # volume = flow_gt[round(index)]
+        # print("volume", volume)
+        # ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        ds = yt.load_uniform_grid(dict(velocity_y=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("stream", "velocity_y"))
+        source = sc[0]
+        source.set_log(True)
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf_vel.add_gaussian(np.log10(0.25), width=0.0005, height=[0.1, 0.8, 0.1, 1e2]) # green
+        source.tfh.tf = tf_vel
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "flow_y_gt_tf.png"), profile_field=("stream", "velocity_y"))
+
+        cam = sc.camera
+        cam.resolution = cam_resolution
+        cam.zoom(1.0)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        im.write_png(os.path.join(dir_res, "Flow_y.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        volume = w_gt[idx]
+        # volume = flow_gt[round(index)]
+        # print("volume", volume)
+        # ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        ds = yt.load_uniform_grid(dict(velocity_z=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("stream", "velocity_z"))
+        source = sc[0]
+        source.set_log(True)
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf_vel.add_gaussian(np.log10(0.35), width=0.0005, height=[0.1, 0.1, 1.0, 1e2]) # blue
+        source.tfh.tf = tf_vel
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "flow_z_gt_tf.png"), profile_field=("stream", "velocity_z"))
+
+        cam = sc.camera
+        cam.resolution = cam_resolution
+        cam.zoom(1.0)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        im.write_png(os.path.join(dir_res, "Flow_z.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        img_x = plt.imread(os.path.join(dir_res, "Flow_x.png"))
+        img_y = plt.imread(os.path.join(dir_res, "Flow_y.png"))
+        img_z = plt.imread(os.path.join(dir_res, "Flow_z.png"))
+        blended_img = (img_x + img_y + img_z) # / 3 
+
+        # blended_img = blended_img - blended_img.min()  # Shift minimum to 0
+        # blended_img = blended_img / blended_img.max()  # Scale maximum to 1
+        blended_img = np.clip(blended_img, 0, 1)
+
+        # plt.imsave(os.path.join(save_path, f'flow_{300+idx}.png'), blended_img)
+        plt.imsave(os.path.join(save_path, f'flow_{300+idx}.png'), blended_img, vmin=0., vmax=1.)
+        
+        # blended_img = sc.render(blended_img)
+        # blended_img.write_png(os.path.join(save_path, f'flow_{300+idx}.png'), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+
+
+    data_flow = np.array(flow)
+
+    save_path = dir_res + "/Renderings_flow"
+    if not os.path.isdir(save_path):
+        os.makedirs(save_path)
+
+    # render density
+    for idx in range(len(data_flow)):
+
+        volume = u[idx]
+        # volume = flow_gt[round(index)]
+        # print("volume", volume)
+        # ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        ds = yt.load_uniform_grid(dict(velocity_x=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("stream", "velocity_x"))
+        source = sc[0]
+        source.set_log(True)
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf_vel.add_gaussian(np.log10(0.16), width=0.0005, height=[1.0, 0.50, 0.05, 1e2]) # orange
+        source.tfh.tf = tf_vel
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "flow_x_gt_tf.png"), profile_field=("stream", "velocity_x"))
+
+        cam = sc.camera
+        cam.resolution = cam_resolution
+        cam.zoom(1.0)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        im.write_png(os.path.join(dir_res, "Flow_x.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        volume = v[idx]
+        # volume = flow_gt[round(index)]
+        # print("volume", volume)
+        # ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        ds = yt.load_uniform_grid(dict(velocity_y=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("stream", "velocity_y"))
+        source = sc[0]
+        source.set_log(True)
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf_vel.add_gaussian(np.log10(0.26), width=0.0005, height=[0.1, 0.8, 0.1, 1e2]) # green
+        source.tfh.tf = tf_vel
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "flow_y_gt_tf.png"), profile_field=("stream", "velocity_y"))
+
+        cam = sc.camera
+        cam.resolution = cam_resolution
+        cam.zoom(1.0)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        im.write_png(os.path.join(dir_res, "Flow_y.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        volume = w[idx]
+        # volume = flow_gt[round(index)]
+        # print("volume", volume)
+        # ds = yt.load_uniform_grid(dict(density=volume), volume.shape)
+        ds = yt.load_uniform_grid(dict(velocity_z=volume), volume.shape)
+        sc = yt.create_scene(ds, field=("stream", "velocity_z"))
+        source = sc[0]
+        source.set_log(True)
+        tf_vel = yt.ColorTransferFunction(np.log10(bounds), grey_opacity=True)
+        tf_vel.add_gaussian(np.log10(0.36), width=0.0005, height=[0.1, 0.1, 1.0, 1e2]) # blue
+        source.tfh.tf = tf_vel
+        source.tfh.bounds = bounds
+        source.tfh.plot(os.path.join(dir_res, "flow_z_gt_tf.png"), profile_field=("stream", "velocity_z"))
+
+        cam = sc.camera
+        cam.resolution = cam_resolution
+        cam.zoom(1.0)
+        cam.focus = ds.arr([0, 0.3, 0.3], 'unitary')
+        im = sc.render()
+        # im.add_background_color(background=([1.0, 1.0, 1.0, 1.0]))
+        im.write_png(os.path.join(dir_res, "Flow_z.png"), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
+        print("rendered!")
+
+        img_x = plt.imread(os.path.join(dir_res, "Flow_x.png"))
+        img_y = plt.imread(os.path.join(dir_res, "Flow_y.png"))
+        img_z = plt.imread(os.path.join(dir_res, "Flow_z.png"))
+        blended_img = (img_x + img_y + img_z) # / 3 
+
+        # blended_img = blended_img - blended_img.min()  # Shift minimum to 0
+        # blended_img = blended_img / blended_img.max()  # Scale maximum to 1
+        blended_img = np.clip(blended_img, 0, 1)
+
+        # plt.imsave(os.path.join(save_path, f'flow_{300+idx}.png'), blended_img)
+        plt.imsave(os.path.join(save_path, f'flow_{300+idx}.png'), blended_img, vmin=0., vmax=1.)
+
+        # blended_img = sc.render(blended_img)
+        # blended_img.write_png(os.path.join(save_path, f'flow_{300+idx}.png'), background=[1.0, 1.0, 1.0, 0.0], sigma_clip=4.0)
 
 def make_video(dir_res):
 
