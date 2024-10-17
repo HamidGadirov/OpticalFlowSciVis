@@ -121,39 +121,61 @@ class HyperNetwork(nn.Module):
         #         offset += size
         #     return weights
 
-        self.mlp = nn.Sequential(
-            nn.Linear(input_dim, 16),
-            nn.PReLU(), # SELU(),
-            # SineActivation(),
-            nn.Linear(16, 32),
-            nn.PReLU(), # SELU(),
-            # SineActivation(),
-            nn.Linear(32, latent_dim), # 64
-            nn.PReLU(), # SELU(),
-            # SineActivation(),
-        )
-
-        self.cnn = nn.Sequential(
-            nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), # 8
-            nn.PReLU(), # SELU(),
-            # SineActivation(),
-            nn.Conv1d(16, 32, kernel_size=3, padding=1),
-            nn.PReLU(), # SELU(),
-            # SineActivation(),
-            nn.Flatten(),
-            nn.Linear(32 * latent_dim, total_params)
-        )
-        # TODO: how can change? Conv1d in 3D?
-        # self.cnn3d = nn.Sequential(
-        #     nn.Conv3d(in_channels=1, out_channels=16, kernel_size=(3, 3, 3), padding=1),
+        # self.mlp = nn.Sequential(
+        #     nn.Linear(input_dim, 16),
+        #     nn.PReLU(), # SELU(),
+        #     # SineActivation(),
+        #     nn.Linear(16, 32),
+        #     nn.PReLU(), # SELU(),
+        #     # SineActivation(),
+        #     nn.Linear(32, latent_dim), # 64
+        #     nn.PReLU(), # SELU(),
+        #     # SineActivation(),
+        # )
+        # self.mlp = nn.Sequential(
+        #     nn.Linear(input_dim, 16),
         #     nn.PReLU(),
-        #     # nn.Conv3d(8, 16, kernel_size=(3, 3, 3), padding=1),
+        #     # nn.Dropout(0.1),  # Add dropout
+        #     nn.Linear(16, 32),
+        #     nn.PReLU(),
+        #     # nn.Dropout(0.1),
+        #     # nn.Linear(32, latent_dim),
         #     # nn.PReLU(),
-        #     nn.Conv3d(16, 32, kernel_size=(3, 3, 3), padding=1),
-        #     nn.PReLU(),
+        #     nn.Linear(32, total_params)
+        # )
+        self.mlp_skip_norm = nn.Sequential(
+            nn.Linear(input_dim, 16),
+            nn.LayerNorm(16),  # Layer normalization
+            nn.PReLU(),
+            nn.Linear(16, 32),
+            nn.LayerNorm(32),  # Layer normalization
+            nn.PReLU(),
+            nn.Linear(32, total_params)
+        )
+        self.skip1 = nn.Linear(input_dim, 16)  # Connects input directly to 2nd hidden layer
+
+        # self.cnn = nn.Sequential(
+        #     nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), # 8 16 32
+        #     nn.PReLU(), # SELU(),
+        #     # SineActivation(),
+        #     nn.Conv1d(16, 32, kernel_size=3, padding=1), # 16 32 64
+        #     nn.PReLU(), # SELU(),
+        #     # SineActivation(),
         #     nn.Flatten(),
         #     nn.Linear(32 * latent_dim, total_params)
         # )
+        # self.cnn3d = nn.Sequential(
+        #     nn.Conv3d(in_channels=1, out_channels=16, kernel_size=3, padding=1),  # Conv3d layer 1
+        #     nn.PReLU(),
+        #     nn.Conv3d(16, 32, kernel_size=3, padding=1),  # Conv3d layer 2
+        #     nn.PReLU(),
+        #     nn.Flatten()
+        # )
+        # Now calculate the flattened size after Conv3d
+        # flattened_size = self.get_flattened_size(latent_dim)  # Calculate flattened size based on latent_dim
+        # Add Linear layer now that we know the flattened size
+        # self.cnn3d.add_module('linear', nn.Linear(32 * flattened_size, total_params))  # Add the Linear layer
+        # cnn3d OOM -
 
         # model weight same capacity - experiment 
         # ablations
@@ -168,10 +190,23 @@ class HyperNetwork(nn.Module):
         # self.apply(prelu_init)
 
     def forward(self, x):
-        x = self.mlp(x).unsqueeze(1)  # Transform and add a channel dimension for CNN
+        # x = self.mlp(x).unsqueeze(1)  # Transform and add a channel dimension for CNN
+        # weights_flat = self.mlp(x) # no CNN
         # x = x.unsqueeze(2).unsqueeze(3)  # Add spatial dimensions for Conv3d
         # weights_flat = self.cnn3d(x)
-        weights_flat = self.cnn(x)
+        # weights_flat = self.cnn(x) # with MLP
+        # weights_flat = self.cnn(x.unsqueeze(1)) # without MLP
+        # x = x.unsqueeze(1).unsqueeze(2).unsqueeze(3)  # Reshape to (B, C, D, H, W) format for Conv3d
+        # x = x.unsqueeze(1).unsqueeze(2)  # Reshape to (Batch, Channel, Height, Width) for Conv2d
+        # weights_flat = self.cnn3d(x)  # Pass through the Conv3d CNN
+        # return self._reshape_weights(weights_flat)
+        # TODO check mlp: can be removed? +
+        # TODO check Conv3d: also Conv2d: OOM -
+
+        # MLP that includes skip connections
+        out = self.mlp_skip_norm[0:3](x)  # Pass through the first part of MLP
+        skip_out = self.skip1(x)  # Compute skip connection
+        weights_flat = self.mlp_skip_norm[3:](out + skip_out)  # Add skip connection and pass through the rest
         return self._reshape_weights(weights_flat)
 
     def _reshape_weights(self, weights_flat):
@@ -182,6 +217,13 @@ class HyperNetwork(nn.Module):
             weights[name] = weights_flat[:, offset:offset + size].view(-1, *shape)
             offset += size
         return weights
+    
+    # def get_flattened_size(self, latent_dim):
+    #     # Helper function to calculate the flattened size after Conv3d layers
+    #     # Use a dummy input tensor with batch size 1 and shape (B, C, D, H, W)
+    #     sample_tensor = torch.zeros(1, 1, latent_dim, latent_dim, latent_dim)
+    #     conv_output = self.cnn3d(sample_tensor)  # Pass through Conv3d layers (excluding the Linear)
+    #     return conv_output.numel() // sample_tensor.size(0)  # Return the flattened size
 
         # pre-train, train with hypernet, fine-tuning - Steffen
 

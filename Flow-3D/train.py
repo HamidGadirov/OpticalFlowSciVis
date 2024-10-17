@@ -24,7 +24,7 @@ sys.path.insert(0, parentdir)
 import yt
 # from torch.cuda.amp import autocast
 
-hyper = False # hyperLREST
+hyper = True # hyperLREST
 
 if hyper == False:
     from model.LREST import Model
@@ -41,6 +41,7 @@ from metrics import calculate_avg_psnr, calculate_avg_ssim, calculate_avg_lpips,
 from utils import plot_distribution, plot_loss, plot_lr, visualize_ind, visualize_ind_flow, visualize_series, visualize_series_flow, visualize_large, \
     visualize_seq_dens, visualize_seq_flow, render_volume_yt, visualize_seq_dens_3d, render_density, render_flow, make_video
 from baseline_interpol import *
+from hypernet_similarity import hypernet_similarity_matrix
 
 # If your model is returning NaNs, you could set 
 # torch.autograd.detect_anomaly(True) 
@@ -84,8 +85,8 @@ def get_learning_rate(step):
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-4 - 3e-6) * mul + 3e-6
-        # return (1e-4 - 4e-4) * mul + 4e-4
-        return (1e-4 - 1e-5) * mul + 1e-5
+        return (1e-4 - 4e-4) * mul + 4e-4
+        # return (1e-4 - 1e-5) * mul + 1e-5
         # return (1e-4 - 1e-5) * mul + 1e-5
         # return (1e-4 - 5e-5) * mul + 5e-5
         # return (1e-4 - 1e-6) * mul + 1e-6
@@ -926,7 +927,7 @@ def evaluate(model, dataset, val_data, nr_eval, local_rank, learning_rate, early
 
 if __name__ == "__main__":    
     parser = argparse.ArgumentParser()
-    parser.add_argument('--epoch', default=120, type=int) # 120 200
+    parser.add_argument('--epoch', default=300, type=int) # 120 200
     parser.add_argument('--batch_size', default=16, type=int, help='minibatch size') # default=16
     parser.add_argument('--local-rank', default=0, type=int, help='local rank') # local-rank
     parser.add_argument('--world_size', default=1, type=int, help='world size') # 4
@@ -1412,6 +1413,97 @@ if __name__ == "__main__":
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_1.pkl"
     # 2x: 52.91 0.0219; 5x: 52.35 0.0219;
 
+    # 11.09.24 - resume after TVCG submission
+    model_name = "hyperFLINT_noTea_2Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_test.pkl"
+    # 2x: 50.42; 0.0295; 5x: 46.15 0.0292; OmM_0155_OmB_00235_h_055
+    # 5x: 47.71 0.0226; OmM_012_OmB_00215_h_055
+    model_name = "hyperFLINT_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b3_conv01convblock012hyper_reproduce.pkl"
+    # 5x: 50.67; 0.0281; OmM_0155_OmB_00235_h_055
+    # 5x: 51.65; 0.0215; OmM_012_OmB_00215_h_055
+    model_name = "hyperFLINT_noTea_3Blocks_2convDown2convUp2conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b3_conv01convblock01hyper.pkl"
+    # 5x: 50.38; 0.0297; OmM_0155_OmB_00235_h_055
+    # 5x: 51.75 0.0231; OmM_012_OmB_00215_h_055
+    model_name = "hyperFLINT_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b3_conv01convblock012hyper_SELU.pkl"
+    # 5x: 46.19; 0.0359; OmM_0155_OmB_00235_h_055 -
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l3_b3_conv01convblock012hyper_120ep.pkl"
+    # 5x: 50.66 0.0282; OmM_0155_OmB_00235_h_055
+    # 5x: 51.66 0.0214; OmM_012_OmB_00215_h_055
+    # lr1e-4_1e-5
+    ### +++
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l3_b3_conv01convblock012hyper_200ep.pkl"
+    # 5x: 50.37 0.0261; OmM_0155_OmB_00235_h_055
+    # 5x: 52.10 0.0176; OmM_012_OmB_00215_h_055
+    ### +++
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l3_b3_conv01convblock012hyper_300ep.pkl"
+    # 5x: 51.52 0.0249; OmM_0155_OmB_00235_h_055
+    # 5x: 52.18 0.0177; OmM_012_OmB_00215_h_055
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l3_b3_conv01convblock012hyper_120ep.pkl"
+    # 5x: 50.12 0.0271; OmM_0155_OmB_00235_h_055
+    # 5x: 51.59 0.0187; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN1D_l3_b3_conv01convblock012hyper_40ep.pkl"
+    # 5x: 45.99 0.0299; OmM_0155_OmB_00235_h_055
+    # 5x: 47.50 0.0286; OmM_012_OmB_00215_h_055
+    ###
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN1D_b3_conv01convblock012hyper.pkl"
+    # 5x: 51.02 0.0265; OmM_0155_OmB_00235_h_055
+    # 5x: 52.31 0.0198; OmM_012_OmB_00215_h_055
+    # no MLP: result is: density better, flow worse
+    ###
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLP_CNN1D_l2_b3_conv01convblock012hyper_120ep.pkl"
+    # 5x: 50.30 0.0281; OmM_0155_OmB_00235_h_055
+    # 5x: 51.66 0.0182; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLP_CNN1D_l4_b3_conv01convblock012hyper_120ep.pkl"
+    # 5x: 50.25 0.0294; OmM_0155_OmB_00235_h_055
+    # 5x: 51.78 0.0195; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN1D64_b3_conv01convblock012hyper.pkl"
+    # 5x: 49.89 0.0260; OmM_0155_OmB_00235_h_055
+    # 5x: 51.78 0.0200; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN1D16_b3_conv01convblock012hyper.pkl"
+    # 5x: 49.65 0.0285; OmM_0155_OmB_00235_h_055
+    # 5x: 51.41 0.0184; OmM_012_OmB_00215_h_055
+    ### +++
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 5x: 51.30 0.0248; OmM_0155_OmB_00235_h_055
+    # 5x: 52.71 0.0178; OmM_012_OmB_00215_h_055    3x: 54.21
+    # no MLP, best. CNN1D 32
+    ### +++
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN3D_b3_conv01convblock012hyper_300ep.pkl"
+    # no MLP, CNN3D 32 OOM -
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLPdropout_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 5x: 49.50 0.0254; OmM_0155_OmB_00235_h_055
+    # 5x: 52.23 0.0171; OmM_012_OmB_00215_h_055
+    ###
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 5x: 50.80 0.0247; OmM_0155_OmB_00235_h_055
+    # 5x: 52.02 0.0177; OmM_012_OmB_00215_h_055
+    ###
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLP_noCNN_b3_conv01convblock012hyper_300ep.pkl"
+    # 5x: 51.12 0.0244; OmM_0155_OmB_00235_h_055
+    # 5x: 51.97 0.0186; OmM_012_OmB_00215_h_055
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLPskipNorm_noCNN_b3_conv01convblock012hyper_300ep.pkl"
+
+    # think about explanation for the arch (hyper -> FLINT)
+    # rationale of the conv 1d
+    # check with literature on hypernets
+    # 3:30 pm Tuesday (Amsterdam)
+    # param space exploration: if works -> new, else -> incremental
+
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN1D_b3_conv01convblock012hyper_500ep.pkl"
+    # 5x: 51.10 0.0251; OmM_0155_OmB_00235_h_055
+    # 5x: 52.75 0.0168; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN1D_flintSELU_b3_conv01convblock012hyper_300ep.pkl"
+    # 5x: 50.81 0.0281; OmM_0155_OmB_00235_h_055
+    # 5x: 52.44 0.0212; OmM_012_OmB_00215_h_055
+
+    # pairs - vary the params (all) - check what happens
+
+    # this will allow to check the impact of hypernet
+
+    # similarity matrix from - pairwise distance from he weight matrix (plot matrix)
+    # dist matrix - use DR - cluster vectors via UMAP - simialr params in similar positions
+
+    # stable diffusion - new method - explore in scivis
+
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b6.pkl"
     # 2x: 53.74 0.0469; 5x: 48.25 0.0467;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_b4.pkl"
@@ -1653,7 +1745,7 @@ if __name__ == "__main__":
             # factors = [2, 3, 4, 5, 8, 12, 16, 24, 32, 48, 64]
             # factors = [2, 3, 5, 8, 16, 32, 64]
             # factors = [2, 10, 15, 20] # 30, 40, 60]
-            factors = [5]
+            factors = [2, 3, 5, 8]
         for factor in factors:
             dir_res = "Results"
             dir_res = os.path.join(dir_res, dataset)
@@ -1669,7 +1761,7 @@ if __name__ == "__main__":
             data_test, interpol_data, flow, mask = train(model, args.dataset, factor, model_name, args.mode, args.local_rank)
             end_time = time.time()
             elapsed_time = end_time - start_time
-            print(f"Inference time: {elapsed_time:.2f} seconds") 
+            print(f"Inference time: {elapsed_time:.2f} seconds ###") 
             # FLINT: 31s Nyx; 25s Jets
 
             # List to store the timings
@@ -1955,6 +2047,9 @@ if __name__ == "__main__":
                 print(flow_original_pred.shape, flow.shape)
                 avg_epe = calculate_avg_epe(flow_original_pred, flow, dir_model, factor)
 
+            # hypernet_similarity_matrix
+            hypernet_similarity_matrix(model, device)
+
             # """
             # fn = "data_original_interpol.pkl"
             # with open(os.path.join(dir_model, fn), 'wb') as f:
@@ -1974,8 +2069,9 @@ if __name__ == "__main__":
             # with open(os.path.join(dir_model, fn), 'wb') as f:
             #     pickle.dump(flow_original_pred, f, protocol=4)
             # print("flow saved for renderings!")
-            render_flow(flow_original_pred, flow_original_pred, dataset, dir_model)
-            input("xxx")
+
+            # render_flow(flow_original_pred, flow_original_pred, dataset, dir_model)
+            # input("xxx")
             # """
 
             """
@@ -1996,20 +2092,19 @@ if __name__ == "__main__":
             """
 
             # 2D for VIS
-            # TODO check dims
-            slice_num = 40
-            data_test = data_test[..., slice_num, :, :]
-            data_original_interpol = data_original_interpol[..., slice_num, :, :]
-            interpol_data = interpol_data[..., slice_num, :, :]
-            # diffs = diffs[..., slice_num, :, :]
-            flow = flow[..., slice_num, :, :]
-            # flow = flow[..., slice_num, :]
-            flow_original_pred = flow_original_pred[..., slice_num, :, :]
-            # flow_original_pred = flow_original_pred[..., slice_num, :]
-            # diffs_flow = diffs_flow[..., slice_num, :, :]
-            # u_diff = u_diff[..., slice_num, :, :]
-            # v_diff = v_diff[..., slice_num, :, :]
-            mask = mask[..., slice_num, :, :]
+            # slice_num = 40
+            # data_test = data_test[..., slice_num, :, :]
+            # data_original_interpol = data_original_interpol[..., slice_num, :, :]
+            # interpol_data = interpol_data[..., slice_num, :, :]
+            # # diffs = diffs[..., slice_num, :, :]
+            # flow = flow[..., slice_num, :, :]
+            # # flow = flow[..., slice_num, :]
+            # flow_original_pred = flow_original_pred[..., slice_num, :, :]
+            # # flow_original_pred = flow_original_pred[..., slice_num, :]
+            # # diffs_flow = diffs_flow[..., slice_num, :, :]
+            # # u_diff = u_diff[..., slice_num, :, :]
+            # # v_diff = v_diff[..., slice_num, :, :]
+            # mask = mask[..., slice_num, :, :]
 
             # title = "original_data_" + str(factor) + "x" + "_2D"
             # visualize_series(original_data, factor, dataset, dir_model, title=title, show=False, save=True)

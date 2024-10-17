@@ -25,7 +25,7 @@ sys.path.insert(0, parentdir)
 from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large, visualize_large_3d, \
     render_volume_yt, visualize_seq_dens_3d, render_density
 
-hyper = False # hyperLREST
+hyper = True # hyperLREST
 
 # @profile
 def load_data(dataset, factor, mode):
@@ -128,7 +128,7 @@ def load_data(dataset, factor, mode):
             if hyper:
                 pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_params.pkl"
                 pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_012_OmB_00215_h_055_test_params.pkl"
-                # pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_0155_OmB_00235_h_055_test_params.pkl"
+                pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_0155_OmB_00235_h_055_test_params.pkl"
                 # pkl_test_filename = "/media/data/hamid/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_params.pkl"
 
         if dataset == "droplet3d":
