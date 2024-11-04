@@ -25,7 +25,7 @@ sys.path.insert(0, parentdir)
 from utils import visualize_ind, visualize_series, visualize_series_flow, visualize_large, visualize_large_3d, \
     render_volume_yt, visualize_seq_dens_3d, render_density
 
-hyper = True # hyperLREST
+hyper = True # hyperFLINT
 
 # @profile
 def load_data(dataset, factor, mode):
@@ -39,6 +39,8 @@ def load_data(dataset, factor, mode):
         datasets = ["pool3d"]
     if dataset == 'nyx3d':
         datasets = ["nyx3d"]
+    if dataset == 'castro3d':
+        datasets = ["castro3d"]
     if dataset == 'droplet3d':
         datasets = ["droplet3d"]
     elif dataset == 'tangaroa3d':
@@ -130,6 +132,16 @@ def load_data(dataset, factor, mode):
                 pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_012_OmB_00215_h_055_test_params.pkl"
                 pkl_test_filename = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_0155_OmB_00235_h_055_test_params.pkl"
                 # pkl_test_filename = "/media/data/hamid/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_test_params.pkl"
+
+        if dataset == 'castro3d':
+            if hyper:
+                pkl_train_filename = "../Datasets/Castro/Exec/science/wdmerger/castro3d_128_log10norm_triplets_params_W12_200_train_massP_090_massS_085.pkl"
+                pkl_val_filename = "../Datasets/Castro/Exec/science/wdmerger/castro3d_128_log10norm_triplets_params_W12_50_val_massP_086_massS_088.pkl"
+                pkl_test_filename = "../Datasets/Castro/Exec/science/wdmerger/castro3d_128_log10norm_massP_090_massS_085_test_params.pkl"
+            else:
+                pkl_train_filename = "../Datasets/Castro/Exec/science/wdmerger/castro3d_128_log10norm_triplets_params_W12_200_train_massP_090_massS_085.pkl"
+                pkl_val_filename = "../Datasets/Castro/Exec/science/wdmerger/castro3d_128_log10norm_triplets_params_W12_50_val_massP_086_massS_088.pkl"
+                pkl_test_filename = "../Datasets/Castro/Exec/science/wdmerger/castro3d_128_log10norm_massP_090_massS_085_test_params.pkl"
 
         if dataset == "droplet3d":
             filename_train = filename + "droplet3d_64_train.pkl"
@@ -307,7 +319,7 @@ def load_data(dataset, factor, mode):
                 input("Data range")
                 """
 
-            if dataset == "nyx3d":
+            if dataset == "nyx3d" or dataset == "castro3d":
                 with open(pkl_train_filename, 'rb') as flow_file:
                     data_train = pickle.load(flow_file)
                     print("data_train loaded!")
@@ -321,6 +333,10 @@ def load_data(dataset, factor, mode):
                     print("data_val loaded!")
 
                 if hyper == False:
+                    # for castro no hyper:
+                    # data_train = data_train[0]
+                    # data_val = data_val[0]
+
                     data_train = np.array(data_train) # [..., :128, :120, :112]
                     data_val = np.array(data_val) # [..., :128, :120, :112]
 
@@ -444,6 +460,22 @@ def load_data(dataset, factor, mode):
             if "3d" in dataset:
                 with open(pkl_test_filename, 'rb') as flow_file:
                     data_test = pickle.load(flow_file)
+
+                # for castro no hyper:
+                # data_test = data_test[0]
+                print(data_test[1])
+                # manyally change!
+                data_test_list = list(data_test)
+                print("len", len(data_test_list[1]))
+                # data_test_list[1] = [0.86, 0.888]
+                # data_test_list[1] = [[0.1, 0.1, 0.1] for _ in data_test_list[1]]
+                data_test_list[1] = [[10, 10, 10] for _ in data_test_list[1]]
+                # data_test_list[1] = [[100, 100, 100] for _ in data_test_list[1]]
+                data_test = tuple(data_test_list)
+                # data_test[1] = [0.86, 0.88] 
+                print("chnaged", data_test[1])
+                # input("params")
+
                 # data_test = np.load(pkl_test_filename)
 
                 # data_test = np.array(data_test)[:, 0] # dens test for viz

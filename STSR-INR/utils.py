@@ -110,7 +110,7 @@ def TypeA2TypeB(dir_path,saved_dir_path,typeA='.dat',typeB='.raw'):
 
 def readDat(file_path):
     """basic & core func"""
-    if "nyx" in file_path:  # Add specific logic for nyx if needed
+    if "nyx" in file_path or "castro" in file_path:  # Add specific logic for nyx if needed
         # For example, nyx might need a different dtype or processing step
         dat = np.fromfile(file_path, dtype='<f4')
     else:
@@ -185,10 +185,12 @@ def getLatestModelPath(model_dir,verbose=False):
     latest_time = 0
     last_file_name = None
 
-    model_dir = "./Exp/nyx/vnyx/Log"
+    # model_dir = "./Exp/nyx/vnyx/Log"
+    model_dir = "./Exp/castro/vcastro/Log"
     print("model_dir", model_dir)
     # last_file_name = os.path.join(model_dir, "STSR-nyx_Scalar-600.pth")
-    last_file_name = os.path.join(model_dir, "STSR-nyx_Scalar-100.pth")
+    # last_file_name = os.path.join(model_dir, "STSR-nyx_Scalar-100.pth")
+    last_file_name = os.path.join(model_dir, "STSR-castro_Scalar-100.pth")
     print(last_file_name)
 
     latest_file_path = last_file_name
@@ -247,7 +249,8 @@ class EvalMetric():
         Returns:
             _type_: _description_
         """
-        self.GT_dirPath = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/STSRINR_GT"
+        # self.GT_dirPath = "../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/STSRINR_GT"
+        self.GT_dirPath = "../Datasets/Castro/Exec/science/wdmerger/STSRINR_GT"
         print(self.GT_dirPath, self.eval_dirPath)
         # nyx_ensemble_test/Nyx/Exec/LyA/STSRINR_GT
         filePaths_GT = getAllDatFilePaths(self.GT_dirPath)
@@ -470,8 +473,10 @@ def parseDatasetInfo(dataset_varList, dataHeaderJsonPath):
         varInfo = dataHeader.get(DatasetName, {})
         if 'vars' in varInfo:
             del varInfo['vars']
-        if DatasetName == 'nyx':  # Add any specific logic for 'nyx' dataset here
+        if DatasetName == 'nyx' or DatasetName == 'castro':  # Add any specific logic for 'nyx' dataset here
+            print(varInfo)
             varInfo['data_path'] = varInfo['data_path'].get(VarName, None)
+            # input("x")
         else:
             varInfo['data_path'] = varInfo['data_path'].get(VarName, None)
         return varInfo

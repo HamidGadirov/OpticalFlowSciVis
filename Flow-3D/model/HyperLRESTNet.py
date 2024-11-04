@@ -132,38 +132,42 @@ class HyperNetwork(nn.Module):
         #     nn.PReLU(), # SELU(),
         #     # SineActivation(),
         # )
-        # self.mlp = nn.Sequential(
+        # print("check", input_dim, latent_dim)
+        self.mlp = nn.Sequential(
+            nn.Linear(input_dim, 16),
+            nn.PReLU(),
+            nn.Dropout(0.1),  # Add dropout
+            nn.Linear(16, 32),
+            nn.PReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(32, latent_dim),
+            nn.PReLU(),
+            # nn.Linear(32, total_params)
+        )
+        # self.mlp_skip_norm = nn.Sequential(
         #     nn.Linear(input_dim, 16),
+        #     # nn.LayerNorm(16),  # Layer normalization
         #     nn.PReLU(),
-        #     # nn.Dropout(0.1),  # Add dropout
         #     nn.Linear(16, 32),
+        #     # nn.LayerNorm(32),  # Layer normalization
         #     nn.PReLU(),
-        #     # nn.Dropout(0.1),
-        #     # nn.Linear(32, latent_dim),
-        #     # nn.PReLU(),
         #     nn.Linear(32, total_params)
         # )
-        self.mlp_skip_norm = nn.Sequential(
-            nn.Linear(input_dim, 16),
-            nn.LayerNorm(16),  # Layer normalization
-            nn.PReLU(),
-            nn.Linear(16, 32),
-            nn.LayerNorm(32),  # Layer normalization
-            nn.PReLU(),
-            nn.Linear(32, total_params)
-        )
-        self.skip1 = nn.Linear(input_dim, 16)  # Connects input directly to 2nd hidden layer
+        # self.skip1 = nn.Linear(input_dim, 16)  # Connects input directly to 2nd hidden layer
 
-        # self.cnn = nn.Sequential(
-        #     nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), # 8 16 32
-        #     nn.PReLU(), # SELU(),
-        #     # SineActivation(),
-        #     nn.Conv1d(16, 32, kernel_size=3, padding=1), # 16 32 64
-        #     nn.PReLU(), # SELU(),
-        #     # SineActivation(),
-        #     nn.Flatten(),
-        #     nn.Linear(32 * latent_dim, total_params)
-        # )
+        self.cnn = nn.Sequential(
+            nn.Conv1d(in_channels=1, out_channels=16, kernel_size=3, padding=1), # 8 16 32
+            # nn.Linear(latent_dim, 16),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
+            nn.Conv1d(16, 32, kernel_size=3, padding=1), # 16 32 64
+            # nn.Linear(16, 32),
+            nn.PReLU(), # SELU(),
+            # SineActivation(),
+            nn.Flatten(),
+            nn.Linear(32 * latent_dim, total_params)
+            # nn.Linear(32, total_params)
+        )
         # self.cnn3d = nn.Sequential(
         #     nn.Conv3d(in_channels=1, out_channels=16, kernel_size=3, padding=1),  # Conv3d layer 1
         #     nn.PReLU(),
@@ -190,24 +194,28 @@ class HyperNetwork(nn.Module):
         # self.apply(prelu_init)
 
     def forward(self, x):
-        # x = self.mlp(x).unsqueeze(1)  # Transform and add a channel dimension for CNN
+        # print(f"Original input shape: {x.shape}")
+        x = self.mlp(x).unsqueeze(1)  # Transform and add a channel dimension for CNN
+        # x = self.mlp(x) # for another MLP
         # weights_flat = self.mlp(x) # no CNN
+        # print(f"After MLP, shape: {x.shape}")
         # x = x.unsqueeze(2).unsqueeze(3)  # Add spatial dimensions for Conv3d
         # weights_flat = self.cnn3d(x)
-        # weights_flat = self.cnn(x) # with MLP
+        weights_flat = self.cnn(x) # with MLP
         # weights_flat = self.cnn(x.unsqueeze(1)) # without MLP
         # x = x.unsqueeze(1).unsqueeze(2).unsqueeze(3)  # Reshape to (B, C, D, H, W) format for Conv3d
         # x = x.unsqueeze(1).unsqueeze(2)  # Reshape to (Batch, Channel, Height, Width) for Conv2d
         # weights_flat = self.cnn3d(x)  # Pass through the Conv3d CNN
-        # return self._reshape_weights(weights_flat)
+        # print(f"After CNN, shape: {weights_flat.shape}")
+        return self._reshape_weights(weights_flat)
         # TODO check mlp: can be removed? +
         # TODO check Conv3d: also Conv2d: OOM -
 
-        # MLP that includes skip connections
-        out = self.mlp_skip_norm[0:3](x)  # Pass through the first part of MLP
-        skip_out = self.skip1(x)  # Compute skip connection
-        weights_flat = self.mlp_skip_norm[3:](out + skip_out)  # Add skip connection and pass through the rest
-        return self._reshape_weights(weights_flat)
+        # # MLP that includes skip connections
+        # out = self.mlp_skip_norm[0:2](x)  # Pass through the first part of MLP
+        # skip_out = self.skip1(x)  # Compute skip connection
+        # weights_flat = self.mlp_skip_norm[2:](out + skip_out)  # Add skip connection and pass through the rest
+        # return self._reshape_weights(weights_flat)
 
     def _reshape_weights(self, weights_flat):
         weights = {}
@@ -264,16 +272,18 @@ refine = False # True
 use_deconv = True # True scale = [1, 1, 1, 1] if use_deconv else [4, 2, 2, 1]
 
 class IFBlock(nn.Module):
-    def __init__(self, in_planes, c=64, input_dim=3):
+    def __init__(self, in_planes, c=64, input_dim=3): # input_dim=3 2
         super(IFBlock, self).__init__()
         self.in_planes = in_planes
         self.c = c
 
         # Define the shapes of the weights for the hypernetwork
         self.weight_shapes = {
-            'conv0_0_weight': torch.Size([c//2, in_planes, 4, 4, 4]),
+            # 'conv0_0_weight': torch.Size([c//2, in_planes, 3, 3, 3]), # 4, 4, 4
+            'conv0_0_weight': torch.Size([c//2, in_planes, 4, 4, 4]), # 4, 4, 4
             'conv0_0_bias': torch.Size([c//2]),
-            'conv0_1_weight': torch.Size([c, c//2, 4, 4, 4]),
+            # 'conv0_1_weight': torch.Size([c, c//2, 3, 3, 3]), # 4, 4, 4
+            'conv0_1_weight': torch.Size([c, c//2, 4, 4, 4]), # 4, 4, 4
             'conv0_1_bias': torch.Size([c]),
             ###
             'convblock_0_weight': torch.Size([c, c, 3, 3, 3]),
@@ -340,7 +350,7 @@ class IFBlock(nn.Module):
 
         # Initialize the hypernetwork
         # self.hypernet = HyperNetwork(input_dim, self.weight_shapes)
-        latent_dim = 3
+        latent_dim = input_dim # 2 3
         self.hypernet = HyperNetwork(input_dim, latent_dim, self.weight_shapes)
 
         # self.hypernet.apply(sine_init)
@@ -357,6 +367,7 @@ class IFBlock(nn.Module):
         # self.convblock_1 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         # self.convblock_2 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_3 = nn.Conv3d(c, c, 3, stride=2, padding=1)
+        # self.convblock_3 = nn.Conv3d(c, c, 3, stride=1, padding=1) # test
         self.convblock_4 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_5 = nn.Conv3d(c, c, 3, stride=1, padding=1)
         self.convblock_6 = nn.Conv3d(c, c, 3, stride=1, padding=1)
@@ -366,6 +377,8 @@ class IFBlock(nn.Module):
 
         # Define the deconvolutional layers to be used in LREST
         self.deconvblock_0 = nn.ConvTranspose3d(c, c, 4, stride=2, padding=1)
+        # self.deconvblock_0 = nn.ConvTranspose3d(c, c, 3, stride=1, padding=1) # test kernel 4
+        # self.deconvblock_0 = nn.ConvTranspose3d(c, c, 4, stride=1, padding=1) # test kernel 4
         self.deconvblock_1 = nn.ConvTranspose3d(c, c//2, 4, stride=2, padding=1)
         self.deconvblock_2 = nn.ConvTranspose3d(c//2, 7, 4, stride=2, padding=1)
 
@@ -413,8 +426,8 @@ class IFBlock(nn.Module):
             x_i = x[i].unsqueeze(0)
 
             # with torch.no_grad():
-            x_i = functional_conv3d(x_i, weight_dict['conv0_0_weight'], weight_dict['conv0_0_bias'], self.c//2, stride=2, padding=1)
-            x_i = functional_conv3d(x_i, weight_dict['conv0_1_weight'], weight_dict['conv0_1_bias'], self.c, stride=2, padding=1)
+            x_i = functional_conv3d(x_i, weight_dict['conv0_0_weight'], weight_dict['conv0_0_bias'], self.c//2, stride=2, padding=2)
+            x_i = functional_conv3d(x_i, weight_dict['conv0_1_weight'], weight_dict['conv0_1_bias'], self.c, stride=2, padding=2)
             # x_i = self.prelu(self.conv0_0(x_i))
             # x_i = self.prelu(self.conv0_1(x_i))
             
@@ -436,6 +449,7 @@ class IFBlock(nn.Module):
             # print(f"x_i after convblock_6: requires_grad={x_i.requires_grad}")
 
             # x_i = functional_conv3d(x_i, weight_dict['convblock_3_weight'], weight_dict['convblock_3_bias'], self.c, stride=2, padding=1)
+            # x_i = functional_conv3d(x_i, weight_dict['convblock_3_weight'], weight_dict['convblock_3_bias'], self.c, stride=1, padding=1) # test
             # x_i = functional_conv3d(x_i, weight_dict['convblock_4_weight'], weight_dict['convblock_4_bias'], self.c, stride=1, padding=1)
             # x_i = functional_conv3d(x_i, weight_dict['convblock_5_weight'], weight_dict['convblock_5_bias'], self.c, stride=1, padding=1)
             # x_i = functional_conv3d(x_i, weight_dict['convblock_6_weight'], weight_dict['convblock_6_bias'], self.c, stride=1, padding=1)
@@ -584,27 +598,28 @@ class HyperLRESTNet(nn.Module):
         self.student_teacher = student_teacher
         self.refine = refine
         self.use_deconv = use_deconv
+        input_dim = 3 # 2 3
 
         if blocks_num == 1:
-            self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
+            self.block0 = IFBlock(3, c=128, input_dim=input_dim) # 6 c=240 128 256
         if blocks_num == 2:
-            self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
-            self.block1 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=128, input_dim=input_dim) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=64, input_dim=input_dim) # 13 c=90 96 64 128
         if blocks_num == 3:
-            self.block0 = IFBlock(3, c=128, input_dim=3) # 6 c=240 128 256
-            self.block1 = IFBlock(6+6, c=96, input_dim=3) # 13 c=150 96 192
-            self.block2 = IFBlock(6+6, c=64, input_dim=3) # 13 c=90 96 64 128
+            self.block0 = IFBlock(3, c=128, input_dim=input_dim) # 6 c=240 128 256
+            self.block1 = IFBlock(6+6, c=96, input_dim=input_dim) # 13 c=150 96 192
+            self.block2 = IFBlock(6+6, c=64, input_dim=input_dim) # 13 c=90 96 64 128
         elif blocks_num == 4:
-            self.block0 = IFBlock(3, c=128, input_dim=3) # 128 256 320 400
-            self.block1 = IFBlock(6+6, c=96, input_dim=3) # 96 192 256 320
-            self.block2 = IFBlock(6+6, c=96, input_dim=3) # 96 192 256 320
-            self.block3 = IFBlock(6+6, c=64, input_dim=3) # 64 128 192 256
+            self.block0 = IFBlock(3, c=128, input_dim=input_dim) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=96, input_dim=input_dim) # 96 192 256 320
+            self.block2 = IFBlock(6+6, c=96, input_dim=input_dim) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=64, input_dim=input_dim) # 64 128 192 256
         elif blocks_num == 5:
-            self.block0 = IFBlock(3, c=256, input_dim=3) # 128 256 320 400
-            self.block1 = IFBlock(6+6, c=192, input_dim=3) # 96 192 256 320
-            self.block2 = IFBlock(6+6, c=192, input_dim=3) # 96 192 256 320
-            self.block3 = IFBlock(6+6, c=128, input_dim=3) # 64 128 192 256
-            self.block4 = IFBlock(6+6, c=128, input_dim=3) # 64 128 192 256
+            self.block0 = IFBlock(3, c=128, input_dim=input_dim) # 128 256 320 400
+            self.block1 = IFBlock(6+6, c=96, input_dim=input_dim) # 96 192 256 320
+            self.block2 = IFBlock(6+6, c=96, input_dim=input_dim) # 96 192 256 320
+            self.block3 = IFBlock(6+6, c=64, input_dim=input_dim) # 64 128 192 256
+            self.block4 = IFBlock(6+6, c=64, input_dim=input_dim) # 64 128 192 256
 
         if student_teacher:
             self.block_tea = IFBlock(7+6, c=128, input_dim=3) # 90 128 192 256

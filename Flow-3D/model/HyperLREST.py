@@ -21,14 +21,16 @@ flow_available = True # True False
 blocks_num = 3 # 2 3 4 5 6
 student_teacher = False # True False
 
+params_len = 3
+
 c = 64
 in_planes = 128
-input_dim = 3
-latent_dim = 3
+input_dim = params_len
+latent_dim = params_len
 weight_shapes = {
-    'conv0_0_weight': torch.Size([c//2, in_planes, 4, 4, 4]),
+    'conv0_0_weight': torch.Size([c//2, in_planes, 3, 3, 3]), # 4, 4, 4
     'conv0_0_bias': torch.Size([c//2]),
-    'conv0_1_weight': torch.Size([c, c//2, 4, 4, 4]),
+    'conv0_1_weight': torch.Size([c, c//2, 3, 3, 3]), # 4, 4, 4
     'conv0_1_bias': torch.Size([c]),
     # 'deconvblock_0_weight': torch.Size([c, c, 4, 4, 4]),
     # 'deconvblock_0_bias': torch.Size([c]),
@@ -101,6 +103,7 @@ class Model:
             self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank)
             # self.flownet = DDP(self.flownet, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
             self.hypernet = DDP(self.hypernet, device_ids=[local_rank], output_device=local_rank)
+            # self.hypernet = DDP(self.hypernet, device_ids=[local_rank], output_device=local_rank, find_unused_parameters=True)
 
 
     def train(self):
@@ -427,7 +430,7 @@ class Model:
         lambda_l1 = 1. # 1.
         lambda_tea = 1. # 1.
         if flow_available:
-            lambda_flow = 2e-1 # 0.01 0.2 1; 0.5 best on rectangle
+            lambda_flow = 1e-1 # 0.01 0.2 1; 0.5 best on rectangle
             lambda_distill = 0
             lambda_reg = 0
             lambda_photo = 0

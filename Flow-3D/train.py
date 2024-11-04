@@ -24,7 +24,7 @@ sys.path.insert(0, parentdir)
 import yt
 # from torch.cuda.amp import autocast
 
-hyper = True # hyperLREST
+hyper = True # hyperFLINT
 
 if hyper == False:
     from model.LREST import Model
@@ -85,9 +85,9 @@ def get_learning_rate(step):
         # return (1e-3 - 1e-5) * mul + 1e-5
         # return (6e-4 - 6e-6) * mul + 6e-6 # 2D
         # return (3e-4 - 3e-6) * mul + 3e-6
-        return (1e-4 - 4e-4) * mul + 4e-4
-        # return (1e-4 - 1e-5) * mul + 1e-5
-        # return (1e-4 - 1e-5) * mul + 1e-5
+        # return (1e-4 - 4e-4) * mul + 4e-4 # nyx3d
+        # return (1e-4 - 2e-4) * mul + 2e-4
+        return (1e-4 - 1e-5) * mul + 1e-5
         # return (1e-4 - 5e-5) * mul + 5e-5
         # return (1e-4 - 1e-6) * mul + 1e-6
         # return (6e-5 - 6e-7) * mul + 6e-7
@@ -437,9 +437,9 @@ def train(model, dataset, factor, model_name, mode, local_rank):
             if hyper:
                 # params = data_gpu[:, 0, 4, :3, 0, 0]  # hypernet
                 params = params_gpu  # hypernet
-            # print("Shape of params tensor:", params.shape)
-            # params_ = params.detach().cpu().numpy()
-            # print("params_", params_)
+            print("Shape of params tensor:", params.shape)
+            params_ = params.detach().cpu().numpy()
+            print("params_", params_)
 
             I0 = imgs[:, :1]
             I1 = imgs[:, 1:2]
@@ -953,6 +953,8 @@ if __name__ == "__main__":
     if args.dataset == "pool3d":
         args.batch_size = 2 # 2 4 32
     if args.dataset == "nyx3d":
+        args.batch_size = 3 # 1 2 4 32
+    if args.dataset == "castro3d":
         args.batch_size = 3 # 1 2 4 32
     if args.dataset == "droplet3d":
         args.batch_size = 20
@@ -1469,7 +1471,7 @@ if __name__ == "__main__":
     ### +++
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN3D_b3_conv01convblock012hyper_300ep.pkl"
     # no MLP, CNN3D 32 OOM -
-    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLPdropout_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLPdropout_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
     # 5x: 49.50 0.0254; OmM_0155_OmB_00235_h_055
     # 5x: 52.23 0.0171; OmM_012_OmB_00215_h_055
     ###
@@ -1477,15 +1479,20 @@ if __name__ == "__main__":
     # 5x: 50.80 0.0247; OmM_0155_OmB_00235_h_055
     # 5x: 52.02 0.0177; OmM_012_OmB_00215_h_055
     ###
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLP_noCNN_b3_conv01convblock012hyper_300ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLP_noCNN_b3_conv01convblock012hyper_300ep.pkl"
     # 5x: 51.12 0.0244; OmM_0155_OmB_00235_h_055
     # 5x: 51.97 0.0186; OmM_012_OmB_00215_h_055
-    model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLPskipNorm_noCNN_b3_conv01convblock012hyper_300ep.pkl"
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLPskipNorm_noCNN_b3_conv01convblock012hyper_300ep.pkl"
+    # diverge -
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLPskip_noCNN_b3_conv01convblock012hyper_300ep.pkl"
+    # 49.876 0.0260 -
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_mlp32_mlp32_b3_conv01convblock012hyper_300ep.pkl"
+    # 5x: 50.39 0.0269; OmM_0155_OmB_00235_h_055
+    # 5x: 51.95 0.0182; OmM_012_OmB_00215_h_055 
 
     # think about explanation for the arch (hyper -> FLINT)
     # rationale of the conv 1d
     # check with literature on hypernets
-    # 3:30 pm Tuesday (Amsterdam)
     # param space exploration: if works -> new, else -> incremental
 
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN1D_b3_conv01convblock012hyper_500ep.pkl"
@@ -1494,6 +1501,8 @@ if __name__ == "__main__":
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_noMLP_CNN1D_flintSELU_b3_conv01convblock012hyper_300ep.pkl"
     # 5x: 50.81 0.0281; OmM_0155_OmB_00235_h_055
     # 5x: 52.44 0.0212; OmM_012_OmB_00215_h_055
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_hyperAll_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 15.22  629291840.0000 -
 
     # pairs - vary the params (all) - check what happens
 
@@ -1621,7 +1630,6 @@ if __name__ == "__main__":
     # 2x: 52.53 0.0178; 5x: 52.09 0.0177; OmM_012_OmB_00215_h_055
 
 
-
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN3D_b4_conv01convblock012hyper_200ep.pkl"
     # 2x: 52.20 0.0190; 5x: 52.64 0.0190;
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_OmM_01375_OmB_00225_h_055_skip5_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_archtestCNN3D_4layers_b4_conv01convblock012hyper_200ep.pkl"
@@ -1708,15 +1716,81 @@ if __name__ == "__main__":
     # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_nyx_ens5m_skip5_log10norm_triplets_W12_500_gamma_eqRes_deconv_lr1e-4_1e-5_archtestCNN1D_6.pkl"
     # 2x: 54.40 0.0371; 5x: 48.30 0.0368
 
-
     # untrained: 2x: 52.68 0.1707; 8x: 41.26 0.1710   
     # hyper, untrained: 2x: 39.66 0.3174
     # baseline: skip5 - 2x: 53.19; 3x: 47.49; 5x: 41.92; 8x: 37.51; 16x: 31.90 32x: 27.68
     # 200 and 50 triplets, same results
 
+    """ castro """
+    # model_name = "FLINT_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_b3_conv01convblock012hyper_120ep.pkl"
+    # 2x: 50.13 0.0516; 3x: 48.45 0.0516; 5x: 46.04 0.0513; 8x: 43.59 0.0516
+    # FLINT*, no hyper
+    # model_name = "FLINT_4Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_b3_conv01convblock012hyper_120ep.pkl"
+    # # FLINT comparison 3x: 48.69 0.0502; 5x: 46.36 0.0506; 8x: 43.83 0.0513
+
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_4e-4_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # explode -
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_2e-41_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 49.14 0.0381; 5x: 46.85 0.0378; # 175 ep
+    # 2x: 49.57 0.0275; 3x: 49.00 0.0273; 5x: 47.39 0.0270; 8x: 45.41 0.0272; # 475 ep
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 48.60 0.0363;
+    # no MLP, CNN1D 32
+    # model_name = "hyperFLINT_noTea_3Blocks_3convDown3convUp3conv_l1_flow3e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 48.98 0.0321; 3x: 47.86 0.0319; 5x: 45.39 0.0316; 8x: 43.53 0.0318
+    # model_name = "hyperFLINT_noTea_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma09_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 49.30 0.0350; 3x: 49.37 0.0348; 5x: 46.98 0.0345; 8x: 44.50 0.0347 # 450 ep
+    # model_name = "hyperFLINT_noTea_4Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 49.04 0.0317; 3x: 48.91 0.0316; 5x: 46.98 0.0314; 8x: 44.73 0.0317;
+    # model_name = "hyperFLINT_noTea_5Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 48.64 0.0344; 3x: 47.86 0.0343; 5x: 46.98 0.0341; 8x: 44.50 0.0344;
+    # model_name = "hyperFLINT_noTea_2Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 49.48 0.0412; 3x: 49.47 0.0410; 5x: 46.87 0.0407; 8x: 44.75 0.0409;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_lapl_flow1e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 49.70 0.0482; 3x: 48.01 0.0481; 5x: 44.95 0.048; 8x: 42.85 0.0484;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64all_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 50.23 0.0433; 3x: 48.77 0.0432; 5x: 47.12 0.0430; 8x: 44.89 0.0434;
+    ### +++
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_st1_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 49.91 0.0323; 3x: 49.84 0.0321; 5x: 48.04 0.0318; 8x: 45.75 0.0321; # 300 ep
+    # 2x: 50.11 0.0281; 3x: 50.67 0.0280; 5x: 48.95 0.0277; 8x: 46.46 0.0279; # 600 ep
+    # 2x: 51.25 0.0244; 3x: 50.60 0.0242; 5x: 49.98 0.0239; 8x: 47.42 0.0241; # 900 ep
+    # deconvblock_0 convblock_3 st=1
+    ### +++
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_st1_k3_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 48.60 0.0371; 3x: 48.40 0.0370; 5x: 47.02 0.0369; 8x: 44.60 0.0373; # 300 ep
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_st1_k3_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock3hyper_300ep.pkl"
+    # 2x: 50.34 0.0309; 3x: 59.80 0.0307; 5x: 48.77 0.0304; 8x: 45.23 0.0306; # 900 ep
+
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow2e-1_v1_64_st1_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 49.89 0.0324; 3x: 49.62 0.0322; 5x: 46.99 0.0318; 8x: 44.81 0.0320;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_st1_hyperAll_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 10.94  136254146478080.0000 -
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_noflow_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 54.42 0.4732; 3x: 51.87 0.5972; 5x: 50.12 0.7432; 8x: 47.75 0.9820;
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_norec_flow1e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep.pkl"
+    # 2x: 43.22 0.0341; 3x: 41.26 0.0339; 5x: 37.89 0.0335; 8x: 35.05 0.0336
+
+    # Steffen, 30.10.24
+    # streamlines castro ?
+    # more interesting param space: other datasets (2d lbs or ABC), samplint more and time ?
+    # check the data depending on params as input to hypernet
+
+
+    # model_name = "hyperLREST_noTea_3Blocks_3convDown3convUp3conv_l1_flow1e-1_v1_64_castro_massP_090_massS_085_log10norm_triplets_W12_200_gamma_lr1e-4_1e-5_MLPdropout01_CNN1D_b3_conv01convblock012hyper_300ep_.pkl"
+
+    # FLINT untrained: 2x: ...; 8x: ... 
+    # hyperFLINT, untrained: 2x: 45.98 0.2313; 5x: 38.60 0.2297
+    # baseline: linear - 2x: 47.04; 3x: 42.11; 5x: 37.28; 8x: 33.64; 16x: 29.04; 32x: 25.09
+    # TODO: linear
+
+    # densely dsample params -> similaruy -> clustering -> check with some gt data
 
     """ tangaroa """
-
     # model_name = "flownet_lapl_tangaroa3d.pkl"
     # model_name = "flownet_l1_tangaroa3d.pkl"
 
@@ -1842,15 +1916,15 @@ if __name__ == "__main__":
             """
             # save data for 3d figure:
             # data = [data_original_interpol, interpol_data, flow_original_pred, flow]
-            # data = [data_original_interpol[:60], interpol_data[:60], flow_original_pred[:60], flow[:60]]
+            data = [data_original_interpol[:60], interpol_data[:60], flow_original_pred[:60], flow[:60]]
             # data = [interpol_data]
-            data = [interpol_data[:60]]
+            # data = [interpol_data[:60]]
             save_path = "Results"
             save_path = os.path.join(save_path, dataset)
-            save_path = os.path.join(save_path, "paper_figure")
-            # filenames = ["data_original_interpol.pkl", "interpol_data.pkl", "flow_original_pred.pkl", "flow.pkl"]
+            save_path = os.path.join(save_path, "paper_figure_hyper")
+            filenames = ["data_original_interpol.pkl", "interpol_data.pkl", "flow_original_pred.pkl", "flow.pkl"]
             # filenames = ["data_coordnet_interpol.pkl"]
-            filenames = ["data_stsr_interpol.pkl"]
+            # filenames = ["data_stsr_interpol.pkl"]
             for d, fn in zip(data, filenames):
                 with open(os.path.join(save_path, fn), 'wb') as f:
                     pickle.dump(d, f, protocol=4)
@@ -1907,6 +1981,8 @@ if __name__ == "__main__":
             # avg_lpips = calculate_avg_lpips(data_original_interpol, lin_interpol, dir_model, factor)
             # Nyx: 2x PSNR: 79.892
             # skip5: 2x: 53.19; 3x: 47.49; 5x: 41.92; 8x: 37.51; 16x: 31.90 32x: 27.68
+
+            # Castro: 2x: 47.04; 3x: 42.11; 5x: 37.28; 8x: 33.64; 16x: 29.04; 32x: 25.09
 
             # jets: PSNR 2x: 77; 5x: 64; 10x: 60.8; 20x: 56.8
             # 100-200: 2x: 51.4; 5x: 40; 10x: 34.27; 15x: 30; 20x: 30.989
@@ -2048,7 +2124,8 @@ if __name__ == "__main__":
                 avg_epe = calculate_avg_epe(flow_original_pred, flow, dir_model, factor)
 
             # hypernet_similarity_matrix
-            hypernet_similarity_matrix(model, device)
+            # hypernet_similarity_matrix(model, device, dir_model)
+            # input("hypernet_similarity_matrix")
 
             # """
             # fn = "data_original_interpol.pkl"
@@ -2092,19 +2169,19 @@ if __name__ == "__main__":
             """
 
             # 2D for VIS
-            # slice_num = 40
-            # data_test = data_test[..., slice_num, :, :]
-            # data_original_interpol = data_original_interpol[..., slice_num, :, :]
-            # interpol_data = interpol_data[..., slice_num, :, :]
-            # # diffs = diffs[..., slice_num, :, :]
-            # flow = flow[..., slice_num, :, :]
-            # # flow = flow[..., slice_num, :]
-            # flow_original_pred = flow_original_pred[..., slice_num, :, :]
-            # # flow_original_pred = flow_original_pred[..., slice_num, :]
-            # # diffs_flow = diffs_flow[..., slice_num, :, :]
-            # # u_diff = u_diff[..., slice_num, :, :]
-            # # v_diff = v_diff[..., slice_num, :, :]
-            # mask = mask[..., slice_num, :, :]
+            slice_num = 40
+            data_test = data_test[..., slice_num, :, :]
+            data_original_interpol = data_original_interpol[..., slice_num, :, :]
+            interpol_data = interpol_data[..., slice_num, :, :]
+            # diffs = diffs[..., slice_num, :, :]
+            flow = flow[..., slice_num, :, :]
+            # flow = flow[..., slice_num, :]
+            flow_original_pred = flow_original_pred[..., slice_num, :, :]
+            # flow_original_pred = flow_original_pred[..., slice_num, :]
+            # diffs_flow = diffs_flow[..., slice_num, :, :]
+            # u_diff = u_diff[..., slice_num, :, :]
+            # v_diff = v_diff[..., slice_num, :, :]
+            mask = mask[..., slice_num, :, :]
 
             # title = "original_data_" + str(factor) + "x" + "_2D"
             # visualize_series(original_data, factor, dataset, dir_model, title=title, show=False, save=True)

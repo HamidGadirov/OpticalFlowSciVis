@@ -87,18 +87,18 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
     def add_zoom(ax, img):
         # Define the coordinates and size of the region to be zoomed in
         if cam_resolution == 256:
-            x1, y1, width1, height1 = 55, 120, 40, 40  # For the top left zoomed-in version
-            x2, y2, width2, height2 = 108, 80, 40, 40  # For the top right zoomed-in version
+            x1, y1, width1, height1 = 55, 120, 30, 30  # For the top left zoomed-in version
+            x2, y2, width2, height2 = 108, 80, 30, 30  # For the top right zoomed-in version
         elif cam_resolution == 512:
-            x1, y1, width1, height1 = 110, 240, 80, 80  # For the top left zoomed-in version
-            x2, y2, width2, height2 = 216, 160, 80, 80  # For the top right zoomed-in version
+            x1, y1, width1, height1 = 110, 240, 60, 60  # For the top left zoomed-in version
+            x2, y2, width2, height2 = 216, 160, 60, 60  # For the top right zoomed-in version
 
         # Create a rectangle patch to highlight the region for the top right zoomed-in version
-        rect1 = patches.Rectangle((x1, y1), width1, height1, linewidth=1.0, edgecolor='purple', facecolor='none')
+        rect1 = patches.Rectangle((x1, y1), width1, height1, linewidth=0.8, edgecolor='purple', facecolor='none')
         ax.add_patch(rect1)
 
         # Create a rectangle patch to highlight the region for the top left zoomed-in version
-        rect2 = patches.Rectangle((x2, y2), width2, height2, linewidth=1.0, edgecolor='orange', facecolor='none')
+        rect2 = patches.Rectangle((x2, y2), width2, height2, linewidth=0.8, edgecolor='orange', facecolor='none')
         ax.add_patch(rect2)
 
         # Create inset axes for the zoomed-in version on the top right
@@ -114,12 +114,11 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
         # Define the coordinates and size of the frames to match the zoomed-in plots
         frame_width, frame_height = width1 * 0.98, height1 * 0.98  # Adjust the scale factor as needed
 
-        frame1 = patches.Rectangle((0, 0), frame_width, frame_height, linewidth=1.5, edgecolor='purple', facecolor='none')
-        frame2 = patches.Rectangle((0, 0), frame_width, frame_height, linewidth=1.5, edgecolor='orange', facecolor='none')
+        frame1 = patches.Rectangle((0, 0), frame_width, frame_height, linewidth=1.2, edgecolor='purple', facecolor='none')
+        frame2 = patches.Rectangle((0, 0), frame_width, frame_height, linewidth=1.2, edgecolor='orange', facecolor='none')
 
         ax_zoom1.add_patch(frame1)
         ax_zoom2.add_patch(frame2)
-
 
     for i in range(columns):
 
@@ -368,6 +367,9 @@ def visualize_seq_dens_3d(original_data, interpol_data, interpol_data_coordnet, 
         img_y = plt.imread(os.path.join(dir_res, "Flow_y.png"))
         img_z = plt.imread(os.path.join(dir_res, "Flow_z.png"))
         blended_img = (img_x + img_y + img_z) # / 3 
+        # print(f"Data range for min={np.min(blended_img)}, max={np.max(blended_img)}")
+        # print(vmin, data_to_vis.max())
+        # input("x")
         ax.imshow(blended_img, vmin=vmin, vmax=data_to_vis.max(), cmap=cmap)
         ax.axis('off')
 

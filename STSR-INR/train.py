@@ -226,7 +226,8 @@ class Train():
         
         # lateset_latent_path = getLatestModelPath(self.Latent_path)
         # lateset_latent_path = "./Exp/nyx/vnyx/Latent/Latent--nyx_Scalar-600.pth"
-        lateset_latent_path = "./Exp/nyx/vnyx/Latent/Latent--nyx_Scalar-100.pth"
+        # lateset_latent_path = "./Exp/nyx/vnyx/Latent/Latent--nyx_Scalar-100.pth"
+        lateset_latent_path = "./Exp/castro/vcastro/Latent/Latent--castro_Scalar-100.pth"
         latent_saved_content = torch.load(lateset_latent_path,map_location='cpu')
         self.latentTable.load_state_dict(latent_saved_content['latent_state_dict'])
         self.LatentOptimizer.load_state_dict(latent_saved_content['latent_optimizer'])

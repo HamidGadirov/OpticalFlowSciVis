@@ -123,6 +123,7 @@ def extract_params(dirName):
         OmM = float(match.group(1)) / 10000  # Converting from int to float
         OmB = float(match.group(2)) / 10000  # Converting from int to float
         h = float(match.group(3)) / 100      # Converting from int to float
+        print(OmM, OmB, h)
         return OmM, OmB, h
     else:
         raise ValueError("Directory name does not match the expected format")
@@ -149,6 +150,8 @@ dirNames = ['./Simulation_OmM_0155_OmB_00235_h_055_npy', './Simulation_OmM_012_O
 dirNames = ['./Simulation_OmM_012_OmB_00215_h_055_npy', './Simulation_OmM_0155_OmB_00215_h_055_npy'] # train
 dirNames = ['./Simulation_OmM_0155_OmB_00225_h_055_npy'] # for ends
 dirNames = ['./Simulation_OmM_01375_OmB_00225_h_055_npy'] # for ends
+
+dirNames = ['./Simulation_OmM_012_OmB_00225_h_055_npy'] # test
 
 # val 
 # dirNames = ['./Simulation_OmM_0155_OmB_00215_h_07_npy']
@@ -353,7 +356,6 @@ data = np.transpose(data, (0, 4, 1, 2, 3))
 # visualize_flow(flow_u_gt, flow_v_gt, dir_res="Results", title="5Jets_Flow_300_xy_2D", show=False, save=True)
 # input("viz")
 
-# TODO log norm
 # Normalize/scale
 print("Density range %f to %f" % (np.min(data[:, 0]), np.max(data[:, 0])))
 print("Vel x range %f to %f" % (np.min(data[:, 1]), np.max(data[:, 1])))
@@ -407,7 +409,8 @@ print("params shape:", params.shape)
 # filename = "nyx3d_skip5_128_test.pkl"
 # filename = "nyx3d_skip5_128_log10norm_test_1.pkl"
 # filename = "nyx3d_skip5_128_log10norm_test_params.pkl"
-filename = "nyx3d_skip5_128_log10norm_OmM_012_OmB_00215_h_055_test_params.pkl"
+# filename = "nyx3d_skip5_128_log10norm_OmM_012_OmB_00215_h_055_test_params.pkl"
+filename = "nyx3d_skip5_128_log10norm_OmM_012_OmB_00225_h_055_test_params.pkl"
 # filename = "nyx3d_skip5_128_log10norm_OmM_0155_OmB_00235_h_055_test_params.pkl"
 # hdf5_file = 'nyx3d_128_150_test_2.h5'
 # with h5py.File(hdf5_file, 'w') as hf:

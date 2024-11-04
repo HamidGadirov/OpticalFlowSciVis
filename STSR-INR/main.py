@@ -72,7 +72,8 @@ if __name__ == "__main__":
     # """
     p = argparse.ArgumentParser()
     # p.add_argument('--config_path', type=str, default='./tasks/configs/CylinderVelM.yml', help='The path of the config file') 
-    p.add_argument('--config_path', type=str, default='./configs/nyx_train.yml', help='The path of the config file')
+    # p.add_argument('--config_path', type=str, default='./configs/nyx_train.yml', help='The path of the config file')
+    p.add_argument('--config_path', type=str, default='./configs/castro_train.yml', help='The path of the config file')
     opt = p.parse_args()
     print("start")
     start_time = time.time()
@@ -83,8 +84,11 @@ if __name__ == "__main__":
     print("end")
     # """
 
-    GT_filePath = '../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_01375_OmB_00225_h_055_STSRINR_train.pkl'
-    eval_dirPath = './Exp/nyx/vnyx/Results/nyx_Scalar/'
+    # GT_filePath = '../Datasets/Nyx/nyx_ensemble_test/Nyx/Exec/LyA/nyx3d_skip5_128_log10norm_OmM_01375_OmB_00225_h_055_STSRINR_train.pkl'
+    # eval_dirPath = './Exp/nyx/vnyx/Results/nyx_Scalar/'
+
+    GT_filePath = '../Datasets/Castro/Exec/science/wdmerger/castro3d_128_log10norm_massP_090_massS_085_test_params.pkl'
+    eval_dirPath = './Exp/castro/vcastro/Results/castro_Scalar/'
 
     metrics_calculator = MetricsCalculator(GT_filePath, eval_dirPath, verbose=True)
     mean_psnr, psnr_list = metrics_calculator.getPSNR()

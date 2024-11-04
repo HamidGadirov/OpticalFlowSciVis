@@ -77,7 +77,7 @@ class MultiVarDataset:
             self.space_sampled_indices = self.Space_Subsample(dim, d_v)
             print("dim, d_v, space_sampled_indices:", dim, d_v, self.space_sampled_indices)
 
-            if d == 'nyx':  # Handle nyx data separately
+            if d == 'nyx' or d == 'castro':  # Handle nyx data separately
                 v_data = self.read_nyx_file(data_path)
                 
                 if v_data.size > 0:
@@ -153,6 +153,9 @@ class MultiVarDataset:
         try:
             with open(file_path, 'rb') as f:
                 data = pickle.load(f)
+
+            # if d == 'castro':
+            data = data[0] # without params
             
             print("data", data.shape)
             v = data[:, 0]  # Assuming the first variable is the density field
